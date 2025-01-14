@@ -21,8 +21,6 @@
 2.4 任务引擎负责任务状态更新。
 
 
-
-
 ## 任务运行时
 1. 任务运行时通过 rag_util , 执行重 CPU、GPU 的计算逻辑，例如 文件下载、文件处理、embedding 计算。然后将结果返回给 任务引擎。
 
@@ -37,3 +35,27 @@
 ## 关于插件中的数据引擎
 1. 数据引擎建立与不同数据库的连接，例如 supabase、elasticSearch。
 2. 数据引擎需要实现基类要求实现的方法，实现知识入库、知识检索、知识删除、任务状态更新、任务状态查询等方法。
+
+
+## 开发设置
+
+### 本地开发模式
+
+要在本地开发模式下使用 util 包，可以使用提供的设置脚本：
+
+```bash
+# 基本用法
+./scripts/setup_dev.sh
+
+# 包含开发依赖
+./scripts/setup_dev.sh --dev
+
+# 指定自定义 package 包路径
+./scripts/setup_dev.sh --path /path/to/util
+
+# 强制重新安装
+./scripts/setup_dev.sh --force
+
+# 同时使用多个选项
+./scripts/setup_dev.sh --dev --force --path ../custom-util
+```
