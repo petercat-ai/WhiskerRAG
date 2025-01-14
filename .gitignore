@@ -65,3 +65,4 @@ dist/
 
 logs
 **/logs
+.mypy_cache
