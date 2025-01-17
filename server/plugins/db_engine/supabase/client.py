@@ -1,9 +1,9 @@
 from typing import List
 from core.log import logger
-from plugin_types.model.knowledge import Knowledge
-from plugin_types.interface.db_engine_plugin_interface import DBPluginInterface
 
 from supabase.client import Client, create_client
+from whisker_rag_type.interface.db_engine_plugin_interface import DBPluginInterface
+from whisker_rag_type.model.knowledge import Knowledge
 
 
 def check_table_exists(client: Client, table_name: str) -> bool:
@@ -27,9 +27,9 @@ class SupaBasePlugin(DBPluginInterface):
 
     def init(self):
         # 初始化数据库连接
-        supabase: Client = create_client(
-            self.settings.SUPABASE_URL, self.settings.SUPABASE_SERVICE_KEY
-        )
+        SUPABASE_URL = self.settings.PLUGIN_ENV.get("SUPABASE_URL", "")
+        SUPABASE_SERVICE_KEY = self.settings.PLUGIN_ENV.get("SUPABASE_SERVICE_KEY", "")
+        supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
         self.supabaseClient = supabase
         # 检查数据表是否存在
         for table_name in [
@@ -40,12 +40,11 @@ class SupaBasePlugin(DBPluginInterface):
             self.settings.TENANT_TABLE_NAME,
         ]:
             if not check_table_exists(supabase, table_name):
-                raise Exception(f"表 {table_name} 不存在，请先创建表")
+                raise Exception(
+                    f"Table {table_name} does not exist, please create the table first"
+                )
 
     async def add_knowledge(self, knowledge_list: List[Knowledge]) -> List[Knowledge]:
-        """
-        将知识导入知识库内，返回知识 ID
-        """
         knowledge_dicts = [
             knowledge.model_dump(exclude_unset=True) for knowledge in knowledge_list
         ]
@@ -57,23 +56,14 @@ class SupaBasePlugin(DBPluginInterface):
         return response.data
 
     async def get_knowledge(self, knowledge_id: str) -> Knowledge:
-        """
-        获取知识库内的知识
-        """
         self.supabaseClient.from_("knowledge").select("*").eq(
             "knowledge_id", knowledge_id
         ).execute()
 
     async def update_knowledge(self, knowledge: Knowledge):
-        """
-        更新知识库内的知识
-        """
         self.supabaseClient.from_("knowledge").upsert(knowledge).execute()
 
     async def delete_knowledge(self, knowledge_id_list: List[str]):
-        """
-        删除知识库内知识
-        """
         response = (
             self.supabaseClient.table("github_repo_config")
             .delete()

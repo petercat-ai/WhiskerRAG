@@ -4,9 +4,9 @@ import sys
 import logging
 
 from core.log import logger
-from plugin_types.interface.task_engine_plugin_interface import TaskEnginPluginInterface
-from plugin_types.interface.db_engine_plugin_interface import DBPluginInterface
-from core.config import settings
+from core.settings import settings
+from whisker_rag_type.interface import TaskEnginPluginInterface, DBPluginInterface
+from dotenv import load_dotenv
 
 
 def singleton(cls):
@@ -64,45 +64,44 @@ class PluginManager:
             )
             raise e
 
-    def _check_and_set_plugin(self, module):
-        for name, obj in module.__dict__.items():
-            if (
-                isinstance(obj, type)
-                and issubclass(obj, DBPluginInterface)
-                and obj is not DBPluginInterface
-            ):
-                print(f"Found plugin class: {name}")
-                self.dbPlugin = obj(settings)
-                return True
-        return False
+    def _load_env_files(directory):
+        for root, _, files in os.walk(directory):
+            for file in files:
+                if file.endswith(".env"):
+                    env_path = os.path.join(root, file)
+                    load_dotenv(env_path)
+                    logger.info(f"Loaded environment variables from {env_path}")
 
     def load_plugins(self, pluginAbsPath):
         plugins_dir = os.path.join(pluginAbsPath, "plugins")
         self.pluginPath = plugins_dir
         logger.info(f"pluginAbsPath: {pluginAbsPath}")
+        settings.load_plugin_dir_env(plugins_dir)
         for root, _, files in os.walk(plugins_dir):
             for file in files:
                 if file.endswith(".py"):
                     module_path = os.path.join(root, file)
                     module_name = os.path.splitext(file)[0]
                     try:
-                        module = self._load_module(module_name, module_path)
-                        for name, obj in module.__dict__.items():
+                        module_list = self._load_module(module_name, module_path)
+                        for name, module_class in module_list.__dict__.items():
+                            # init db plugin
                             if (
-                                isinstance(obj, type)
-                                and issubclass(obj, DBPluginInterface)
-                                and obj is not DBPluginInterface
+                                isinstance(module_class, type)
+                                and issubclass(module_class, DBPluginInterface)
+                                and module_class is not DBPluginInterface
                             ):
-                                logger.info(f"Found db plugin class: {name}")
-                                db_plugin_instance = obj(settings)
+                                logger.debug(f"Found db plugin class: {name}")
+                                db_plugin_instance = module_class(logger, settings)
                                 self._db_plugin_list.append(db_plugin_instance)
+                            # init task plugin
                             if (
-                                isinstance(obj, type)
-                                and issubclass(obj, TaskEnginPluginInterface)
-                                and obj is not TaskEnginPluginInterface
+                                isinstance(module_class, type)
+                                and issubclass(module_class, TaskEnginPluginInterface)
+                                and module_class is not TaskEnginPluginInterface
                             ):
-                                logger.info(f"Found task plugin class: { name}")
-                                task_plugin_instance = obj(settings)
+                                logger.debug(f"Found task plugin class: { name}")
+                                task_plugin_instance = module_class(logger, settings)
                                 self._task_plugin_list.append(task_plugin_instance)
 
                     except Exception as e:

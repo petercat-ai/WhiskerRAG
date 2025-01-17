@@ -1,4 +1,5 @@
 import os
+from core import settings
 import uvicorn
 
 from core.plugin_manager import PluginManager
@@ -7,7 +8,6 @@ from model.response import ResponseModel
 from api.knowledge import router as knowledge_router
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse
-from core.config import settings
 
 app = FastAPI()
 app.include_router(knowledge_router.router)

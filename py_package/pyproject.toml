@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "whisker-rag-util"
+name = "whiskerRAG"
 version = "0.0.1a1"
 description = "A utility package for RAG operations"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["petercat.ai <antd.antgroup@gmail.com>"]
 readme = "README.md"
 packages = [
   { include = "whisker_rag_util", from = "src" },
-  { include = "plugin_types", from = "src" },
+  { include = "whisker_rag_type", from = "src" },
 ]
 
 [tool.poetry.dependencies]
@@ -35,6 +35,11 @@ testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 consider_namespace_packages = "True"
 addopts = "-ra -q -v -s"
+cov = "com"
+cov-report = ["xml", "html"]
+md_report = true
+md_report_verbose = 0
+md_report_color = "auto"
 
 [tool.black]
 line-length = 88

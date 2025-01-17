@@ -9,7 +9,7 @@ class GitFileElementType(BaseModel):
     url: str
     branch: str
     repo_name: str
-    size: int
+    file_size: int
     file_sha: str
 
 
@@ -42,7 +42,7 @@ class GithubRepoLoader:
         if not self.branch_name and self.repo:
             self.branch_name = self.repo.default_branch
 
-    def get_file_tree(
+    def get_file_list(
         self,
     ) -> list[GitFileElementType]:
         file_tree = self.repo.get_git_tree(self.branch_name, recursive=True)  # type: ignore
@@ -57,7 +57,7 @@ class GithubRepoLoader:
                         path=item.path,
                         url=item.url,
                         mode=item.mode,
-                        size=item.size,
+                        file_size=item.size,
                         branch=self.branch_name,  # type: ignore[arg-type]
                         repo_name=self.repo_name,
                     )

@@ -3,7 +3,8 @@ from typing import Optional, Any
 from typing import TypeVar, Generic
 
 
-T = TypeVar('T')
+T = TypeVar("T")
+
 
 class ResponseModel(BaseModel, Generic[T]):
     success: bool

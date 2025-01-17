@@ -8,7 +8,7 @@ from core.log import logger
 from core.plugin_manager import PluginManager
 from core.sha_util import calculate_sha256
 from model.response import ResponseModel
-from plugin_types.model.knowledge import Knowledge, ResourceType
+from whisker_rag_type.model.knowledge import Knowledge, ResourceType
 
 
 def convert_datetime(iso_time):
@@ -69,6 +69,12 @@ class KnowledgeResponse(BaseModel):
         )
 
 
+@router.post("/test/sqs")
+async def add_knowledge(body: dict) -> ResponseModel:
+    task = PluginManager().taskPlugin
+    task.test(body)
+
+
 @router.post("/add")
 async def add_knowledge(body: List[KnowledgeCreate]) -> ResponseModel:
     db = PluginManager().dbPlugin
@@ -86,5 +92,6 @@ async def add_knowledge(body: List[KnowledgeCreate]) -> ResponseModel:
     logger.info(f"Knowledge added successfully: {knowledge_list}")
     # TODO: 交给 任务引擎，异步执行知识拆分和向量索引构建
     task = PluginManager().taskPlugin
-    await task.embed_knowledge_list(knowledge_list)
+    # TODO: user_id
+    await task.embed_knowledge_list("", knowledge_list)
     return ResponseModel[List[KnowledgeResponse]](success=True, data=knowledge_list)

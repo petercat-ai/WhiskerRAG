@@ -22,7 +22,7 @@ def test_get_file_tree(mock_github):
     loader = GithubRepoLoader(repo_name="test_repo", branch_name="main", token="fake_token")
 
     # Act
-    file_tree = loader.get_file_tree()
+    file_tree = loader.get_file_list()
 
     assert file_tree == ["file1", "file2"]
     mock_github.assert_called_once_with("fake_token")

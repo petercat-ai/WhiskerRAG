@@ -1,9 +1,15 @@
 [project]
-name = "whisker-rag-server"
+name = "server"
 version = "0.1.0"
 description = "rag server"
-authors = [{ name = "Your Name", email = "you@example.com" }]
+authors = [{ name = "petercat.ai", email = "antd.antgroup@gmail.com" }]
 readme = "README.md"
+
+[tool.poetry]
+# packages = [
+#     { include = "scripts" }
+# ]
+package-mode = false # 禁用包模式
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -18,17 +24,16 @@ pydantic = "^2.0.0,<3.0.0"
 python-dotenv = ">=1.0.0,<2.0.0"
 pydantic-settings = ">=2.0.0,<3.0.0"
 PyGithub = "2.3.0"
-whisker-rag-util = { path = "../py_package" }
+whiskerRAG = { path = "../py_package", develop = true }
+httpx = "^0.24.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.0"
 pytest-asyncio = "^0.21.0"
-httpx = "^0.24.0"
 black = "^23.3.0"
 isort = "^5.13.0"
 mypy = "^1.14.0"
 
 [tool.poetry.scripts]
-start = "uvicorn app.main:app --reload"
+start = "python -m uvicorn main:app --reload"
 test = "pytest tests/"
-migrate = "alembic upgrade head"

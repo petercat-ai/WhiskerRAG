@@ -26,8 +26,8 @@ class Knowledge(BaseModel):
     knowledge_id: str = Field(None, description="knowledge id")
     knowledge_name: str = Field(description="knowledge name")
     knowledge_type: ResourceType = Field(description="knowledge type")
-    """ file sha value """
-    sha: Optional[str] = Field(None, description="resource sha")
+    file_sha: Optional[str] = Field(None, description="resource sha")
+    file_size: Optional[int] = Field(None, description="resource size")
     split_config: Optional[KnowledgeSplitConfig] = Field(
         None, description="split config"
     )

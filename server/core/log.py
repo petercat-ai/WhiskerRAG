@@ -3,8 +3,36 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 from datetime import datetime
 
+from whisker_rag_type.interface.logger_interface import LoggerManagerInterface
 
-class LoggerManager:
+
+# ANSI 转义码颜色
+class ColorCodes:
+    GREY = "\x1b[38;21m"
+    BLUE = "\x1b[38;5;39m"
+    YELLOW = "\x1b[38;5;226m"
+    RED = "\x1b[38;5;196m"
+    BOLD_RED = "\x1b[31;1m"
+    RESET = "\x1b[0m"
+
+
+class ColoredFormatter(logging.Formatter):
+    def __init__(self, format_str):
+        super().__init__(format_str)
+        self.FORMATS = {
+            logging.DEBUG: ColorCodes.GREY + format_str + ColorCodes.RESET,
+            logging.INFO: ColorCodes.BLUE + format_str + ColorCodes.RESET,
+            logging.WARNING: ColorCodes.YELLOW + format_str + ColorCodes.RESET,
+            logging.ERROR: ColorCodes.RED + format_str + ColorCodes.RESET,
+        }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        formatter = logging.Formatter(log_fmt, datefmt="%Y-%m-%d %H:%M:%S")
+        return formatter.format(record)
+
+
+class LoggerManager(LoggerManagerInterface):
     _instance = None
     _logger = None
 
@@ -37,16 +65,17 @@ class LoggerManager:
             encoding="utf-8",
         )
 
-        # 控制台处理器（可选）
+        # 控制台处理器（带颜色）
         console_handler = logging.StreamHandler()
 
         # 设置日志格式
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        )
-        file_handler.setFormatter(formatter)
-        console_handler.setFormatter(formatter)
+        format_str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+        file_formatter = logging.Formatter(format_str, datefmt="%Y-%m-%d %H:%M:%S")
+        console_formatter = ColoredFormatter(format_str)
+
+        file_handler.setFormatter(file_formatter)
+        console_handler.setFormatter(console_formatter)
 
         # 添加处理器
         self._logger.addHandler(file_handler)
