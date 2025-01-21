@@ -9,7 +9,7 @@ on:
       - 'server/**'
 
 jobs:
-  test:
+  server-ci:
     runs-on: ubuntu-latest
     defaults:
       run:

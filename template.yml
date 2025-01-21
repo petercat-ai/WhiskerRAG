@@ -1,0 +1,244 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Streaming Bedrock Response with FastAPI on AWS Lambda
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 300
+
+Parameters:
+  AWS_ACCOUNT_ID:
+    Type: String
+    Description: Environment marker for AWS_ACCOUNT_ID
+    Default: 1
+
+  AWS_REGION:
+    Type: String
+    Description: Environment marker for AWS_REGION
+    Default: 1
+
+  S3_TEMP_BUCKET_NAME:
+    Type: String
+    Description: Environment marker for S3_TEMP_BUCKET_NAME
+    Default: 1
+
+  SUPABASE_SERVICE_KEY:
+    Type: String
+    Description: Environment marker for SUPABASE_SERVICE_KEY
+    Default: 1
+
+  SUPABASE_URL:
+    Type: String
+    Description: Environment marker for SUPABASE_URL
+    Default: 1
+
+  API_URL:
+    Type: String
+    Description: Environment marker for API_URL
+    Default: 1
+
+  WEB_URL:
+    Type: String
+    Description: Environment marker for WEB_URL
+    Default: 1
+
+  KNOWLEDGE_TABLE_NAME:
+    Type: String
+    Description: Environment marker for KNOWLEDGE_TABLE_NAME
+    Default: 1
+
+  CHUNK_TABLE_NAME:
+    Type: String
+    Description: Environment marker for CHUNK_TABLE_NAME
+    Default: 1
+
+  KNOWLEDGE_TABLE_NAME:
+    Type: String
+    Description: Environment marker for KNOWLEDGE_TABLE_NAME
+    Default: 1
+
+  TASK_TABLE_NAME:
+    Type: String
+    Description: Environment marker for TASK_TABLE_NAME
+    Default: 1
+
+  ACTION_TABLE_NAME:
+    Type: String
+    Description: Environment marker for ACTION_TABLE_NAME
+    Default: 1
+
+  TENANT_TABLE_NAME:
+    Type: String
+    Description: Environment marker for TENANT_TABLE_NAME
+    Default: 1
+
+Resources:
+  WhiskerServer:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      MemorySize: 512
+      Environment:
+        Variables:
+          AWS_LWA_INVOKE_MODE: RESPONSE_STREAM
+          AWS_ACCOUNT_ID: !Ref AWS_ACCOUNT_ID
+          AWS_REGION: !Ref AWS_ACCOUNT_ID
+          S3_TEMP_BUCKET_NAME: !Ref S3_TEMP_BUCKET_NAME
+          SUPABASE_SERVICE_KEY: !Ref SUPABASE_SERVICE_KEY
+          SUPABASE_URL: !Ref SUPABASE_URL
+          API_URL: !Ref API_URL
+          WEB_URL: !Ref WEB_URL
+          KNOWLEDGE_TABLE_NAME: !Ref KNOWLEDGE_TABLE_NAME
+          CHUNK_TABLE_NAME: !Ref CHUNK_TABLE_NAME
+          TASK_TABLE_NAME: !Ref TASK_TABLE_NAME
+          ACTION_TABLE_NAME: !Ref ACTION_TABLE_NAME
+          TENANT_TABLE_NAME: !Ref TENANT_TABLE_NAME
+      FunctionUrlConfig:
+        AuthType: NONE
+        InvokeMode: RESPONSE_STREAM
+      Policies:
+      - Statement:
+        - Sid: BedrockInvokePolicy
+          Effect: Allow
+          Action:
+            - bedrock:InvokeModelWithResponseStream
+          Resource: '*'
+        - Sid: AllObjectActions
+          Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:DeleteObject
+          Resource:
+            - !Sub 'arn:aws:s3:::${S3_TEMP_BUCKET_NAME}/*'
+      Tracing: Active
+    Metadata:
+      DockerContext: server
+      Dockerfile: ./docker/Dockerfile.aws.server
+      DockerTag: v1
+
+  # 输入队列 - 触发 Lambda 的队列
+  InputQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${AWS::StackName}-input-queue'
+      VisibilityTimeout: 300  # 设置为函数超时时间
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt InputDLQ.Arn
+        maxReceiveCount: 3
+
+  # 输入队列的死信队列
+  InputDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${AWS::StackName}-input-dlq'
+
+  # 输出队列 - 处理结果队列
+  OutputQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${AWS::StackName}-output-queue'
+      VisibilityTimeout: 300
+
+  # 队列策略
+  InputQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref InputQueue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: 'sqs:SendMessage'
+            Resource: !GetAtt InputQueue.Arn
+
+  OutputQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref OutputQueue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: 'sqs:SendMessage'
+            Resource: !GetAtt OutputQueue.Arn
+
+  TaskFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      MemorySize: 512
+      FunctionUrlConfig:
+        AuthType: NONE
+      Environment:
+        Variables:
+          AWS_ACCOUNT_ID: !Ref AWS_ACCOUNT_ID
+          AWS_REGION: !Ref AWS_REGION
+          OUTPUT_QUEUE_URL: !Ref OutputQueue
+      Events:
+        SQSTrigger:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt InputQueue.Arn
+            BatchSize: 1
+      Policies:
+        - Statement:
+            - Sid: BedrockInvokePolicy
+              Effect: Allow
+              Action:
+                - bedrock:InvokeModelWithResponseStream
+              Resource: '*'
+            - Sid: SQSPolicy
+              Effect: Allow
+              Action:
+                - sqs:SendMessage
+                - sqs:ReceiveMessage
+                - sqs:DeleteMessage
+                - sqs:GetQueueAttributes
+              Resource: 
+                - !GetAtt InputQueue.Arn
+                - !GetAtt OutputQueue.Arn
+            - Sid: AllObjectActions
+              Effect: Allow
+              Action:
+                - s3:PutObject
+                - s3:GetObject
+                - s3:DeleteObject
+              Resource:
+                - !Sub 'arn:aws:s3:::${S3_TEMP_BUCKET_NAME}/*'
+      Tracing: Active
+    Metadata:
+      Dockerfile: ./docker/Dockerfile.aws.task
+      DockerContext: lambda_test_subscriber
+      DockerTag: v1
+
+Outputs:
+  WhiskerServerUrl:
+    Description: "Function URL for FastAPI function"
+    Value: !GetAtt WhiskerServerUrl.FunctionUrl
+  WhiskerServer:
+    Description: "FastAPI Lambda Function ARN"
+    Value: !GetAtt WhiskerServer.Arn
+  TaskFunctionUrl:
+    Description: "Function URL for SQS Subscriptio function"
+    Value: !GetAtt TaskFunctionUrl.FunctionUrl
+  TaskFunction:
+    Description: "SQS Subscription Function Lambda Function ARN"
+    Value: !GetAtt TaskFunction.Arn
+  InputQueueUrl:
+    Description: "URL of the Input SQS Queue"
+    Value: !Ref InputQueue
+  OutputQueueUrl:
+    Description: "URL of the Output SQS Queue"
+    Value: !Ref OutputQueue
+  InputQueueArn:
+    Description: "ARN of the Input SQS Queue"
+    Value: !GetAtt InputQueue.Arn
+  OutputQueueArn:
+    Description: "ARN of the Output SQS Queue"
+    Value: !GetAtt OutputQueue.Arn

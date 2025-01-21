@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# 保存当前工作目录
+REPO_ROOT=$(git rev-parse --show-toplevel)
+cd "$REPO_ROOT"
+
+# 获取被修改的文件列表
+CHANGED_FILES=$(git diff --name-only HEAD@{1} HEAD)
+
+# 检查是否有 py_package 目录下的文件被修改
+if echo "$CHANGED_FILES" | grep -q "^py_package/"; then
+    echo "Changes detected in py_package directory. Running build script..."
+    
+    # 检查构建脚本是否存在
+    if [ ! -f "./py_package/scripts/build.sh" ]; then
+        echo "Error: build script not found at ./py_package/scripts/build.py"
+        exit 1
+    
+    # 执行构建脚本
+    python ./py_package/scripts/build.py
+    
+    # 检查构建脚本的退出状态
+    if [ $? -ne 0 ]; then
+        echo "Error: Build script failed"
+        exit 1
+    fi
+fi
+
+exit 0

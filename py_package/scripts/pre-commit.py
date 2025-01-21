@@ -14,8 +14,10 @@ def run_command(cmd: List[str]) -> int:
 
 
 def main() -> int:
-    # 运行检查
+    # 运行检查和格式化
     checks = [
+        ["black", "."],
+        ["isort", "."],
         ["pytest"],
         ["mypy"],
     ]

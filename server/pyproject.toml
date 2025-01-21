@@ -6,9 +6,6 @@ authors = [{ name = "petercat.ai", email = "antd.antgroup@gmail.com" }]
 readme = "README.md"
 
 [tool.poetry]
-# packages = [
-#     { include = "scripts" }
-# ]
 package-mode = false # 禁用包模式
 
 [build-system]

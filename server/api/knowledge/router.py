@@ -2,20 +2,12 @@ from datetime import datetime
 from pydantic import BaseModel
 from fastapi import APIRouter
 from typing import List, Optional
-from dateutil import parser
 
 from core.log import logger
 from core.plugin_manager import PluginManager
 from core.sha_util import calculate_sha256
 from model.response import ResponseModel
 from whisker_rag_type.model.knowledge import Knowledge, ResourceType
-
-
-def convert_datetime(iso_time):
-    # 使用 dateutil 解析 ISO 时间
-    dt = parser.parse(iso_time)
-    # 格式化为指定格式
-    return dt.strftime("%Y-%m-%d %H:%M:%S")
 
 
 router = APIRouter(
@@ -62,8 +54,8 @@ class KnowledgeResponse(BaseModel):
             knowledge_name=record.get("knowledge_name"),
             sha=record.get("sha"),
             source_url=record.get("source_url"),
-            created_at=convert_datetime(record.get("created_at")),
-            updated_at=convert_datetime(record.get("updated_at")),
+            created_at=record.get("created_at"),
+            updated_at=record.get("created_at"),
             space_id=record.get("space_id"),
             tenant_id=record.get("tenant_id"),
         )
