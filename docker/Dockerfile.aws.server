@@ -8,17 +8,33 @@ LABEL org.opencontainers.image.licenses=MIT
 ENV LAMBDA_TASK_ROOT=/var/task
 WORKDIR ${LAMBDA_TASK_ROOT}
 
-# 先复制所有代码，确保包含 pyproject.toml
+# 复制所有代码
 COPY . .
 
 # Copy aws-lambda-adapter
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.1 /lambda-adapter /opt/extensions/lambda-adapter
 
-# Install poetry and dependencies
-RUN pip3 install poetry \
-    && poetry config virtualenvs.create false \
-    && poetry config experimental.new-installer false \
-    && poetry install --no-interaction --no-ansi \
-    && rm -rf ~/.cache/pypoetry
+# 分步安装并添加错误输出
+RUN pip3 install poetry --verbose
+
+# 显示 poetry 版本和环境信息
+RUN poetry --version && \
+    poetry env info
+
+# 配置 poetry
+RUN poetry config virtualenvs.create false && \
+    poetry config experimental.new-installer false
+
+# 显示当前目录内容
+RUN pwd && ls -la
+
+# 显示 pyproject.toml 内容
+RUN cat pyproject.toml
+
+# 安装依赖
+RUN poetry install --no-interaction --no-ansi --verbose
+
+# 清理缓存
+RUN rm -rf ~/.cache/pypoetry
 
 CMD [ "app.handler" ]
