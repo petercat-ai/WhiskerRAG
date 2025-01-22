@@ -79,15 +79,15 @@ Resources:
           AWS_LWA_INVOKE_MODE: RESPONSE_STREAM
           AWS_ACCOUNT_ID: !Ref awsAccountId
           AWS_REGION: !Ref awsRegion
-            S3_TEMP_BUCKET_NAME: !Ref s3TempBucketName
-            SUPABASE_SERVICE_KEY: !Ref supabaseServiceKey
-            SUPABASE_URL: !Ref supabaseUrl
-            API_URL: !Ref apiUrl
-            WEB_URL: !Ref webUrl
-            KNOWLEDGE_TABLE_NAME: !Ref knowledgeTableName
-            CHUNK_TABLE_NAME: !Ref chunkTableName
-            TASK_TABLE_NAME: !Ref taskTableName
-            ACTION_TABLE_NAME: !Ref actionTableName
+          S3_TEMP_BUCKET_NAME: !Ref s3TempBucketName
+          SUPABASE_SERVICE_KEY: !Ref supabaseServiceKey
+          SUPABASE_URL: !Ref supabaseUrl
+          API_URL: !Ref apiUrl
+          WEB_URL: !Ref webUrl
+          KNOWLEDGE_TABLE_NAME: !Ref knowledgeTableName
+          CHUNK_TABLE_NAME: !Ref chunkTableName
+          TASK_TABLE_NAME: !Ref taskTableName
+          ACTION_TABLE_NAME: !Ref actionTableName
           TENANT_TABLE_NAME: !Ref tenantTableName
       FunctionUrlConfig:
         AuthType: NONE
@@ -106,7 +106,7 @@ Resources:
             - s3:GetObject
             - s3:DeleteObject
           Resource:
-            - !Sub 'arn:aws:s3:::${S3_TEMP_BUCKET_NAME}/*'
+            - !Sub 'arn:aws:s3:::${s3TempBucketName}/*'
       Tracing: Active
     Metadata:
       DockerContext: server
@@ -205,7 +205,7 @@ Resources:
                 - s3:GetObject
                 - s3:DeleteObject
               Resource:
-                - !Sub 'arn:aws:s3:::${S3_TEMP_BUCKET_NAME}/*'
+                - !Sub 'arn:aws:s3:::${s3TempBucketName}/*'
       Tracing: Active
     Metadata:
       DockerContext: lambda_task_subscriber
