@@ -208,7 +208,7 @@ Resources:
                 - !Sub 'arn:aws:s3:::${S3_TEMP_BUCKET_NAME}/*'
       Tracing: Active
     Metadata:
-      DockerContext: lambda_test_subscriber
+      DockerContext: lambda_task_subscriber
       Dockerfile: ../docker/Dockerfile.aws.task
       DockerTag: v1
 
