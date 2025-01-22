@@ -41,7 +41,7 @@ jobs:
             --no-confirm-changeset \
             --config-env ${{ vars.DEPLOY_ENV}}
             --no-fail-on-empty-changeset \
-            --config-file .aws/task.toml \
+            --config-file .aws/amsconfig.toml \
             --parameter-overrides \
               ParameterKey=SUPABASE_SERVICE_KEY,ParameterValue=${{ secrets.SUPABASE_SERVICE_KEY }} \
               ParameterKey=SUPABASE_URL,ParameterValue=${{ secrets.SUPABASE_URL }} \
