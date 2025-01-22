@@ -1,5 +1,5 @@
 # .github/workflows/deploy.yml
-name: Deploy Server to AWS
+name: Deploy SAM app to AWS
 
 on:
   workflow_run:
@@ -9,9 +9,11 @@ on:
   push:
     branches: ["test"]
     paths:
+      - 'server/**'  # 监控 server 文件夹下的所有文件
       - '.github/workflows/deploy.yml'
       - '.aws/samconfig.toml'
       - 'template_server.yml'
+
 
 permissions:
   id-token: write   # This is required for requesting the JWT
@@ -42,11 +44,9 @@ jobs:
           echo "GitHub actor: ${{ github.actor }}"
 
       # Build inside Docker containers
-      - name: sam build
-        run: sam build --template template_server.yml --use-container --config-file .aws/samconfig.toml
+      - run: sam build --template template_server.yml --use-container --config-file .aws/samconfig.toml
 
       # Prevent prompts and failure when the stack is unchanged
-      - name: sam deploy
       - run: |
           sam deploy \
             --no-confirm-changeset \
