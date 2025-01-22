@@ -1,0 +1,128 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Task Function with SQS Integration
+
+Globals:
+  Function:
+    Timeout: 300
+
+Parameters:
+  s3TempBucketName:
+    Type: String
+    Description: Environment marker for S3_TEMP_BUCKET_NAME
+    Default: "1"
+
+Resources:
+  InputQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${AWS::StackName}-input-queue'
+      VisibilityTimeout: 300
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt InputDLQ.Arn
+        maxReceiveCount: 3
+
+  InputDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${AWS::StackName}-input-dlq'
+
+  OutputQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub '${AWS::StackName}-output-queue'
+      VisibilityTimeout: 300
+
+  InputQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref InputQueue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: 'sqs:SendMessage'
+            Resource: !GetAtt InputQueue.Arn
+
+  OutputQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref OutputQueue
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action: 'sqs:SendMessage'
+            Resource: !GetAtt OutputQueue.Arn
+
+  TaskFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      MemorySize: 512
+      FunctionUrlConfig:
+        AuthType: NONE
+      Environment:
+        Variables:
+          AWS_ACCOUNT_ID: !Ref AWS::AccountId
+          OUTPUT_QUEUE_URL: !Ref OutputQueue
+      Events:
+        SQSTrigger:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt InputQueue.Arn
+            BatchSize: 1
+      Policies:
+        - Statement:
+            - Sid: BedrockInvokePolicy
+              Effect: Allow
+              Action:
+                - bedrock:InvokeModelWithResponseStream
+              Resource: '*'
+            - Sid: SQSPolicy
+              Effect: Allow
+              Action:
+                - sqs:SendMessage
+                - sqs:ReceiveMessage
+                - sqs:DeleteMessage
+                - sqs:GetQueueAttributes
+              Resource: 
+                - !GetAtt InputQueue.Arn
+                - !GetAtt OutputQueue.Arn
+            - Sid: AllObjectActions
+              Effect: Allow
+              Action:
+                - s3:PutObject
+                - s3:GetObject
+                - s3:DeleteObject
+              Resource:
+                - !Sub 'arn:aws:s3:::${s3TempBucketName}/*'
+      Tracing: Active
+    Metadata:
+      DockerContext: lambda_task_subscriber
+      Dockerfile: ../docker/Dockerfile.aws.task
+      DockerTag: v1
+
+Outputs:
+  TaskFunctionUrl:
+    Description: "Function URL for SQS Subscriptio function"
+    Value: !GetAtt TaskFunctionUrl.FunctionUrl
+  TaskFunction:
+    Description: "SQS Subscription Function Lambda Function ARN"
+    Value: !GetAtt TaskFunction.Arn
+  InputQueueUrl:
+    Description: "URL of the Input SQS Queue"
+    Value: !Ref InputQueue
+  OutputQueueUrl:
+    Description: "URL of the Output SQS Queue"
+    Value: !Ref OutputQueue
+  InputQueueArn:
+    Description: "ARN of the Input SQS Queue"
+    Value: !GetAtt InputQueue.Arn
+  OutputQueueArn:
+    Description: "ARN of the Output SQS Queue"
+    Value: !GetAtt OutputQueue.Arn
