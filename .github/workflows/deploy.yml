@@ -51,8 +51,6 @@ jobs:
               ParameterKey=supabaseServiceKey,ParameterValue=${{ secrets.SUPABASE_SERVICE_KEY }} \
               ParameterKey=supabaseUrl,ParameterValue=${{ secrets.SUPABASE_URL }} \
               ParameterKey=apiUrl,ParameterValue=${{ vars.API_URL }} \
-              ParameterKey=awsAccountId,ParameterValue=${{ vars.AWS_ACCOUNT_ID }} \
-              ParameterKey=awsRegion,ParameterValue=${{ vars.AWS_REGION }} \
               ParameterKey=webUrl,ParameterValue=${{ vars.WEB_URL }} \
               ParameterKey=knowledgeTableName,ParameterValue=${{ vars.KNOWLEDGE_TABLE_NAME }} \
               ParameterKey=chunkTableName,ParameterValue=${{ vars.CHUNK_TABLE_NAME }} \

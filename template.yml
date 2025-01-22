@@ -8,16 +8,6 @@ Globals:
     Timeout: 300
 
 Parameters:
-  awsAccountId:
-    Type: String
-    Description: Environment marker for AWS_ACCOUNT_ID
-    Default: "1"
-
-  awsRegion:
-    Type: String
-    Description: Environment marker for AWS_REGION
-    Default: "1"
-
   s3TempBucketName:
     Type: String
     Description: Environment marker for S3_TEMP_BUCKET_NAME
@@ -77,8 +67,7 @@ Resources:
       Environment:
         Variables:
           AWS_LWA_INVOKE_MODE: RESPONSE_STREAM
-          AWS_ACCOUNT_ID: !Ref awsAccountId
-          AWS_REGION: !Ref awsRegion
+          AWS_ACCOUNT_ID: !Ref AWS::AccountId
           S3_TEMP_BUCKET_NAME: !Ref s3TempBucketName
           SUPABASE_SERVICE_KEY: !Ref supabaseServiceKey
           SUPABASE_URL: !Ref supabaseUrl
@@ -173,8 +162,7 @@ Resources:
         AuthType: NONE
       Environment:
         Variables:
-          AWS_ACCOUNT_ID: !Ref awsAccountId
-          AWS_REGION: !Ref awsRegion
+          AWS_ACCOUNT_ID: !Ref AWS::AccountId
           OUTPUT_QUEUE_URL: !Ref OutputQueue
       Events:
         SQSTrigger:
