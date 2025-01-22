@@ -35,6 +35,8 @@ jobs:
       # Build inside Docker containers
       - run: sam build --use-container --debug --config-file .aws/amsconfig.toml
 
+      - run: echo "DEPLOY_ENV: ${{ vars.DEPLOY_ENV }}"
+      - run: echo "SUPABASE_URL: ${{ secrets.SUPABASE_URL }}"
       # Prevent prompts and failure when the stack is unchanged
       - run: |
           sam deploy \
@@ -46,6 +48,6 @@ jobs:
               ParameterKey=SUPABASE_SERVICE_KEY,ParameterValue=${{ secrets.SUPABASE_SERVICE_KEY }} \
               ParameterKey=SUPABASE_URL,ParameterValue=${{ secrets.SUPABASE_URL }} \
               ParameterKey=API_URL,ParameterValue=${{ vars.API_URL }} \
-              ParameterKey=AWS_ACCOUNT_ID,ParameterValue=${{ secrets.AWS_ACCOUNT_ID }} \
-              ParameterKey=AWS_REGION,ParameterValue=${{ secrets.AWS_REGION }} \
-              ParameterKey=WEB_URL,ParameterValue=${{ secrets.WEB_URL }}
+              ParameterKey=AWS_ACCOUNT_ID,ParameterValue=${{ vars.AWS_ACCOUNT_ID }} \
+              ParameterKey=AWS_REGION,ParameterValue=${{ vars.AWS_REGION }} \
+              ParameterKey=WEB_URL,ParameterValue=${{ vars.WEB_URL }}
