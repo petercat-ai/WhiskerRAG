@@ -13,57 +13,57 @@ Parameters:
     Description: Environment marker for AWS_ACCOUNT_ID
     Default: "1"
 
-    awsRegion:
+  awsRegion:
     Type: String
     Description: Environment marker for AWS_REGION
     Default: "1"
 
-    s3TempBucketName:
+  s3TempBucketName:
     Type: String
     Description: Environment marker for S3_TEMP_BUCKET_NAME
     Default: "1"
 
-    supabaseServiceKey:
+  supabaseServiceKey:
     Type: String
     Description: Environment marker for SUPABASE_SERVICE_KEY
     Default: "1"
 
-    supabaseUrl:
+  supabaseUrl:
     Type: String
     Description: Environment marker for SUPABASE_URL
     Default: "1"
 
-    apiUrl:
+  apiUrl:
     Type: String
     Description: Environment marker for API_URL
     Default: "1"
 
-    webUrl:
+  webUrl:
     Type: String
     Description: Environment marker for WEB_URL
     Default: "1"
 
-    knowledgeTableName:
+  knowledgeTableName:
     Type: String
     Description: Environment marker for KNOWLEDGE_TABLE_NAME
     Default: "knowledge"
 
-    chunkTableName:
+  chunkTableName:
     Type: String
     Description: Environment marker for CHUNK_TABLE_NAME
     Default: "chunk"
 
-    taskTableName:
+  taskTableName:
     Type: String
     Description: Environment marker for TASK_TABLE_NAME
     Default: "task"
 
-    actionTableName:
+  actionTableName:
     Type: String
     Description: Environment marker for ACTION_TABLE_NAME
     Default: "action"
 
-    tenantTableName:
+  tenantTableName:
     Type: String
     Description: Environment marker for TENANT_TABLE_NAME
     Default: "tenant"
