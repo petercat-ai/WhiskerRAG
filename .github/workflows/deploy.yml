@@ -53,4 +53,9 @@ jobs:
               ParameterKey=API_URL,ParameterValue=${{ vars.API_URL }} \
               ParameterKey=AWS_ACCOUNT_ID,ParameterValue=${{ vars.AWS_ACCOUNT_ID }} \
               ParameterKey=AWS_REGION,ParameterValue=${{ vars.AWS_REGION }} \
-              ParameterKey=WEB_URL,ParameterValue=${{ vars.WEB_URL }}
+              ParameterKey=WEB_URL,ParameterValue=${{ vars.WEB_URL }} \
+              ParameterKey=KNOWLEDGE_TABLE_NAME,ParameterValue=${{ vars.KNOWLEDGE_TABLE_NAME }} \
+              ParameterKey=CHUNK_TABLE_NAME,ParameterValue=${{ vars.CHUNK_TABLE_NAME }} \
+              ParameterKey=TASK_TABLE_NAME,ParameterValue=${{ vars.TASK_TABLE_NAME }} \
+              ParameterKey=ACTION_TABLE_NAME,ParameterValue=${{ vars.ACTION_TABLE_NAME }} \
+              ParameterKey=TENANT_TABLE_NAME,ParameterValue=${{ vars.TENANT_TABLE_NAME }}

@@ -11,67 +11,62 @@ Parameters:
   AWS_ACCOUNT_ID:
     Type: String
     Description: Environment marker for AWS_ACCOUNT_ID
-    Default: 1
+    Default: "1"
 
   AWS_REGION:
     Type: String
     Description: Environment marker for AWS_REGION
-    Default: 1
+    Default: "1"
 
   S3_TEMP_BUCKET_NAME:
     Type: String
     Description: Environment marker for S3_TEMP_BUCKET_NAME
-    Default: 1
+    Default: "1"
 
   SUPABASE_SERVICE_KEY:
     Type: String
     Description: Environment marker for SUPABASE_SERVICE_KEY
-    Default: 1
+    Default: "1"
 
   SUPABASE_URL:
     Type: String
     Description: Environment marker for SUPABASE_URL
-    Default: 1
+    Default: "1"
 
   API_URL:
     Type: String
     Description: Environment marker for API_URL
-    Default: 1
+    Default: "1"
 
   WEB_URL:
     Type: String
     Description: Environment marker for WEB_URL
-    Default: 1
+    Default: "1"
 
   KNOWLEDGE_TABLE_NAME:
     Type: String
     Description: Environment marker for KNOWLEDGE_TABLE_NAME
-    Default: 1
+    Default: "knowledge"
 
   CHUNK_TABLE_NAME:
     Type: String
     Description: Environment marker for CHUNK_TABLE_NAME
-    Default: 1
-
-  KNOWLEDGE_TABLE_NAME:
-    Type: String
-    Description: Environment marker for KNOWLEDGE_TABLE_NAME
-    Default: 1
+    Default: "chunk"
 
   TASK_TABLE_NAME:
     Type: String
     Description: Environment marker for TASK_TABLE_NAME
-    Default: 1
+    Default: "task"
 
   ACTION_TABLE_NAME:
     Type: String
     Description: Environment marker for ACTION_TABLE_NAME
-    Default: 1
+    Default: "action"
 
   TENANT_TABLE_NAME:
     Type: String
     Description: Environment marker for TENANT_TABLE_NAME
-    Default: 1
+    Default: "tenant"
 
 Resources:
   WhiskerServer:
