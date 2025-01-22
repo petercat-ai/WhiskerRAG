@@ -1,0 +1,31 @@
+name: Server CI
+
+on:
+  push:
+    paths:
+      - 'server/**'
+  pull_request:
+    paths:
+      - 'server/**'
+
+jobs:
+  server-ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./server
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python -
+        echo "::add-path::${HOME}/.local/bin"
+    - name: Install dependencies
+      run: poetry install
+    - name: Run tests
+      run: poetry run pytest
