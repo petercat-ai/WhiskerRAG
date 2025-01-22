@@ -129,7 +129,7 @@ Resources:
     Properties:
       QueueName: !Sub '${AWS::StackName}-input-dlq'
 
-  # 输出队列 - 处理结果队列
+  # 输出队列
   OutputQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -163,6 +163,7 @@ Resources:
             Action: 'sqs:SendMessage'
             Resource: !GetAtt OutputQueue.Arn
 
+  # SQS 订阅函数
   TaskFunction:
     Type: AWS::Serverless::Function
     Properties:
