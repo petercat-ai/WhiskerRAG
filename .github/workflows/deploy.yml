@@ -32,16 +32,21 @@ jobs:
           audience: sts.amazonaws.com
           aws-region: ${{ vars.AWS_REGION }}
 
+      - name: Print specific variables
+        run: |
+          echo "Current DEPLOY_ENV: ${{ vars.DEPLOY_ENV }}"
+          echo "GitHub actor: ${{ github.actor }}"
+
       # Build inside Docker containers
-      - run: sam build --use-container --debug --config-file .aws/amsconfig.toml
+      - run: sam build --use-container --debug --config-file .aws/samconfig.toml
 
       # Prevent prompts and failure when the stack is unchanged
       - run: |
           sam deploy \
             --no-confirm-changeset \
-            --config-env ${{ vars.DEPLOY_ENV}}
+            --config-env ${{ vars.DEPLOY_ENV}} \
             --no-fail-on-empty-changeset \
-            --config-file .aws/amsconfig.toml \
+            --config-file .aws/samconfig.toml \
             --parameter-overrides \
               ParameterKey=SUPABASE_SERVICE_KEY,ParameterValue=${{ secrets.SUPABASE_SERVICE_KEY }} \
               ParameterKey=SUPABASE_URL,ParameterValue=${{ secrets.SUPABASE_URL }} \
