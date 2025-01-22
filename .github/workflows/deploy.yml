@@ -35,8 +35,6 @@ jobs:
       # Build inside Docker containers
       - run: sam build --use-container --debug --config-file .aws/amsconfig.toml
 
-      - run: echo "DEPLOY_ENV: ${{ vars.DEPLOY_ENV }}"
-      - run: echo "SUPABASE_URL: ${{ secrets.SUPABASE_URL }}"
       # Prevent prompts and failure when the stack is unchanged
       - run: |
           sam deploy \
