@@ -1,25 +1,18 @@
 FROM public.ecr.aws/docker/library/python:3.12.0-slim-bullseye
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1 \
-    POETRY_VERSION=1.7.1 \
-    POETRY_HOME="/opt/poetry" \
-    POETRY_VIRTUALENVS_CREATE=false \
-    LAMBDA_TASK_ROOT="/var/task"
-
-# Create working directory
 WORKDIR ${LAMBDA_TASK_ROOT}
 
-# Install poetry
-RUN pip install --no-cache-dir "poetry==${POETRY_VERSION}"
+# Install the specified packages into the Lambda task root
+RUN pip3 install poetry --target "${LAMBDA_TASK_ROOT}" --no-cache-dir
+
+# Verify poetry installation
+RUN poetry --version
 
 # Copy only dependencies files first
 COPY pyproject.toml poetry.lock ./
 
 # Install dependencies
-RUN poetry install --no-root
+RUN poetry install --no-root --directory "${LAMBDA_TASK_ROOT}"
 
 # Copy aws-lambda-adapter for Streaming response
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.1 /lambda-adapter /opt/extensions/lambda-adapter
