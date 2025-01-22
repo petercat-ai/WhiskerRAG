@@ -1,5 +1,5 @@
 # .github/workflows/deploy.yml
-name: Deploy SAM app to AWS
+name: Deploy Server to AWS
 
 on:
   workflow_run:
@@ -38,9 +38,11 @@ jobs:
           echo "GitHub actor: ${{ github.actor }}"
 
       # Build inside Docker containers
-      - run: sam build --use-container --debug --config-file .aws/samconfig.toml
+      - name: sam build
+        run: sam build --template template_server.yml --use-container --config-file .aws/samconfig.toml
 
       # Prevent prompts and failure when the stack is unchanged
+      - name: sam deploy
       - run: |
           sam deploy \
             --no-confirm-changeset \

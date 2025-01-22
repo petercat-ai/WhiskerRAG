@@ -2,10 +2,14 @@ name: Server CI
 
 on:
   push:
+    branches:
+      - '**'
     paths:
       - 'server/**'
       - '.github/workflows/server-ci.yml'
   pull_request:
+    branches:
+      - 'main'
     paths:
       - 'server/**'
       - '.github/workflows/server-ci.yml'
@@ -40,11 +44,6 @@ jobs:
 
     - name: Run tests
       run: poetry run pytest -v
-
-
-    # - name: Run tests with coverage
-    #   run: |
-    #     poetry run pytest --cov=./ --cov-report=xml
 
     # - name: Upload coverage to Codecov
     #   uses: codecov/codecov-action@v3
