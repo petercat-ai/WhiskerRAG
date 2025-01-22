@@ -6,13 +6,13 @@ on:
       - '**'
     paths:
       - 'server/**'
-      - '.github/workflows/server-ci.yml'
+      - '.github/workflows/ci-server.yml'
   pull_request:
     branches:
       - 'main'
     paths:
       - 'server/**'
-      - '.github/workflows/server-ci.yml'
+      - '.github/workflows/ci-server.yml'
 
 jobs:
   server-ci:

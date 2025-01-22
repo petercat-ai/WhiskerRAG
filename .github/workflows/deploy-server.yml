@@ -9,7 +9,7 @@ on:
     branches: ["test"]
     paths:
       - 'server/**'
-      - '.github/workflows/deploy.yml'
+      - '.github/workflows/deploy-server.yml'
       - '.aws/samconfig.toml'
       - 'template_server.yml'
 
