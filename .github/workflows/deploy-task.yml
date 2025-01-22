@@ -8,7 +8,7 @@ on:
       - '.github/workflows/deploy-task.yml'
       - '.aws/task_samconfig.toml'
       - 'template_task.yml'
-  push:
+  pull_request:
     branches: ["test","main","preview","test/*","preview/*"]
     paths:
       - 'lambda_task_subscriber/**'
