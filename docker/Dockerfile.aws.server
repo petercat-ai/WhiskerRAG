@@ -22,8 +22,8 @@ RUN poetry --version && \
     poetry env info
 
 # Configure poetry
-RUN poetry config virtualenvs.create false && \
-    poetry config experimental.new-installer false
+# RUN poetry config virtualenvs.create false && \
+#     poetry config experimental.new-installer false
 
 # Display current directory contents
 RUN pwd && ls -la
