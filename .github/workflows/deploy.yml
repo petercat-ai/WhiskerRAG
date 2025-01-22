@@ -33,7 +33,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       # Build inside Docker containers
-      - run: sam build --use-container --config-file .aws/amsconfig.toml
+      - run: sam build --use-container --debug --config-file .aws/amsconfig.toml
 
       # Prevent prompts and failure when the stack is unchanged
       - run: |
