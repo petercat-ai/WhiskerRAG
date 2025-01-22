@@ -1436,14 +1436,14 @@ files = [
 
 [[package]]
 name = "openai"
-version = "1.59.8"
+version = "1.59.9"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "openai-1.59.8-py3-none-any.whl", hash = "sha256:a8b8ee35c4083b88e6da45406d883cf6bd91a98ab7dd79178b8bc24c8bfb09d9"},
-    {file = "openai-1.59.8.tar.gz", hash = "sha256:ac4bda5fa9819fdc6127e8ea8a63501f425c587244bc653c7c11a8ad84f953e1"},
+    {file = "openai-1.59.9-py3-none-any.whl", hash = "sha256:61a0608a1313c08ddf92fe793b6dbd1630675a1fe3866b2f96447ce30050c448"},
+    {file = "openai-1.59.9.tar.gz", hash = "sha256:ec1a20b0351b4c3e65c6292db71d8233515437c6065efd4fd50edeb55df5f5d2"},
 ]
 
 [package.dependencies]
@@ -2543,21 +2543,19 @@ name = "whiskerrag"
 version = "0.0.1a1"
 description = "A utility package for RAG operations"
 optional = false
-python-versions = ">=3.8.1,<4.0"
+python-versions = "<4.0,>=3.8.1"
 groups = ["main"]
-files = []
-develop = true
+files = [
+    {file = "whiskerrag-0.0.1a1-py3-none-any.whl", hash = "sha256:bd040f81b2d7b822401099b565186f8563defdb6757977c4045712d15bd3a236"},
+    {file = "whiskerrag-0.0.1a1.tar.gz", hash = "sha256:136f46a9673d6a1ed2bfa6c4cf7ea0b72abe3bca26e7c09d53ce07133c6e4555"},
+]
 
 [package.dependencies]
-langchain = "^0.2.12"
-langchain_community = "^0.2.11"
-langchain_core = "^0.2.28"
-langchain_openai = "^0.1.20"
+langchain = ">=0.2.12,<0.3.0"
+langchain_community = ">=0.2.11,<0.3.0"
+langchain_core = ">=0.2.28,<0.3.0"
+langchain_openai = ">=0.1.20,<0.2.0"
 PYGithub = "2.3.0"
-
-[package.source]
-type = "directory"
-url = "../py_package"
 
 [[package]]
 name = "wrapt"
@@ -2764,4 +2762,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.8.1,<4.0"
-content-hash = "556061c40566ec5b22601379dfd05e08795d4eecba61182131476d20cec5b2e9"
+content-hash = "4aa86d4861ca81c0f70390dfdd3a3bf99e74b3b82ffda23518d395439c2b657a"
