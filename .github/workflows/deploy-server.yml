@@ -55,7 +55,7 @@ jobs:
             --parameter-overrides \
               ParameterKey=supabaseServiceKey,ParameterValue=${{ secrets.SUPABASE_SERVICE_KEY }} \
               ParameterKey=supabaseUrl,ParameterValue=${{ secrets.SUPABASE_URL }} \
-              ParameterKey=s3TempBucketName,ParameterValue=${{ secrets.S3_TEMP_BUCKET_NAME }} \
+              ParameterKey=s3TempBucketName,ParameterValue=${{ vars.S3_TEMP_BUCKET_NAME }} \
               ParameterKey=apiUrl,ParameterValue=${{ vars.API_URL }} \
               ParameterKey=webUrl,ParameterValue=${{ vars.WEB_URL }} \
               ParameterKey=knowledgeTableName,ParameterValue=${{ vars.KNOWLEDGE_TABLE_NAME }} \
