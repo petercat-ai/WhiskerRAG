@@ -9,7 +9,10 @@ COPY . ${LAMBDA_TASK_ROOT}
 COPY pyproject.toml poetry.lock ./
 
 # from your project folder.
-RUN pip3 install poetry --target "${LAMBDA_TASK_ROOT}" --no-cache-dir
+RUN pip3 install poetry
+
+# Print poetry version
+RUN poetry --version
 
 # Install dependencies
 RUN poetry install --no-root --directory "${LAMBDA_TASK_ROOT}"
