@@ -1,23 +1,17 @@
 FROM public.ecr.aws/docker/library/python:3.12.0-slim-bullseye
 
-WORKDIR ${LAMBDA_TASK_ROOT}
-
-# Install the specified packages into the Lambda task root
-RUN pip3 install poetry --target "${LAMBDA_TASK_ROOT}" --no-cache-dir
-
-# Verify poetry installation
-RUN poetry --version
-
-# Copy only dependencies files first
-COPY pyproject.toml poetry.lock ./
-
-# Install dependencies
-RUN poetry install --no-root --directory "${LAMBDA_TASK_ROOT}"
-
-# Copy aws-lambda-adapter for Streaming response
+# Copy aws-lambda-adapter for Steaming response
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.1 /lambda-adapter /opt/extensions/lambda-adapter
 
 # Copy function code
-COPY . .
+COPY . ${LAMBDA_TASK_ROOT}
+
+COPY pyproject.toml poetry.lock ./
+
+# from your project folder.
+RUN pip3 install poetry --target "${LAMBDA_TASK_ROOT}" --no-cache-dir
+
+# Install dependencies
+RUN poetry install --no-root --directory "${LAMBDA_TASK_ROOT}"
 
 CMD ["python", "main.py"]
