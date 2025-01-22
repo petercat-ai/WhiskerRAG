@@ -20,11 +20,16 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.8'
+        python-version: '3.10'
+
     - name: Install Poetry
       run: |
         curl -sSL https://install.python-poetry.org | python -
         echo "::add-path::${HOME}/.local/bin"
+
+    - name: Add Poetry to PATH
+      run: echo "${HOME}/.local/bin" >> $GITHUB_PATH
+
     - name: Install dependencies
       run: poetry install
     - name: Run tests

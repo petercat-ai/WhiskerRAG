@@ -6,7 +6,7 @@ on:
     workflows: ["server-ci"]
     types: ["completed"]
     branches: ["test"]
-  pull_request:
+  push:
     branches: ["test"]
 
 permissions:
