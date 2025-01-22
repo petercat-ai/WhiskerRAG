@@ -4,19 +4,25 @@ LABEL org.opencontainers.image.source=https://github.com/petercat-ai/WhiskerRAG
 LABEL org.opencontainers.image.description="Petercat Whisker RAG server Image"
 LABEL org.opencontainers.image.licenses=MIT
 
-# Copy aws-lambda-adapter for Steaming response
+WORKDIR ${LAMBDA_TASK_ROOT}
+
+# Copy poetry files first
+COPY pyproject.toml poetry.lock ./
+
+# Copy aws-lambda-adapter
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.1 /lambda-adapter /opt/extensions/lambda-adapter
 
-# Copy function code
-COPY . ${LAMBDA_TASK_ROOT}
-
-# from your project folder.
+# Install poetry
 RUN pip3 install poetry
 
-# Print poetry version
-RUN poetry --version
+# Configure poetry
+RUN poetry config virtualenvs.create false \
+    && poetry config experimental.new-installer false
 
 # Install dependencies
-RUN poetry install
+RUN poetry install --no-interaction --no-ansi
+
+# Copy function code
+COPY . .
 
 CMD ["python", "main.py"]
