@@ -115,7 +115,7 @@ Resources:
       Tracing: Active
     Metadata:
       DockerContext: server
-      Dockerfile: ./docker/Dockerfile.aws.server
+      Dockerfile: ../docker/Dockerfile.aws.server
       DockerTag: v1
 
   # 输入队列 - 触发 Lambda 的队列
@@ -213,8 +213,8 @@ Resources:
                 - !Sub 'arn:aws:s3:::${S3_TEMP_BUCKET_NAME}/*'
       Tracing: Active
     Metadata:
-      Dockerfile: ./docker/Dockerfile.aws.task
       DockerContext: lambda_test_subscriber
+      Dockerfile: ../docker/Dockerfile.aws.task
       DockerTag: v1
 
 Outputs:
