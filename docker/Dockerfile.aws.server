@@ -4,25 +4,21 @@ LABEL org.opencontainers.image.source=https://github.com/petercat-ai/WhiskerRAG
 LABEL org.opencontainers.image.description="Petercat Whisker RAG server Image"
 LABEL org.opencontainers.image.licenses=MIT
 
+# Set Lambda environment
+ENV LAMBDA_TASK_ROOT=/var/task
 WORKDIR ${LAMBDA_TASK_ROOT}
 
-# Copy poetry files first
-COPY pyproject.toml poetry.lock ./
+# 先复制所有代码，确保包含 pyproject.toml
+COPY . .
 
 # Copy aws-lambda-adapter
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.1 /lambda-adapter /opt/extensions/lambda-adapter
 
-# Install poetry
-RUN pip3 install poetry
+# Install poetry and dependencies
+RUN pip3 install poetry \
+    && poetry config virtualenvs.create false \
+    && poetry config experimental.new-installer false \
+    && poetry install --no-interaction --no-ansi \
+    && rm -rf ~/.cache/pypoetry
 
-# Configure poetry
-RUN poetry config virtualenvs.create false \
-    && poetry config experimental.new-installer false
-
-# Install dependencies
-RUN poetry install --no-interaction --no-ansi
-
-# Copy function code
-COPY . .
-
-CMD ["python", "main.py"]
+CMD [ "app.handler" ]
