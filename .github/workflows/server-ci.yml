@@ -4,9 +4,11 @@ on:
   push:
     paths:
       - 'server/**'
+      - '.github/workflows/server-ci.yml'
   pull_request:
     paths:
       - 'server/**'
+      - '.github/workflows/server-ci.yml'
 
 jobs:
   server-ci:
@@ -23,14 +25,28 @@ jobs:
         python-version: '3.10'
 
     - name: Install Poetry
-      run: |
-        curl -sSL https://install.python-poetry.org | python -
-        echo "::add-path::${HOME}/.local/bin"
-
-    - name: Add Poetry to PATH
-      run: echo "${HOME}/.local/bin" >> $GITHUB_PATH
+      uses: snok/install-poetry@v1
+      with:
+        version: latest
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+        installer-parallel: true
 
     - name: Install dependencies
       run: poetry install
+
+    - name: Install dependencies
+      run: poetry install --no-interaction --no-root
+
     - name: Run tests
       run: poetry run pytest
+
+    # - name: Run tests with coverage
+    #   run: |
+    #     poetry run pytest --cov=./ --cov-report=xml
+
+    # - name: Upload coverage to Codecov
+    #   uses: codecov/codecov-action@v3
+    #   with:
+    #     file: ./coverage.xml
+    #     fail_ci_if_error: true
