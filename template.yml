@@ -8,62 +8,62 @@ Globals:
     Timeout: 300
 
 Parameters:
-  AWS_ACCOUNT_ID:
+  awsAccountId:
     Type: String
     Description: Environment marker for AWS_ACCOUNT_ID
     Default: "1"
 
-  AWS_REGION:
+    awsRegion:
     Type: String
     Description: Environment marker for AWS_REGION
     Default: "1"
 
-  S3_TEMP_BUCKET_NAME:
+    s3TempBucketName:
     Type: String
     Description: Environment marker for S3_TEMP_BUCKET_NAME
     Default: "1"
 
-  SUPABASE_SERVICE_KEY:
+    supabaseServiceKey:
     Type: String
     Description: Environment marker for SUPABASE_SERVICE_KEY
     Default: "1"
 
-  SUPABASE_URL:
+    supabaseUrl:
     Type: String
     Description: Environment marker for SUPABASE_URL
     Default: "1"
 
-  API_URL:
+    apiUrl:
     Type: String
     Description: Environment marker for API_URL
     Default: "1"
 
-  WEB_URL:
+    webUrl:
     Type: String
     Description: Environment marker for WEB_URL
     Default: "1"
 
-  KNOWLEDGE_TABLE_NAME:
+    knowledgeTableName:
     Type: String
     Description: Environment marker for KNOWLEDGE_TABLE_NAME
     Default: "knowledge"
 
-  CHUNK_TABLE_NAME:
+    chunkTableName:
     Type: String
     Description: Environment marker for CHUNK_TABLE_NAME
     Default: "chunk"
 
-  TASK_TABLE_NAME:
+    taskTableName:
     Type: String
     Description: Environment marker for TASK_TABLE_NAME
     Default: "task"
 
-  ACTION_TABLE_NAME:
+    actionTableName:
     Type: String
     Description: Environment marker for ACTION_TABLE_NAME
     Default: "action"
 
-  TENANT_TABLE_NAME:
+    tenantTableName:
     Type: String
     Description: Environment marker for TENANT_TABLE_NAME
     Default: "tenant"
@@ -77,18 +77,18 @@ Resources:
       Environment:
         Variables:
           AWS_LWA_INVOKE_MODE: RESPONSE_STREAM
-          AWS_ACCOUNT_ID: !Ref AWS_ACCOUNT_ID
-          AWS_REGION: !Ref AWS_REGION
-          S3_TEMP_BUCKET_NAME: !Ref S3_TEMP_BUCKET_NAME
-          SUPABASE_SERVICE_KEY: !Ref SUPABASE_SERVICE_KEY
-          SUPABASE_URL: !Ref SUPABASE_URL
-          API_URL: !Ref API_URL
-          WEB_URL: !Ref WEB_URL
-          KNOWLEDGE_TABLE_NAME: !Ref KNOWLEDGE_TABLE_NAME
-          CHUNK_TABLE_NAME: !Ref CHUNK_TABLE_NAME
-          TASK_TABLE_NAME: !Ref TASK_TABLE_NAME
-          ACTION_TABLE_NAME: !Ref ACTION_TABLE_NAME
-          TENANT_TABLE_NAME: !Ref TENANT_TABLE_NAME
+          AWS_ACCOUNT_ID: !Ref awsAccountId
+          AWS_REGION: !Ref awsRegion
+            S3_TEMP_BUCKET_NAME: !Ref s3TempBucketName
+            SUPABASE_SERVICE_KEY: !Ref supabaseServiceKey
+            SUPABASE_URL: !Ref supabaseUrl
+            API_URL: !Ref apiUrl
+            WEB_URL: !Ref webUrl
+            KNOWLEDGE_TABLE_NAME: !Ref knowledgeTableName
+            CHUNK_TABLE_NAME: !Ref chunkTableName
+            TASK_TABLE_NAME: !Ref taskTableName
+            ACTION_TABLE_NAME: !Ref actionTableName
+          TENANT_TABLE_NAME: !Ref tenantTableName
       FunctionUrlConfig:
         AuthType: NONE
         InvokeMode: RESPONSE_STREAM
@@ -172,8 +172,8 @@ Resources:
         AuthType: NONE
       Environment:
         Variables:
-          AWS_ACCOUNT_ID: !Ref AWS_ACCOUNT_ID
-          AWS_REGION: !Ref AWS_REGION
+          AWS_ACCOUNT_ID: !Ref awsAccountId
+          AWS_REGION: !Ref awsRegion
           OUTPUT_QUEUE_URL: !Ref OutputQueue
       Events:
         SQSTrigger:
