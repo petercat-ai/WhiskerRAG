@@ -4,9 +4,16 @@ on:
   workflow_run:
     workflows: ["server-ci"]
     types: ["completed"]
-    branches: ["test"]
+    branches: ["test","main","preview","test/*","preview/*"]
   push:
-    branches: ["test"]
+    branches: ["test","main","preview","test/*","preview/*"]
+    paths:
+      - 'server/**'
+      - '.github/workflows/deploy-server.yml'
+      - '.aws/server_samconfig.toml'
+      - 'template_server.yml'
+  pull_request:
+    branches: ["test","main","preview","test/*","preview/*"]
     paths:
       - 'server/**'
       - '.github/workflows/deploy-server.yml'

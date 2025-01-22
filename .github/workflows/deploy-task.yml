@@ -2,13 +2,19 @@ name: Deploy sqs subscriber to AWS
 
 on:
   push:
-    branches: ["test"]
+    branches: ["test","main","preview","test/*","preview/*"]
     paths:
       - 'lambda_task_subscriber/**'
       - '.github/workflows/deploy-task.yml'
       - '.aws/task_samconfig.toml'
       - 'template_task.yml'
-
+  push:
+    branches: ["test","main","preview","test/*","preview/*"]
+    paths:
+      - 'lambda_task_subscriber/**'
+      - '.github/workflows/deploy-task.yml'
+      - '.aws/task_samconfig.toml'
+      - 'template_task.yml'
 
 permissions:
   id-token: write   # This is required for requesting the JWT
