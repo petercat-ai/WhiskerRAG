@@ -10,7 +10,7 @@ on:
     paths:
       - 'server/**'
       - '.github/workflows/deploy-server.yml'
-      - '.aws/samconfig.toml'
+      - '.aws/server_samconfig.toml'
       - 'template_server.yml'
 
 
@@ -43,7 +43,7 @@ jobs:
           echo "GitHub actor: ${{ github.actor }}"
 
       # Build inside Docker containers
-      - run: sam build --use-container --template template_server.yml --config-file .aws/samconfig.toml
+      - run: sam build --use-container --template template_server.yml --config-file .aws/server_samconfig.toml
 
       # Prevent prompts and failure when the stack is unchanged
       - run: |
@@ -51,7 +51,7 @@ jobs:
             --no-confirm-changeset \
             --config-env ${{ vars.DEPLOY_ENV}} \
             --no-fail-on-empty-changeset \
-            --config-file .aws/samconfig.toml \
+            --config-file .aws/server_samconfig.toml \
             --parameter-overrides \
               ParameterKey=supabaseServiceKey,ParameterValue=${{ secrets.SUPABASE_SERVICE_KEY }} \
               ParameterKey=supabaseUrl,ParameterValue=${{ secrets.SUPABASE_URL }} \
