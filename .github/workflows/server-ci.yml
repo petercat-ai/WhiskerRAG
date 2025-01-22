@@ -39,7 +39,8 @@ jobs:
       run: poetry install --no-interaction --no-root
 
     - name: Run tests
-      run: poetry run test
+      run: poetry run pytest -v
+
 
     # - name: Run tests with coverage
     #   run: |
