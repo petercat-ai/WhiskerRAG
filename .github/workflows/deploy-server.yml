@@ -1,4 +1,4 @@
-name: Deploy SAM app to AWS
+name: Deploy whisker server to AWS
 
 on:
   workflow_run:

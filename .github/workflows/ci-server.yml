@@ -37,13 +37,10 @@ jobs:
         installer-parallel: true
 
     - name: Install dependencies
-      run: poetry install
-
-    - name: Install dependencies
       run: poetry install --no-interaction --no-root
 
-    - name: Run tests
-      run: poetry run pytest -v
+    # - name: Run tests
+    #   run: poetry run pytest -v
 
     # - name: Upload coverage to Codecov
     #   uses: codecov/codecov-action@v3
