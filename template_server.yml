@@ -22,11 +22,6 @@ Parameters:
     Description: Environment marker for SUPABASE_URL
     Default: "1"
 
-  apiUrl:
-    Type: String
-    Description: Environment marker for API_URL
-    Default: "1"
-
   webUrl:
     Type: String
     Description: Environment marker for WEB_URL
@@ -70,7 +65,6 @@ Resources:
           S3_TEMP_BUCKET_NAME: !Ref s3TempBucketName
           SUPABASE_SERVICE_KEY: !Ref supabaseServiceKey
           SUPABASE_URL: !Ref supabaseUrl
-          API_URL: !Ref apiUrl
           WEB_URL: !Ref webUrl
           KNOWLEDGE_TABLE_NAME: !Ref knowledgeTableName
           CHUNK_TABLE_NAME: !Ref chunkTableName

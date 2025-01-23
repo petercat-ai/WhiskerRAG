@@ -1,5 +1,5 @@
 import os
-from core import settings
+from core.settings import settings
 import uvicorn
 
 from core.plugin_manager import PluginManager
@@ -24,6 +24,7 @@ app.add_middleware(
 )
 
 app.include_router(knowledge_router.router)
+
 
 @app.get("/")
 def home_page():
@@ -71,7 +72,7 @@ async def shutdown_event():
 
 
 if __name__ == "__main__":
-    if bool(os.getenv("IS_DEV")):
+    if settings.IS_DEV:
         uvicorn.run(
             "main:app",
             host="0.0.0.0",

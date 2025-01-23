@@ -17,6 +17,14 @@ class Settings(SettingsInterface):
     TENANT_TABLE_NAME: str = os.getenv("TENANT_TABLE_NAME")
     LOG_DIR: str = os.getenv("LOG_DIR")
     PLUGIN_ENV = {}
+    IS_DEV: bool = os.getenv("WHISKER_ENV") == "dev"
+    IS_IN_Lambda: bool = all(
+        [
+            os.getenv("AWS_LAMBDA_FUNCTION_NAME"),
+            os.getenv("AWS_LAMBDA_FUNCTION_VERSION"),
+            os.getenv("AWS_LAMBDA_RUNTIME_API"),
+        ]
+    )
 
     def load_plugin_dir_env(self, plugin_env_path: str) -> dict:
         if not plugin_env_path or not os.path.exists(plugin_env_path):

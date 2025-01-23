@@ -11,7 +11,7 @@ WORKDIR ${LAMBDA_TASK_ROOT}
 # Copy all code
 COPY . .
 
-# Copy aws-lambda-adapter
+# Copy aws-lambda-adapter for Streaming response
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.1 /lambda-adapter /opt/extensions/lambda-adapter
 
 # Install Poetry
