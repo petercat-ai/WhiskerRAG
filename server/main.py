@@ -32,7 +32,8 @@ def home_page():
 
 @app.get("/api/health_checker", response_model=ResponseModel)
 def health_checker():
-    return {success: True, message: "Server is running"}
+    res = {"env": os.getenv("ENV"), "extra": "hello"}
+    return {"success": True, "message": res}
 
 
 @app.exception_handler(HTTPException)
@@ -63,14 +64,18 @@ async def startup_event():
 async def shutdown_event():
     logger.info("Application shutting down")
 
-
 if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,  # 开启热重载
-        reload_dirs=["./"],  # 指定监听的目录
-        reload_includes=["*.py"],  # 指定监听的文件类型
-        reload_excludes=["*.pyc", "__pycache__/*"],  # 排除的文件/目录
-    )
+    if bool(os.getenv("IS_DEV")):
+        uvicorn.run(
+            "main:app",
+            host="0.0.0.0",
+            port=8000,
+            reload=True,  # 开启热重载
+            reload_dirs=["./"],  # 指定监听的目录
+            reload_includes=["*.py"],  # 指定监听的文件类型
+            reload_excludes=["*.pyc", "__pycache__/*"],  # 排除的文件/目录
+        )
+    else:
+        uvicorn.run(
+            app, host="0.0.0.0", port=int(os.environ.get("WHISKER_SERVER_PORT", "8080"))
+        )

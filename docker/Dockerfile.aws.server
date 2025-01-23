@@ -33,9 +33,4 @@ fi
 # Clean up
 RUN rm -rf ~/.cache/pip ~/.cache/poetry
 
-# Set environment variables
-ENV PORT=8000
-ENV HOST=0.0.0.0
-
-# Command to run the application
-CMD ["poetry", "run", "uvicorn", "main:app", "--host", "${HOST}", "--port", "${PORT}"]
+CMD ["python", "main.py"]
