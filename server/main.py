@@ -8,26 +8,31 @@ from model.response import ResponseModel
 from api.knowledge import router as knowledge_router
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
+cors_origins_whitelist = os.getenv("CORS_ORIGINS_WHITELIST", "*")
+cors_origins = (
+    ["*"] if cors_origins_whitelist is None else cors_origins_whitelist.split(",")
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers="*",
+)
+
 app.include_router(knowledge_router.router)
-
-if os.getenv("ENV") == "development":
-    # 添加开发模式中间件
-    from fastapi.middleware.cors import CORSMiddleware
-
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],  # 允许所有源
-        allow_credentials=True,
-        allow_methods=["*"],  # 允许所有方法
-        allow_headers=["*"],  # 允许所有头
-    )
-
 
 @app.get("/")
 def home_page():
     return RedirectResponse(url=settings.WEB_URL)
+
+
+@app.get("/hello")
+def hello():
+    return "hello"
 
 
 @app.get("/api/health_checker", response_model=ResponseModel)
@@ -63,6 +68,7 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     logger.info("Application shutting down")
+
 
 if __name__ == "__main__":
     if bool(os.getenv("IS_DEV")):
