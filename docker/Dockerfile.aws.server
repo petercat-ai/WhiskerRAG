@@ -8,30 +8,37 @@ LABEL org.opencontainers.image.licenses=MIT
 ENV LAMBDA_TASK_ROOT=/var/task
 WORKDIR ${LAMBDA_TASK_ROOT}
 
-# Copy all code
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Poetry
+RUN curl -sSL https://install.python-poetry.org | python3 -
+
+# Copy poetry files first
+COPY pyproject.toml poetry.lock ./
+
+# Configure poetry
+RUN poetry config virtualenvs.create false \
+    && poetry install --no-dev --no-interaction --no-ansi
+
+RUN if [ -f plugins/requirements.txt ]; then \
+pip3 install -r plugins/requirements.txt -U --no-cache-dir; \
+fi
+
+# Copy application code
 COPY . .
 
 # Copy aws-lambda-adapter
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.1 /lambda-adapter /opt/extensions/lambda-adapter
 
-# Install step by step and add error output
-RUN pip3 install poetry
+# Clean up
+RUN rm -rf ~/.cache/pip ~/.cache/poetry
 
-# Display poetry version and environment information
-RUN poetry --version && \
-    poetry env info
+# Set environment variables
+ENV PORT=8000
+ENV HOST=0.0.0.0
 
-# Configure poetry
-# RUN poetry config virtualenvs.create false && \
-#     poetry config experimental.new-installer false
-
-# Display current directory contents
-RUN pwd && ls -la
-
-# Install dependencies
-RUN poetry install --no-interaction --no-ansi --verbose
-
-# Clean cache
-RUN rm -rf ~/.cache/pypoetry
-
-CMD ["python", "main.py"]
+# Command to run the application
+CMD ["poetry", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
