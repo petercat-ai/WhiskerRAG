@@ -1,5 +1,6 @@
 import json
 import os
+from whiskerrag_utils.embedding import handle
 
 
 MAX_RETRY_COUNT = 5
@@ -18,5 +19,4 @@ def lambda_handler(event, context):
             body = record["body"]
             print(f"r++eceive message here: {body}")
             message_dict = json.loads(body)
-
         return sqs_batch_response

@@ -2,6 +2,7 @@ import os
 from core.settings import settings
 import uvicorn
 
+from core.auth import TenantAuthMiddleware
 from core.plugin_manager import PluginManager
 from core.log import logger
 from model.response import ResponseModel
@@ -10,11 +11,13 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 
+
 app = FastAPI()
 cors_origins_whitelist = os.getenv("CORS_ORIGINS_WHITELIST", "*")
 cors_origins = (
     ["*"] if cors_origins_whitelist is None else cors_origins_whitelist.split(",")
 )
+app.add_middleware(TenantAuthMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
@@ -29,11 +32,6 @@ app.include_router(knowledge_router.router)
 @app.get("/")
 def home_page():
     return RedirectResponse(url=settings.WEB_URL)
-
-
-@app.get("/hello")
-def hello():
-    return "hello"
 
 
 @app.get("/api/health_checker", response_model=ResponseModel)
@@ -79,8 +77,8 @@ if __name__ == "__main__":
             port=8000,
             reload=True,  # 开启热重载
             reload_dirs=["./"],  # 指定监听的目录
-            reload_includes=["*.py"],  # 指定监听的文件类型
-            reload_excludes=["*.pyc", "__pycache__/*"],  # 排除的文件/目录
+            reload_includes=["*.py", ".env", "./plugins/.env"],  # 指定监听的文件类型
+            reload_excludes=["*.pyc", "__pycache__/*", "./logs"],  # 排除的文件/目录
         )
     else:
         uvicorn.run(

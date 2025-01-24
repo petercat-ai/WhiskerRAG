@@ -3,7 +3,7 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 from datetime import datetime
 
-from whisker_rag_type.interface.logger_interface import LoggerManagerInterface
+from whiskerrag_types.interface import LoggerManagerInterface
 
 from core.settings import settings
 

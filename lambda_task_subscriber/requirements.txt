@@ -1,1 +1,1 @@
-whiskerrag==0.0.1a1
+whiskerrag==0.0.1a7

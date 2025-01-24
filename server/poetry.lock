@@ -1438,14 +1438,14 @@ files = [
 
 [[package]]
 name = "openai"
-version = "1.59.9"
+version = "1.60.0"
 description = "The official Python library for the openai API"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "openai-1.59.9-py3-none-any.whl", hash = "sha256:61a0608a1313c08ddf92fe793b6dbd1630675a1fe3866b2f96447ce30050c448"},
-    {file = "openai-1.59.9.tar.gz", hash = "sha256:ec1a20b0351b4c3e65c6292db71d8233515437c6065efd4fd50edeb55df5f5d2"},
+    {file = "openai-1.60.0-py3-none-any.whl", hash = "sha256:df06c43be8018274980ac363da07d4b417bd835ead1c66e14396f6f15a0d5dda"},
+    {file = "openai-1.60.0.tar.gz", hash = "sha256:7fa536cd4b644718645b874d2706e36dbbef38b327e42ca0623275da347ee1a9"},
 ]
 
 [package.dependencies]
@@ -2542,22 +2542,24 @@ standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)",
 
 [[package]]
 name = "whiskerrag"
-version = "0.0.1a1"
+version = "0.0.1a4"
 description = "A utility package for RAG operations"
 optional = false
-python-versions = "<4.0,>=3.8.1"
+python-versions = ">=3.8.1,<4.0"
 groups = ["main"]
-files = [
-    {file = "whiskerrag-0.0.1a1-py3-none-any.whl", hash = "sha256:bd040f81b2d7b822401099b565186f8563defdb6757977c4045712d15bd3a236"},
-    {file = "whiskerrag-0.0.1a1.tar.gz", hash = "sha256:136f46a9673d6a1ed2bfa6c4cf7ea0b72abe3bca26e7c09d53ce07133c6e4555"},
-]
+files = []
+develop = true
 
 [package.dependencies]
-langchain = ">=0.2.12,<0.3.0"
-langchain_community = ">=0.2.11,<0.3.0"
-langchain_core = ">=0.2.28,<0.3.0"
-langchain_openai = ">=0.1.20,<0.2.0"
+langchain = "^0.2.12"
+langchain_community = "^0.2.11"
+langchain_core = "^0.2.28"
+langchain_openai = "^0.1.20"
 PYGithub = "2.3.0"
+
+[package.source]
+type = "directory"
+url = "../../WhiskerRAG-toolkit"
 
 [[package]]
 name = "wrapt"
@@ -2764,4 +2766,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.8.1,<4.0"
-content-hash = "812d67860e8f7c7a5ebf4bc0dda5acfcdbcd54c96b6692920017e0ef082d3cde"
+content-hash = "7600068ac52b0ca181f64aaa64dfc6418a326fb1ce1379cfe05a02bdae1e7977"

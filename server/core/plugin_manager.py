@@ -5,7 +5,7 @@ import logging
 
 from core.log import logger
 from core.settings import settings
-from whisker_rag_type.interface import TaskEnginPluginInterface, DBPluginInterface
+from whiskerrag_types.interface import TaskEnginPluginInterface, DBPluginInterface
 from dotenv import load_dotenv
 
 

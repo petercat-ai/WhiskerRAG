@@ -3,14 +3,12 @@
 2. 提供知识入库、编辑、检索、删除、任务查询等接口。
 3. 通过插件机制，让系统能够支持不同向量数据库、任务引擎。
 
-
 ## 关于插件
 为了让系统能支持不同技术环境，我们设计了插件机制。RAG 中最核心的是向量数据库，但是不同的项目采用的向量数据库可能不同。
 通过插件机制，让系统能够支持不同向量数据库。
 1. 在插件中提供任务引擎、数据引擎。他们必须存在，可以将 数据引擎作为参数传递给 任务引擎，让任务引擎直接修改数据。
 2. 基本原理：fastapi 在启动的时候，读取 .env 配置文件，然后遍历 plugins 下的文件，通过 python 动态加载的方式将符合配置描述的插件注册到系统中。
 3. 加载插件的引擎，需要考虑插件对项目的 env、requirement 的更改。
-
 
 ## 关于插件中的任务引擎
 1. 任务引擎不等于任务运行时，任务引擎是任务的调度器，用于触发任务运行时的执行。
@@ -20,42 +18,28 @@
 2.3 任务引擎提供任务状态查询接口。
 2.4 任务引擎负责任务状态更新。
 
-
-## 任务运行时
-1. 任务运行时通过 rag_util , 执行重 CPU、GPU 的计算逻辑，例如 文件下载、文件处理、embedding 计算。然后将结果返回给 任务引擎。
-
-
 ## 关于 rag_util
 1. rag_util 是一个 python sdk, 它的输入是文件路径、文本内容、图片内容等，经过处理，输出 embedding 结果。
 2. rag_util 中的 embedding 函数，需要支持多种 embedding 算法，例如 word2vec、bert、fasttext 等。但是受限于架构，可以尝试内嵌
 一些 embedding 模型，但是没有办法让用户进行拓展。
 3. 可以构建自己的 rag_util_sdk ，但需要和 rag_util 一样定义相同的输入、输出，在「Task Runtime」混合使用。如果输出不一致，需要在任务引擎插件中进行修改。
 
-
 ## 关于插件中的数据引擎
 1. 数据引擎建立与不同数据库的连接，例如 supabase、elasticSearch。
 2. 数据引擎需要实现基类要求实现的方法，实现知识入库、知识检索、知识删除、任务状态更新、任务状态查询等方法。
 
+## 任务运行时
+1. 任务运行时通过 rag_util , 执行重 CPU、GPU 的计算逻辑，例如 文件下载、文件处理、embedding 计算。然后将结果返回给 任务引擎。
 
-## 开发设置
+## 开发指南
+```
+pip install poetry
 
-### 本地开发模式
+cd server # if you are not in the server directory
 
-要在本地开发模式下使用 util 包，可以使用提供的设置脚本：
+poetry install
 
-```bash
-# 基本用法
-./scripts/setup_dev.sh
+# set .env file
 
-# 包含开发依赖
-./scripts/setup_dev.sh --dev
-
-# 指定自定义 package 包路径
-./scripts/setup_dev.sh --path /path/to/util
-
-# 强制重新安装
-./scripts/setup_dev.sh --force
-
-# 同时使用多个选项
-./scripts/setup_dev.sh --dev --force --path ../custom-util
+python main.py
 ```
