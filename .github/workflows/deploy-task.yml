@@ -41,7 +41,7 @@ jobs:
 
       - name: Print specific variables
         run: |
-          echo "Current DEPLOY_ENV: ${{ vars.DEPLOY_ENV }}"
+          echo "Current DEPLOY_ENV: ${{ vars.WHISKER_ENV }}"
           echo "GitHub actor: ${{ github.actor }}"
 
       # Build inside Docker containers
@@ -51,7 +51,7 @@ jobs:
       - run: |
           sam deploy \
             --no-confirm-changeset \
-            --config-env ${{ vars.DEPLOY_ENV}} \
+            --config-env ${{ vars.WHISKER_ENV}} \
             --no-fail-on-empty-changeset \
             --config-file .aws/task_samconfig.toml \
             --parameter-overrides \
