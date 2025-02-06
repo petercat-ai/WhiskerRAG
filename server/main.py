@@ -5,7 +5,7 @@ import uvicorn
 from core.auth import TenantAuthMiddleware
 from core.plugin_manager import PluginManager
 from core.log import logger
-from model.response import ResponseModel
+from core.response import ResponseModel
 from api.knowledge import router as knowledge_router
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse

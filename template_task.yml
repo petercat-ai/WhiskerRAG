@@ -11,6 +11,10 @@ Parameters:
     Type: String
     Description: Environment marker for S3_TEMP_BUCKET_NAME
     Default: "1"
+  openAIKey:
+    Type: String
+    Description: Environment marker for OPENAI_API_KEY
+    Default: "1"
 
 Resources:
   InputQueue:
@@ -70,6 +74,8 @@ Resources:
         Variables:
           AWS_ACCOUNT_ID: !Ref AWS::AccountId
           OUTPUT_QUEUE_URL: !Ref OutputQueue
+          S3_TEMP_BUCKET_NAME: !Ref s3TempBucketName
+          OPENAI_API_KEY: !Ref openAIKey
       Events:
         SQSTrigger:
           Type: SQS

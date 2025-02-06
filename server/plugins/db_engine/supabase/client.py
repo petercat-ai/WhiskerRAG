@@ -157,7 +157,7 @@ class SupaBasePlugin(DBPluginInterface):
 
     async def save_task_list(self, task_list: List[Task]):
         res = (
-            self.supabaseClient.table("task")
+            self.supabaseClient.table(self.settings.TASK_TABLE_NAME)
             .insert([task.model_dump(exclude_unset=True) for task in task_list])
             .execute()
         )
