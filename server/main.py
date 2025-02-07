@@ -1,16 +1,16 @@
 import asyncio
 import os
-from core.settings import settings
 import uvicorn
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
 
+from core.settings import settings
 from core.auth import TenantAuthMiddleware
 from core.plugin_manager import PluginManager
 from core.log import logger
 from core.response import ResponseModel
 from api.knowledge import router as knowledge_router
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse, RedirectResponse
-from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI()
@@ -59,13 +59,13 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 @app.on_event("startup")
 async def startup_event():
-    # 读取配置加载 plugins 文件夹下的 任务引擎、数据引擎插件
+    # Load task engine and database engine plugins from the plugins folder based on the configuration
     path = os.path.abspath(os.path.dirname(__file__))
     logger.info("Application started")
     PluginManager(path)
     task_engine = PluginManager().taskPlugin
-    if task_engine.process_message_queue:
-        asyncio.create_task(task_engine.process_message_queue())
+    if task_engine.on_task_execute:
+        asyncio.create_task(task_engine.on_task_execute())
 
 
 @app.on_event("shutdown")
@@ -79,10 +79,10 @@ if __name__ == "__main__":
             "main:app",
             host="0.0.0.0",
             port=8000,
-            reload=True,  # 开启热重载
-            reload_dirs=["./"],  # 指定监听的目录
-            reload_includes=["*.py", ".env", "./plugins/.env"],  # 指定监听的文件类型
-            reload_excludes=["*.pyc", "__pycache__/*", "./logs"],  # 排除的文件/目录
+            reload=True,
+            reload_dirs=["./"],
+            reload_includes=["*.py", ".env", "./plugins/.env"],
+            reload_excludes=["*.pyc", "__pycache__/*", "./logs"],
         )
     else:
         uvicorn.run(
