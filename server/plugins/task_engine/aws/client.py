@@ -116,7 +116,7 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
             try:
                 response = self.sqs_client.receive_message(
                     QueueUrl=self.SQS_QUEUE_URL,
-                    MaxNumberOfMessages=20,
+                    MaxNumberOfMessages=10,
                     WaitTimeSeconds=20,
                     AttributeNames=["All"],
                 )

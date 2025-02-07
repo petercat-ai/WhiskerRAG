@@ -66,7 +66,7 @@ async def startup_event():
     task_engine = PluginManager().taskPlugin
     db_engine = PluginManager().dbPlugin
     if db_engine and task_engine.on_task_execute:
-        task_engine.on_task_execute(db_engine)
+        await task_engine.on_task_execute(db_engine)
 
 
 @app.on_event("shutdown")

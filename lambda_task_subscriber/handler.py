@@ -14,12 +14,20 @@ async def _handle_task(task: Task, knowledge: Knowledge):
         documents = await loader(knowledge).load()
         chunk_list = await model().embed(knowledge, documents)
         task.status = TaskStatus.SUCCESS
-        return {"task": task, "knowledge": knowledge, "chunk": chunk_list}
+        return {
+            "task": task.model_dump(),
+            "knowledge": knowledge.model_dump(),
+            "chunk": [chunk.model_dump() for chunk in chunk_list],
+        }
     except Exception as e:
         print(f"Error parsing task or knowledge: {e}")
         task.status = TaskStatus.FAILED
         task.error_message = str(e)
-        return {"task": task, "knowledge": knowledge, "chunk": []}
+        return {
+            "task": task.model_dump(),
+            "knowledge": knowledge.model_dump(),
+            "chunk": [],
+        }
 
 
 async def _batch_execute_task(records):
