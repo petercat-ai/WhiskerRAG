@@ -2,9 +2,7 @@ import asyncio
 import json
 from typing import List
 import boto3
-from whiskerrag_types.interface import (
-    TaskEnginPluginInterface,
-)
+from whiskerrag_types.interface import TaskEnginPluginInterface, DBPluginInterface
 from whiskerrag_types.model import (
     Knowledge,
     KnowledgeCreate,
@@ -18,9 +16,11 @@ from plugins.task_engine.aws.utils import get_knowledge_list_from_github_repo
 
 
 class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
-    SQS_QUEUE_URL: str
-    s3_client: boto3.client
-    sqs_client: boto3.client
+    SQS_QUEUE_URL: str = None
+    max_retries: int = 3
+    s3_client: boto3.client = None
+    sqs_client: boto3.client = None
+    db_client: DBPluginInterface = None
 
     def init(self):
         self.s3_client = boto3.client("s3")
@@ -99,15 +99,54 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
     async def execute_task(self, task_id: str) -> List[Task]:
         pass
 
-    async def on_task_execute(self):
+    async def on_task_execute(self, db):
+        self.db_client = db
+        asyncio.create_task(self._poll_queue())
+
+    async def _process_message(self, message):
         try:
-            response = self.sqs_client.receive_message(
-                QueueUrl=self.settings.PLUGIN_ENV.get("OUTPUT_QUEUE_URL"),
-                MaxNumberOfMessages=10,
-                VisibilityTimeout=10,
-                WaitTimeSeconds=10,
-            )
-            return response.get("Messages", [])
+            self.logger.info(f"Processing message: {message}")
+
         except Exception as e:
-            self.logger.error(f"Error receiving messages: {str(e)}")
-            return []
+            self.logger.error(f"Error processing message: {e}")
+            raise
+
+    async def _poll_queue(self):
+        while True:
+            try:
+                response = self.sqs_client.receive_message(
+                    QueueUrl=self.SQS_QUEUE_URL,
+                    MaxNumberOfMessages=20,
+                    WaitTimeSeconds=20,
+                    AttributeNames=["All"],
+                )
+
+                if "Messages" in response:
+                    for message in response["Messages"]:
+                        retry_count = 0
+                        while retry_count < self.max_retries:
+                            try:
+                                await self._process_message(message["Body"])
+                                self.sqs_client.delete_message(
+                                    QueueUrl=self.SQS_QUEUE_URL,
+                                    ReceiptHandle=message["ReceiptHandle"],
+                                )
+                                self.logger.info(
+                                    f"Message processed and deleted: {message['MessageId']}"
+                                )
+                                break
+
+                            except Exception as e:
+                                retry_count += 1
+                                self.logger.error(f"Attempt {retry_count} failed: {e}")
+                                if retry_count == self.max_retries:
+                                    self.logger.error(
+                                        f"Message processing failed after {self.max_retries} attempts"
+                                    )
+                                await asyncio.sleep(
+                                    1 * retry_count
+                                )  # Exponential backoff
+
+            except Exception as e:
+                self.logger.error(f"Error polling queue: {e}")
+                await asyncio.sleep(10)
