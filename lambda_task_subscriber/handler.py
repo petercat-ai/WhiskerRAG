@@ -5,8 +5,6 @@ from whiskerrag_utils.registry import init_register, get_register
 import boto3
 import asyncio
 
-MAX_RETRY_COUNT = 5
-
 
 async def _handle_task(task: Task, knowledge: Knowledge):
     try:
