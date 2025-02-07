@@ -56,6 +56,6 @@ jobs:
             --config-file .aws/task_samconfig.toml \
             --parameter-overrides \
               ParameterKey=s3TempBucketName,ParameterValue=${{ vars.S3_TEMP_BUCKET_NAME }} \
-              ParameterKey=openAIKey,ParameterValue=${{ vars.OPENAI_API_KEY }} \
+              ParameterKey=openAIKey,ParameterValue=${{ secrets.OPENAI_API_KEY }} \
 
               

@@ -17,18 +17,28 @@ from plugins.task_engine.aws.utils import get_knowledge_list_from_github_repo
 
 class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
     SQS_QUEUE_URL: str = None
+    OUTPUT_QUEUE_URL: str = None
     max_retries: int = 3
     s3_client: boto3.client = None
     sqs_client: boto3.client = None
     db_client: DBPluginInterface = None
+    is_running: bool = False
 
     def init(self):
         self.s3_client = boto3.client("s3")
         self.sqs_client = boto3.client("sqs")
         self.SQS_QUEUE_URL = self.settings.PLUGIN_ENV.get("SQS_QUEUE_URL")
+        self.OUTPUT_QUEUE_URL = self.settings.PLUGIN_ENV.get("OUTPUT_QUEUE_URL")
+
+        missing_vars = []
         if self.SQS_QUEUE_URL is None:
+            missing_vars.append("SQS_QUEUE_URL")
+        if self.OUTPUT_QUEUE_URL is None:
+            missing_vars.append("OUTPUT_QUEUE_URL")
+
+        if missing_vars:
             raise Exception(
-                "SQS_QUEUE_URL is not set. Please set this variable in the .env file located in the plugins folder."
+                f"Missing environment variables: {', '.join(missing_vars)}. Please set these variables in the .env file located in the plugins folder."
             )
 
     async def gen_knowledge_list(
@@ -82,7 +92,7 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
         async def process_batch(batch):
             message_body = json.dumps(batch)
             return self.sqs_client.send_message_batch(
-                QueueUrl=self.SQS_QUEUE_URL,
+                QueueUrl=self.OUTPUT_QUEUE_URL,
                 Entries=[
                     {"Id": str(i), "MessageBody": message_body}
                     for i in range(len(batch))
@@ -101,34 +111,28 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
 
     async def on_task_execute(self, db):
         self.db_client = db
-        asyncio.create_task(self._poll_queue())
-
-    async def _process_message(self, message):
-        try:
-            self.logger.info(f"Processing message: {message}")
-
-        except Exception as e:
-            self.logger.error(f"Error processing message: {e}")
-            raise
-
-    async def _poll_queue(self):
-        while True:
+        self.is_running = True
+        while self.is_running:
             try:
-                response = self.sqs_client.receive_message(
-                    QueueUrl=self.SQS_QUEUE_URL,
+                self.logger.info("Polling SQS queue for messages")
+                response = await asyncio.to_thread(
+                    self.sqs_client.receive_message,
+                    QueueUrl=self.OUTPUT_QUEUE_URL,
                     MaxNumberOfMessages=10,
                     WaitTimeSeconds=20,
                     AttributeNames=["All"],
                 )
-
+                self.logger.info(f"Response: {response}")
                 if "Messages" in response:
+                    self.logger.info(f"Received {len(response['Messages'])} messages")
                     for message in response["Messages"]:
                         retry_count = 0
                         while retry_count < self.max_retries:
                             try:
                                 await self._process_message(message["Body"])
-                                self.sqs_client.delete_message(
-                                    QueueUrl=self.SQS_QUEUE_URL,
+                                await asyncio.to_thread(
+                                    self.sqs_client.delete_message,
+                                    QueueUrl=self.OUTPUT_QUEUE_URL,
                                     ReceiptHandle=message["ReceiptHandle"],
                                 )
                                 self.logger.info(
@@ -146,7 +150,17 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
                                 await asyncio.sleep(
                                     1 * retry_count
                                 )  # Exponential backoff
-
             except Exception as e:
                 self.logger.error(f"Error polling queue: {e}")
                 await asyncio.sleep(10)
+
+    async def stop_on_task_execute(self):
+        self.is_running = False
+
+    async def _process_message(self, message):
+        try:
+            self.logger.info(f"Processing message: {message}")
+
+        except Exception as e:
+            self.logger.error(f"Error processing message: {e}")
+            raise

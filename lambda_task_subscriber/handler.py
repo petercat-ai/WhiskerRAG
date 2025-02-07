@@ -17,7 +17,7 @@ async def _handle_task(task: Task, knowledge: Knowledge):
         return {
             "task": task.model_dump(),
             "knowledge": knowledge.model_dump(),
-            "chunk": [chunk.model_dump() for chunk in chunk_list],
+            "chunks": [chunk.model_dump() for chunk in chunk_list],
         }
     except Exception as e:
         print(f"Error parsing task or knowledge: {e}")
@@ -26,7 +26,7 @@ async def _handle_task(task: Task, knowledge: Knowledge):
         return {
             "task": task.model_dump(),
             "knowledge": knowledge.model_dump(),
-            "chunk": [],
+            "chunks": [],
         }
 
 

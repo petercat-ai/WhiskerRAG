@@ -66,12 +66,15 @@ async def startup_event():
     task_engine = PluginManager().taskPlugin
     db_engine = PluginManager().dbPlugin
     if db_engine and task_engine.on_task_execute:
-        await task_engine.on_task_execute(db_engine)
+        asyncio.create_task(task_engine.on_task_execute(db_engine))
+        logger.info("Task engine callback registered")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    logger.info("Application shutting down")
+    task_engine = PluginManager().taskPlugin
+    await task_engine.stop_on_task_execute()
+    logger.info("Application shutdown")
 
 
 if __name__ == "__main__":
