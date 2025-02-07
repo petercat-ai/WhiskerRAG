@@ -2542,7 +2542,7 @@ standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)",
 
 [[package]]
 name = "whiskerrag"
-version = "0.0.1a16"
+version = "0.0.1a17"
 description = "A utility package for RAG operations"
 optional = false
 python-versions = ">=3.8.1,<4.0"
