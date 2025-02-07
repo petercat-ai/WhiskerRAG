@@ -1,3 +1,4 @@
+import asyncio
 import os
 from core.settings import settings
 import uvicorn
@@ -62,6 +63,9 @@ async def startup_event():
     path = os.path.abspath(os.path.dirname(__file__))
     logger.info("Application started")
     PluginManager(path)
+    task_engine = PluginManager().taskPlugin
+    if task_engine.process_message_queue:
+        asyncio.create_task(task_engine.process_message_queue())
 
 
 @app.on_event("shutdown")

@@ -17,14 +17,14 @@ from whiskerrag_types.model import (
 from plugins.task_engine.aws.utils import get_knowledge_list_from_github_repo
 
 
-sqs = boto3.client("sqs")
-
-
 class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
     SQS_QUEUE_URL: str
+    s3_client: boto3.client
+    sqs_client: boto3.client
 
     def init(self):
         self.s3_client = boto3.client("s3")
+        self.sqs_client = boto3.client("sqs")
         self.SQS_QUEUE_URL = self.settings.PLUGIN_ENV.get("SQS_QUEUE_URL")
         if self.SQS_QUEUE_URL is None:
             raise Exception(
@@ -81,7 +81,7 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
 
         async def process_batch(batch):
             message_body = json.dumps(batch)
-            return sqs.send_message_batch(
+            return self.sqs_client.send_message_batch(
                 QueueUrl=self.SQS_QUEUE_URL,
                 Entries=[
                     {"Id": str(i), "MessageBody": message_body}
@@ -98,3 +98,16 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
 
     async def execute_task(self, task_id: str) -> List[Task]:
         pass
+
+    async def process_message_queue(self):
+        try:
+            response = self.sqs_client.receive_message(
+                QueueUrl=self.settings.PLUGIN_ENV.get("OUTPUT_QUEUE_URL"),
+                MaxNumberOfMessages=10,
+                VisibilityTimeout=10,
+                WaitTimeSeconds=10,
+            )
+            return response.get("Messages", [])
+        except Exception as e:
+            self.logger.error(f"Error receiving messages: {str(e)}")
+            return []

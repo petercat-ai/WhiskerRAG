@@ -25,10 +25,8 @@ async def _batch_execute_task(records):
     output_messages = []
     for record in records:
         body = record["body"]
-        # task = Task(body["task"])
         task = Task(**body["task"])
         knowledge = Knowledge(**body["knowledge"])
-        # knowledge = Knowledge(body["knowledge"])
         res = await _handle_task(task, knowledge)
         output_messages.append(res)
     print(f"Output messages: {output_messages}")
@@ -42,7 +40,8 @@ async def _batch_execute_task(records):
 def lambda_handler(event, context):
     try:
         if event:
-            asyncio.run(_batch_execute_task(event["Records"]))
+            print(f"Event: {event},type:{type(event)}; Context: {context},")
+            asyncio.run(_batch_execute_task(event.get("Records", [])))
         else:
             raise Exception("No event data found")
         return {"statusCode": 200, "message": "Success"}
