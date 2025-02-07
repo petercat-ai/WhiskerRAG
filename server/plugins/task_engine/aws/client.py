@@ -99,7 +99,7 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
     async def execute_task(self, task_id: str) -> List[Task]:
         pass
 
-    async def process_message_queue(self):
+    async def on_task_execute(self):
         try:
             response = self.sqs_client.receive_message(
                 QueueUrl=self.settings.PLUGIN_ENV.get("OUTPUT_QUEUE_URL"),

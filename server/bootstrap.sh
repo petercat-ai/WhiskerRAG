@@ -1,29 +1,29 @@
 #!/bin/bash
 
-# 检查 poetry 是否安装
+# Check if poetry is installed
 if ! command -v poetry &> /dev/null
 then
-  echo "Poetry 未安装，正在安装..."
+  echo "Poetry is not installed, installing..."
   curl -sSL https://install.python-poetry.org | python3 -
   export PATH="$HOME/.local/bin:$PATH"
 else
-  echo "Poetry 已安装"
+  echo "Poetry is installed"
 fi
 
-# 删除 lock 文件
+# Remove lock file
 rm -f poetry.lock
 
-# 安装依赖，忽略 lock 文件
+# Install dependencies, ignoring lock file
 poetry install --no-root
 
-# 激活 poetry 虚拟环境
+# Activate poetry virtual environment
 source $(poetry env info --path)/bin/activate
 
-# 检查 pip 版本，并强制升级到最新
+# Check pip version and force upgrade to the latest
 pip install --upgrade pip
 
-# 安装 ./plugins 目录下 requirements.txt 中的依赖
+# Install dependencies from requirements.txt in ./plugins directory
 pip install -r ./plugins/requirements.txt
 
-# 启动 FastAPI 应用
+# Start FastAPI application
 uvicorn main:app --host 0.0.0.0 --port 8000

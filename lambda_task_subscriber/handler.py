@@ -9,14 +9,19 @@ MAX_RETRY_COUNT = 5
 
 
 async def _handle_task(task: Task, knowledge: Knowledge):
-    init_register()
-    loader = get_register(knowledge.source_type)
-    model = get_register(knowledge.embedding_model_name)
-    documents = await loader(knowledge).load()
-    chunk_list = await model().embed(knowledge, documents)
-    print(f"Chunk list: {chunk_list}")
-    task.status = TaskStatus.SUCCESS
-    return {"task": task, "knowledge": knowledge, "chunk": chunk_list}
+    try:
+        init_register()
+        loader = get_register(knowledge.source_type)
+        model = get_register(knowledge.embedding_model_name)
+        documents = await loader(knowledge).load()
+        chunk_list = await model().embed(knowledge, documents)
+        task.status = TaskStatus.SUCCESS
+        return {"task": task, "knowledge": knowledge, "chunk": chunk_list}
+    except Exception as e:
+        print(f"Error parsing task or knowledge: {e}")
+        task.status = TaskStatus.FAILED
+        task.error_message = str(e)
+        return {"task": task, "knowledge": knowledge, "chunk": []}
 
 
 async def _batch_execute_task(records):
@@ -24,11 +29,19 @@ async def _batch_execute_task(records):
     print(f"OUTPUT_QUEUE_URL: {output_queue_url}")
     output_messages = []
     for record in records:
-        body = record["body"]
-        task = Task(**body["task"])
-        knowledge = Knowledge(**body["knowledge"])
-        res = await _handle_task(task, knowledge)
-        output_messages.append(res)
+        try:
+            body = record["body"]
+            if isinstance(body, str):
+                body = json.loads(body)
+            if "task" not in body or "knowledge" not in body:
+                raise ValueError("Missing 'task' or 'knowledge' in the record body")
+            task = Task(**body["task"])
+            knowledge = Knowledge(**body["knowledge"])
+            res = await _handle_task(task, knowledge)
+            output_messages.append(res)
+        except Exception as e:
+            print(f"Error parsing record: {e}, record: {record}")
+
     print(f"Output messages: {output_messages}")
     sqs = boto3.client("sqs")
     response = sqs.send_message(

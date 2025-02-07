@@ -2542,14 +2542,14 @@ standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)",
 
 [[package]]
 name = "whiskerrag"
-version = "0.0.1a8"
+version = "0.0.1a9"
 description = "A utility package for RAG operations"
 optional = false
 python-versions = "<4.0,>=3.8.1"
 groups = ["main"]
 files = [
-    {file = "whiskerrag-0.0.1a8-py3-none-any.whl", hash = "sha256:6e5f9e15971a9bf4d67caeeb4f60a4a23b19728ac4b8c22df81a12a14a2fd23a"},
-    {file = "whiskerrag-0.0.1a8.tar.gz", hash = "sha256:cc5af2893cf922e7ad819a73265b205a556ed7884f2879b3fc58776956fc5978"},
+    {file = "whiskerrag-0.0.1a9-py3-none-any.whl", hash = "sha256:3fa79a362d3cd9b0da9aac305f5cc124e960d4a36d887d0d352f9911246d5e41"},
+    {file = "whiskerrag-0.0.1a9.tar.gz", hash = "sha256:30f3c026a7170e37131970498a9e53a003aec70bdc59aeb3ab4d1423422fc0d1"},
 ]
 
 [package.dependencies]
@@ -2766,4 +2766,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.8.1,<4.0"
-content-hash = "dcef646b781c947a006d1e320a13283368295a73dd45a22e103d4c01795c9622"
+content-hash = "038b4d2f66c2f074002787f326296d9f24092ab124dc57809752fc86dc4ac0db"
