@@ -29,14 +29,22 @@ async def _batch_execute_task(records):
     for record in records:
         try:
             body = record["body"]
+            if not body:
+                raise ValueError("Record body is missing")
+
             if isinstance(body, str):
                 body = json.loads(body)
-            if "task" not in body or "knowledge" not in body:
-                raise ValueError("Missing 'task' or 'knowledge' in the record body")
-            task = Task(**body["task"])
-            knowledge = Knowledge(**body["knowledge"])
-            res = await _handle_task(task, knowledge)
-            output_messages.append(res)
+            tasks = body if isinstance(body, list) else [body]
+
+            for item in tasks:
+                if "task" not in item or "knowledge" not in item:
+                    raise ValueError(
+                        "Missing 'task' or 'knowledge' in the record body item"
+                    )
+                task = Task(**item["task"])
+                knowledge = Knowledge(**item["knowledge"])
+                res = await _handle_task(task, knowledge)
+                output_messages.append(res)
         except Exception as e:
             print(f"Error parsing record: {e}, record: {record}")
 
