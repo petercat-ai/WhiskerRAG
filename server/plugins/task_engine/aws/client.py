@@ -92,7 +92,7 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
         async def process_batch(batch):
             message_body = json.dumps(batch)
             return self.sqs_client.send_message_batch(
-                QueueUrl=self.OUTPUT_QUEUE_URL,
+                QueueUrl=self.SQS_QUEUE_URL,
                 Entries=[
                     {"Id": str(i), "MessageBody": message_body}
                     for i in range(len(batch))

@@ -2542,24 +2542,26 @@ standard = ["colorama (>=0.4)", "httptools (>=0.5.0)", "python-dotenv (>=0.13)",
 
 [[package]]
 name = "whiskerrag"
-version = "0.0.1a15"
+version = "0.0.1a16"
 description = "A utility package for RAG operations"
 optional = false
-python-versions = "<4.0,>=3.8.1"
+python-versions = ">=3.8.1,<4.0"
 groups = ["main"]
-files = [
-    {file = "whiskerrag-0.0.1a15-py3-none-any.whl", hash = "sha256:2dcbe4263e237537d6340135522b57cdb4a62cf392781fa1b6368ead94426ece"},
-    {file = "whiskerrag-0.0.1a15.tar.gz", hash = "sha256:ccc3614dfcee5e341e6f6fcfd0aa41406648b22ad2229fde6d8251d3729131d4"},
-]
+files = []
+develop = true
 
 [package.dependencies]
-langchain = ">=0.2.12,<0.3.0"
-langchain_community = ">=0.2.11,<0.3.0"
-langchain_core = ">=0.2.28,<0.3.0"
-langchain_openai = ">=0.1.20,<0.2.0"
-pydantic = ">=2.0.0,<3.0.0"
+langchain = "^0.2.12"
+langchain_community = "^0.2.11"
+langchain_core = "^0.2.28"
+langchain_openai = "^0.1.20"
+pydantic = "^2.0.0,<3.0.0"
 PYGithub = "2.3.0"
-requests = ">=2.32.3,<3.0.0"
+requests = "^2.32.3"
+
+[package.source]
+type = "directory"
+url = "../../WhiskerRAG-toolkit"
 
 [[package]]
 name = "wrapt"
@@ -2766,4 +2768,4 @@ propcache = ">=0.2.0"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.8.1,<4.0"
-content-hash = "0ebaa187e372ba2acff395f3f287bd3d1582f687896a95817f80e128fb5f2d86"
+content-hash = "9b1864beda4ab25ee24bbf0711cce50d48e1a68911ec9d1f90d9d659f6e49d7e"

@@ -13,6 +13,7 @@ async def _handle_task(task: Task, knowledge: Knowledge):
         model = get_register(knowledge.embedding_model_name)
         documents = await loader(knowledge).load()
         chunk_list = await model().embed(knowledge, documents)
+        print(f"Task: {task.model_dump()}")
         task.status = TaskStatus.SUCCESS
         return {
             "task": task.model_dump(),
