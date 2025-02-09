@@ -37,10 +37,9 @@ class Settings(SettingsInterface):
                 if file.endswith(".env"):
                     env_path = os.path.join(root, file)
                     load_dotenv(env_path, override=True)
-                    config = dotenv_values(env_path)
-                    plugin_env = {**plugin_env, **config}
 
-        self.PLUGIN_ENV = plugin_env
+    def get_env(self, name, default_value=None):
+        return os.getenv(name) or default_value
 
 
 settings = Settings()

@@ -13,6 +13,7 @@ from whiskerrag_types.model import (
 )
 
 from plugins.task_engine.aws.utils import get_knowledge_list_from_github_repo
+from plugins.task_engine.aws.sqs_message_processor import SQSMessageProcessor
 
 
 class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
@@ -27,15 +28,14 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
     def init(self):
         self.s3_client = boto3.client("s3")
         self.sqs_client = boto3.client("sqs")
-        self.SQS_QUEUE_URL = self.settings.PLUGIN_ENV.get("SQS_QUEUE_URL")
-        self.OUTPUT_QUEUE_URL = self.settings.PLUGIN_ENV.get("OUTPUT_QUEUE_URL")
+        self.SQS_QUEUE_URL = self.settings.get_env("SQS_QUEUE_URL", "")
+        self.OUTPUT_QUEUE_URL = self.settings.get_env("OUTPUT_QUEUE_URL", "")
 
         missing_vars = []
         if self.SQS_QUEUE_URL is None:
             missing_vars.append("SQS_QUEUE_URL")
         if self.OUTPUT_QUEUE_URL is None:
             missing_vars.append("OUTPUT_QUEUE_URL")
-
         if missing_vars:
             raise Exception(
                 f"Missing environment variables: {', '.join(missing_vars)}. Please set these variables in the .env file located in the plugins folder."
@@ -114,7 +114,6 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
         self.is_running = True
         while self.is_running:
             try:
-                self.logger.info("Polling SQS queue for messages")
                 response = await asyncio.to_thread(
                     self.sqs_client.receive_message,
                     QueueUrl=self.OUTPUT_QUEUE_URL,
@@ -122,45 +121,18 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
                     WaitTimeSeconds=20,
                     AttributeNames=["All"],
                 )
-                self.logger.info(f"Response: {response}")
-                if "Messages" in response:
-                    self.logger.info(f"Received {len(response['Messages'])} messages")
-                    for message in response["Messages"]:
-                        retry_count = 0
-                        while retry_count < self.max_retries:
-                            try:
-                                await self._process_message(message["Body"])
-                                await asyncio.to_thread(
-                                    self.sqs_client.delete_message,
-                                    QueueUrl=self.OUTPUT_QUEUE_URL,
-                                    ReceiptHandle=message["ReceiptHandle"],
-                                )
-                                self.logger.info(
-                                    f"Message processed and deleted: {message['MessageId']}"
-                                )
-                                break
-
-                            except Exception as e:
-                                retry_count += 1
-                                self.logger.error(f"Attempt {retry_count} failed: {e}")
-                                if retry_count == self.max_retries:
-                                    self.logger.error(
-                                        f"Message processing failed after {self.max_retries} attempts"
-                                    )
-                                await asyncio.sleep(
-                                    1 * retry_count
-                                )  # Exponential backoff
+                processor = SQSMessageProcessor(
+                    self.logger,
+                    self.db_client,
+                    self.sqs_client,
+                    self.s3_client,
+                    self.OUTPUT_QUEUE_URL,
+                    self.max_retries,
+                )
+                await processor.handle_response(response)
             except Exception as e:
                 self.logger.error(f"Error polling queue: {e}")
                 await asyncio.sleep(10)
 
     async def stop_on_task_execute(self):
         self.is_running = False
-
-    async def _process_message(self, message):
-        try:
-            self.logger.info(f"Processing message: {message}")
-
-        except Exception as e:
-            self.logger.error(f"Error processing message: {e}")
-            raise

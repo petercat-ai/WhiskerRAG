@@ -30,7 +30,6 @@ async def add_knowledge(
         task_list = await task_engine.init_task_from_knowledge(saved_knowledge, tenant)
         saved_task = await db_engine.save_task_list(task_list)
         await task_engine.batch_execute_task(saved_task, saved_knowledge)
-        # TODO: 监听任务执行结果，更新知识状态
         return ResponseModel(success=True, data=saved_knowledge)
     except Exception as e:
         logger.error(e)
