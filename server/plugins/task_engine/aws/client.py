@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import boto3  # type: ignore
 from whiskerrag_types.interface import DBPluginInterface, TaskEnginPluginInterface
@@ -77,7 +77,7 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
 
     async def batch_execute_task(
         self, task_list: List[Task], knowledge_list: List[Knowledge]
-    ) -> List[dict]:
+    ) -> List[Task]:
         batch_size = 5
         knowledge_dict = {
             knowledge.knowledge_id: knowledge for knowledge in knowledge_list
@@ -90,7 +90,7 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
                     {"task": task.model_dump(), "knowledge": knowledge.model_dump()}
                 )
 
-        async def process_batch(batch):
+        async def process_batch(batch) -> Any:
             message_body = json.dumps(batch)
             return self.sqs_client.send_message_batch(
                 QueueUrl=self.SQS_QUEUE_URL,
@@ -105,7 +105,7 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
             await asyncio.sleep(len(combined_list) / batch_size)
             await process_batch(batch)
 
-        return combined_list
+        return task_list
 
     async def execute_task(self, task_id: str) -> List[Task]:
         pass

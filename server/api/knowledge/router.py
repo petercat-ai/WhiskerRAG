@@ -1,7 +1,13 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
-from whiskerrag_types.model import KnowledgeCreate, Tenant
+from whiskerrag_types.model import (
+    KnowledgeCreate,
+    Tenant,
+    PageParams,
+    PageResponse,
+    Knowledge,
+)
 
 from core.auth import get_tenant, require_auth
 from core.log import logger
@@ -32,3 +38,15 @@ async def add_knowledge(
     except Exception as e:
         logger.error(e)
         return ResponseModel(success=False, message=str(e))
+
+
+@router.post("/list")
+@require_auth()
+async def get_knowledge_list(
+    body: PageParams, tenant: Tenant = Depends(get_tenant)
+) -> ResponseModel:
+    db_engine = PluginManager().dbPlugin
+    knowledge_list: PageResponse[Knowledge] = await db_engine.get_knowledge_list(
+        tenant.tenant_id, body
+    )
+    return ResponseModel(data=knowledge_list, success=True)

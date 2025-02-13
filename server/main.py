@@ -73,11 +73,19 @@ def health_checker() -> ResponseModel[dict]:
     return ResponseModel(success=True, data=res)
 
 
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.error(f"Global exception handler Request path: {request.url.path}")
+
+    if isinstance(exc, HTTPException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=ResponseModel(success=False, message=str(exc.detail)).model_dump(),
+        )
+
     return JSONResponse(
-        status_code=exc.status_code or 500,
-        content={"success": False, "message": str(exc)},
+        status_code=500,
+        content=ResponseModel(success=False, message=str(exc)).model_dump(),
     )
 
 
