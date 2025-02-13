@@ -28,13 +28,13 @@ permissions:
   contents: read    # This is required for actions/checkout
   actions: write
 
-env:
-  ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
-
 jobs:
   deploy-server:
     runs-on: ubuntu-latest
-    environment: ${{ env.ENVIRONMENT }}
+    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
+    # 然后在 steps 中可以使用环境变量
+    env:
+      ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
     strategy:
       fail-fast: true
 
@@ -42,6 +42,7 @@ jobs:
       - name: Print specific variables
         run: |
           echo "Current github.ref : ${{ github.ref }}"
+          echo "Deploying to ${{ env.ENVIRONMENT }}"
           echo "Current AWS_REGION: ${{ vars.AWS_REGION }}"
           echo "Current WHISKER_ENV: ${{ vars.WHISKER_ENV }}"
           echo "GitHub actor: ${{ github.actor }}"
