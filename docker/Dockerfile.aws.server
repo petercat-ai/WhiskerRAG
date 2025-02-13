@@ -4,6 +4,9 @@ LABEL org.opencontainers.image.source=https://github.com/petercat-ai/WhiskerRAG
 LABEL org.opencontainers.image.description="Petercat Whisker RAG server Image"
 LABEL org.opencontainers.image.licenses=MIT
 
+# Install make
+RUN apt-get update && apt-get install -y make
+
 # Set Lambda environment
 ENV LAMBDA_TASK_ROOT=/var/task
 WORKDIR ${LAMBDA_TASK_ROOT}
@@ -15,9 +18,13 @@ COPY . .
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.1 /lambda-adapter /opt/extensions/lambda-adapter
 
 # Install dependencies
-RUN make install
+RUN cd server && make install
 
 # Clean up
-RUN rm -rf ~/.cache/pip
+RUN rm -rf ~/.cache/pip && \
+    apt-get remove -y make && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 CMD ["python", "main.py"]
