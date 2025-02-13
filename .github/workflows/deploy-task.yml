@@ -31,6 +31,10 @@ jobs:
       fail-fast: true
 
     steps:
+      - name: debug
+        run: |
+          echo "Current GitHub event_name: ${{ github.event_name }}"
+
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
@@ -59,5 +63,3 @@ jobs:
             --parameter-overrides \
               ParameterKey=s3TempBucketName,ParameterValue=${{ vars.S3_TEMP_BUCKET_NAME }} \
               ParameterKey=openAIKey,ParameterValue=${{ secrets.OPENAI_API_KEY }} \
-
-              
