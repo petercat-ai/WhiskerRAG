@@ -12,7 +12,7 @@ on:
       - '.github/workflows/deploy-server.yml'
       - '.aws/server_samconfig.toml'
       - 'template_server.yml'
-      - 'Dockerfile.aws.server'
+      - 'docker/Dockerfile.aws.server'
   pull_request:
     branches: ["test","main","preview","test/*","preview/*"]
     paths:
@@ -20,7 +20,7 @@ on:
       - '.github/workflows/deploy-server.yml'
       - '.aws/server_samconfig.toml'
       - 'template_server.yml'
-      - 'Dockerfile.aws.server'
+      - 'docker/Dockerfile.aws.server'
 
 
 permissions:
