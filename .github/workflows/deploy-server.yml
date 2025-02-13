@@ -31,11 +31,17 @@ permissions:
 jobs:
   deploy-server:
     runs-on: ubuntu-latest
-    # environment: Preview
+    environment: ${{ vars.WHISKER_ENV }}
     strategy:
       fail-fast: true
 
     steps:
+      - name: Print specific variables
+        run: |
+          echo "Current github.ref : ${{ github.ref }}"
+          echo "Current WHISKER_ENV: ${{ vars.WHISKER_ENV }}"
+          echo "GitHub actor: ${{ github.actor }}"
+
       - name: Checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
@@ -46,11 +52,7 @@ jobs:
           audience: sts.amazonaws.com
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Print specific variables
-        run: |
-          echo "Current github.ref : ${{ github.ref }}"
-          echo "Current WHISKER_ENV: ${{ vars.WHISKER_ENV }}"
-          echo "GitHub actor: ${{ github.actor }}"
+
 
       # # Build inside Docker containers
       # - run: sam build --use-container --template template_server.yml --config-file .aws/server_samconfig.toml
