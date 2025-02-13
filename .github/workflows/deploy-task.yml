@@ -8,6 +8,7 @@ on:
       - '.github/workflows/deploy-task.yml'
       - '.aws/task_samconfig.toml'
       - 'template_task.yml'
+      - 'docker/Dockerfile.aws.task'
   pull_request:
     branches: ["test","main","preview","test/*","preview/*"]
     paths:
@@ -15,6 +16,7 @@ on:
       - '.github/workflows/deploy-task.yml'
       - '.aws/task_samconfig.toml'
       - 'template_task.yml'
+      - 'docker/Dockerfile.aws.task'
 
 permissions:
   id-token: write   # This is required for requesting the JWT
