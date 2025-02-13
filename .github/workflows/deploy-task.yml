@@ -1,0 +1,63 @@
+name: Deploy sqs subscriber to AWS
+
+on:
+  push:
+    branches: ["test","main","preview","test/*","preview/*"]
+    paths:
+      - 'lambda_task_subscriber/**'
+      - '.github/workflows/deploy-task.yml'
+      - '.aws/task_samconfig.toml'
+      - 'template_task.yml'
+      - 'docker/Dockerfile.aws.task'
+  pull_request:
+    branches: ["test","main","preview","test/*","preview/*"]
+    paths:
+      - 'lambda_task_subscriber/**'
+      - '.github/workflows/deploy-task.yml'
+      - '.aws/task_samconfig.toml'
+      - 'template_task.yml'
+      - 'docker/Dockerfile.aws.task'
+
+permissions:
+  id-token: write   # This is required for requesting the JWT
+  contents: read    # This is required for actions/checkout
+  actions: write
+
+jobs:
+  deploy-task:
+    runs-on: ubuntu-latest
+    environment: Preview
+    strategy:
+      fail-fast: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::654654285942:role/Github-OIDC
+          audience: sts.amazonaws.com
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Print specific variables
+        run: |
+          echo "Current DEPLOY_ENV: ${{ vars.WHISKER_ENV }}"
+          echo "GitHub actor: ${{ github.actor }}"
+
+      # Build inside Docker containers
+      - run: sam build --use-container --template template_task.yml --config-file .aws/task_samconfig.toml
+
+      # Prevent prompts and failure when the stack is unchanged
+      - run: |
+          sam deploy \
+            --no-confirm-changeset \
+            --config-env ${{ vars.WHISKER_ENV}} \
+            --no-fail-on-empty-changeset \
+            --config-file .aws/task_samconfig.toml \
+            --parameter-overrides \
+              ParameterKey=s3TempBucketName,ParameterValue=${{ vars.S3_TEMP_BUCKET_NAME }} \
+              ParameterKey=openAIKey,ParameterValue=${{ secrets.OPENAI_API_KEY }} \
+
+              

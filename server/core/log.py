@@ -1,12 +1,13 @@
-import os
 import logging
-from logging.handlers import TimedRotatingFileHandler
+import os
 from datetime import datetime
+from logging.handlers import TimedRotatingFileHandler
 
-from whisker_rag_type.interface.logger_interface import LoggerManagerInterface
+from whiskerrag_types.interface import LoggerManagerInterface
+
+from core.settings import settings
 
 
-# ANSI 转义码颜色
 class ColorCodes:
     GREY = "\x1b[38;21m"
     BLUE = "\x1b[38;5;39m"
@@ -17,7 +18,7 @@ class ColorCodes:
 
 
 class ColoredFormatter(logging.Formatter):
-    def __init__(self, format_str):
+    def __init__(self, format_str: str) -> None:
         super().__init__(format_str)
         self.FORMATS = {
             logging.DEBUG: ColorCodes.GREY + format_str + ColorCodes.RESET,
@@ -26,7 +27,7 @@ class ColoredFormatter(logging.Formatter):
             logging.ERROR: ColorCodes.RED + format_str + ColorCodes.RESET,
         }
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt, datefmt="%Y-%m-%d %H:%M:%S")
         return formatter.format(record)
@@ -43,7 +44,12 @@ class LoggerManager(LoggerManagerInterface):
         return cls._instance
 
     def _initialize_logger(self):
-        # 获取日志文件路径，默认为当前目录下的 logs 文件夹
+        if settings.IS_IN_Lambda:
+            self._logger = logging.getLogger()
+            # In AWS Lambda environment, log files will be automatically uploaded
+            return
+
+        # Get the log file path, defaulting to the logs folder in the current directory
         log_dir = os.getenv("LOG_DIR", "./logs")
 
         # 确保日志目录存在
@@ -97,5 +103,4 @@ class LoggerManager(LoggerManagerInterface):
         self._logger.warning(message, *args, **kwargs)
 
 
-# 创建全局 logger 实例
 logger = LoggerManager()

@@ -1,1 +1,1 @@
-whisker_rag_utils
+whiskerrag>=0.0.2

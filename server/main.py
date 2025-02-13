@@ -1,76 +1,98 @@
+import asyncio
 import os
-from core import settings
-import uvicorn
+from contextlib import asynccontextmanager
 
-from core.plugin_manager import PluginManager
-from core.log import logger
-from model.response import ResponseModel
-from api.knowledge import router as knowledge_router
+import uvicorn
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 
-app = FastAPI()
+from api.knowledge import router as knowledge_router
+from api.retrieval import router as retrieval_router
+from api.task import router as task_router
+from core.auth import TenantAuthMiddleware
+from core.log import logger
+from core.plugin_manager import PluginManager
+from core.response import ResponseModel
+from core.settings import settings
+
+
+async def startup_event() -> None:
+    # Load task engine and database engine plugins from the plugins folder based on the configuration
+    path = os.path.abspath(os.path.dirname(__file__))
+    logger.info("Application started")
+    PluginManager(path)
+    task_engine = PluginManager().taskPlugin
+    db_engine = PluginManager().dbPlugin
+    asyncio.create_task(task_engine.on_task_execute(db_engine))
+    logger.info("Task engine callback registered")
+
+
+async def shutdown_event() -> None:
+    task_engine = PluginManager().taskPlugin
+    await task_engine.stop_on_task_execute()
+    logger.info("Application shutdown")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):  # type: ignore
+    await startup_event()
+    try:
+        yield
+    finally:
+        await shutdown_event()
+
+
+app = FastAPI(lifespan=lifespan)
+cors_origins_whitelist = os.getenv("CORS_ORIGINS_WHITELIST", "*")
+cors_origins = (
+    ["*"] if cors_origins_whitelist is None else cors_origins_whitelist.split(",")
+)
+app.add_middleware(TenantAuthMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers="*",
+)
+
 app.include_router(knowledge_router.router)
-
-if os.getenv("ENV") == "development":
-    # 添加开发模式中间件
-    from fastapi.middleware.cors import CORSMiddleware
-
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"],  # 允许所有源
-        allow_credentials=True,
-        allow_methods=["*"],  # 允许所有方法
-        allow_headers=["*"],  # 允许所有头
-    )
+app.include_router(retrieval_router.router)
+app.include_router(task_router.router)
 
 
 @app.get("/")
-def home_page():
+def home_page() -> RedirectResponse:
     return RedirectResponse(url=settings.WEB_URL)
 
 
 @app.get("/api/health_checker", response_model=ResponseModel)
-def health_checker():
-    return {success: True, message: "Server is running"}
+def health_checker() -> ResponseModel[dict]:
+    res = {"env": os.getenv("ENV"), "extra": "hello"}
+    return ResponseModel(success=True, data=res)
 
 
 @app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
     return JSONResponse(
-        status_code=exc.status_code,
-        content={"success": False, "message": exc.detail},
-    )
-
-
-@app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(
-        status_code=500,
+        status_code=exc.status_code or 500,
         content={"success": False, "message": str(exc)},
     )
 
 
-@app.on_event("startup")
-async def startup_event():
-    # 读取配置加载 plugins 文件夹下的 任务引擎、数据引擎插件
-    path = os.path.abspath(os.path.dirname(__file__))
-    logger.info("Application started")
-    PluginManager(path)
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    logger.info("Application shutting down")
-
-
 if __name__ == "__main__":
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,  # 开启热重载
-        reload_dirs=["./"],  # 指定监听的目录
-        reload_includes=["*.py"],  # 指定监听的文件类型
-        reload_excludes=["*.pyc", "__pycache__/*"],  # 排除的文件/目录
-    )
+    if settings.IS_DEV:
+        uvicorn.run(
+            "main:app",
+            host="0.0.0.0",
+            port=8000,
+            reload=True,
+            reload_dirs=["./"],
+            reload_includes=["*.py", ".env", "./plugins/.env"],
+            reload_excludes=["*.pyc", "__pycache__/*", "./logs"],
+        )
+    else:
+        uvicorn.run(
+            app, host="0.0.0.0", port=int(os.environ.get("WHISKER_SERVER_PORT", "8080"))
+        )

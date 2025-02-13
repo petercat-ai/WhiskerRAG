@@ -1,6 +1,6 @@
 from typing import Optional
-from fastapi import APIRouter
 
+from fastapi import APIRouter
 
 router = APIRouter(
     prefix="/api/task",

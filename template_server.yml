@@ -1,0 +1,104 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Whisker RAG Server
+
+Globals:
+  Function:
+    Timeout: 300
+
+Parameters:
+  s3TempBucketName:
+    Type: String
+    Description: Environment marker for S3_TEMP_BUCKET_NAME
+    Default: "1"
+
+  supabaseServiceKey:
+    Type: String
+    Description: Environment marker for SUPABASE_SERVICE_KEY
+    Default: "1"
+
+  supabaseUrl:
+    Type: String
+    Description: Environment marker for SUPABASE_URL
+    Default: "1"
+
+  webUrl:
+    Type: String
+    Description: Environment marker for WEB_URL
+    Default: "1"
+
+  knowledgeTableName:
+    Type: String
+    Description: Environment marker for KNOWLEDGE_TABLE_NAME
+    Default: "knowledge"
+
+  chunkTableName:
+    Type: String
+    Description: Environment marker for CHUNK_TABLE_NAME
+    Default: "chunk"
+
+  taskTableName:
+    Type: String
+    Description: Environment marker for TASK_TABLE_NAME
+    Default: "task"
+
+  actionTableName:
+    Type: String
+    Description: Environment marker for ACTION_TABLE_NAME
+    Default: "action"
+
+  tenantTableName:
+    Type: String
+    Description: Environment marker for TENANT_TABLE_NAME
+    Default: "tenant"
+
+Resources:
+  WhiskerServer:
+    Type: AWS::Serverless::Function
+    Properties:
+      PackageType: Image
+      MemorySize: 512
+      Environment:
+        Variables:
+          AWS_LWA_INVOKE_MODE: RESPONSE_STREAM
+          AWS_ACCOUNT_ID: !Ref AWS::AccountId
+          S3_TEMP_BUCKET_NAME: !Ref s3TempBucketName
+          SUPABASE_SERVICE_KEY: !Ref supabaseServiceKey
+          SUPABASE_URL: !Ref supabaseUrl
+          WEB_URL: !Ref webUrl
+          KNOWLEDGE_TABLE_NAME: !Ref knowledgeTableName
+          CHUNK_TABLE_NAME: !Ref chunkTableName
+          TASK_TABLE_NAME: !Ref taskTableName
+          ACTION_TABLE_NAME: !Ref actionTableName
+          TENANT_TABLE_NAME: !Ref tenantTableName
+      FunctionUrlConfig:
+        AuthType: NONE
+        InvokeMode: RESPONSE_STREAM
+      Policies:
+      - Statement:
+        - Sid: BedrockInvokePolicy
+          Effect: Allow
+          Action:
+            - bedrock:InvokeModelWithResponseStream
+          Resource: '*'
+        - Sid: AllObjectActions
+          Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+            - s3:DeleteObject
+          Resource:
+            - !Sub 'arn:aws:s3:::${s3TempBucketName}/*'
+      Tracing: Active
+    Metadata:
+      DockerContext: server
+      Dockerfile: ../docker/Dockerfile.aws.server
+      DockerTag: v1
+
+Outputs:
+  WhiskerServerUrl:
+    Description: "Function URL for FastAPI function"
+    Value: !GetAtt WhiskerServerUrl.FunctionUrl
+  WhiskerServer:
+    Description: "FastAPI Lambda Function ARN"
+    Value: !GetAtt WhiskerServer.Arn
