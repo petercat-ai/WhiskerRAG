@@ -52,6 +52,11 @@ Parameters:
     Description: Environment marker for TENANT_TABLE_NAME
     Default: "tenant"
 
+  openAIKey:
+    Type: String
+    Description: Environment marker for OPENAI_API_KEY
+    Default: "1"
+
 Resources:
   WhiskerServer:
     Type: AWS::Serverless::Function
@@ -71,6 +76,7 @@ Resources:
           TASK_TABLE_NAME: !Ref taskTableName
           ACTION_TABLE_NAME: !Ref actionTableName
           TENANT_TABLE_NAME: !Ref tenantTableName
+          OPENAI_API_KEY: !Ref openAIKey
       FunctionUrlConfig:
         AuthType: NONE
         InvokeMode: RESPONSE_STREAM

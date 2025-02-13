@@ -22,7 +22,6 @@ on:
       - 'template_server.yml'
       - 'docker/Dockerfile.aws.server'
 
-
 permissions:
   id-token: write   # This is required for requesting the JWT
   contents: read    # This is required for actions/checkout
@@ -32,7 +31,6 @@ jobs:
   deploy-server:
     runs-on: ubuntu-latest
     environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
-    # 然后在 steps 中可以使用环境变量
     env:
       ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
     strategy:
@@ -57,25 +55,24 @@ jobs:
           audience: sts.amazonaws.com
           aws-region: ${{ vars.AWS_REGION }}
 
+      # Build inside Docker containers
+      - run: sam build --use-container --template template_server.yml --config-file .aws/server_samconfig.toml
 
-
-      # # Build inside Docker containers
-      # - run: sam build --use-container --template template_server.yml --config-file .aws/server_samconfig.toml
-
-      # # Prevent prompts and failure when the stack is unchanged
-      # - run: |
-      #     sam deploy \
-      #       --no-confirm-changeset \
-      #       --config-env ${{ vars.WHISKER_ENV}} \
-      #       --no-fail-on-empty-changeset \
-      #       --config-file .aws/server_samconfig.toml \
-      #       --parameter-overrides \
-      #         ParameterKey=supabaseServiceKey,ParameterValue=${{ secrets.SUPABASE_SERVICE_KEY }} \
-      #         ParameterKey=supabaseUrl,ParameterValue=${{ secrets.SUPABASE_URL }} \
-      #         ParameterKey=s3TempBucketName,ParameterValue=${{ vars.S3_TEMP_BUCKET_NAME }} \
-      #         ParameterKey=webUrl,ParameterValue=${{ vars.WEB_URL }} \
-      #         ParameterKey=knowledgeTableName,ParameterValue=${{ vars.KNOWLEDGE_TABLE_NAME }} \
-      #         ParameterKey=chunkTableName,ParameterValue=${{ vars.CHUNK_TABLE_NAME }} \
-      #         ParameterKey=taskTableName,ParameterValue=${{ vars.TASK_TABLE_NAME }} \
-      #         ParameterKey=actionTableName,ParameterValue=${{ vars.ACTION_TABLE_NAME }} \
-      #         ParameterKey=tenantTableName,ParameterValue=${{ vars.TENANT_TABLE_NAME }}
+      # Prevent prompts and failure when the stack is unchanged
+      - run: |
+          sam deploy \
+            --no-confirm-changeset \
+            --config-env ${{ vars.WHISKER_ENV}} \
+            --no-fail-on-empty-changeset \
+            --config-file .aws/server_samconfig.toml \
+            --parameter-overrides \
+              ParameterKey=supabaseServiceKey,ParameterValue=${{ secrets.SUPABASE_SERVICE_KEY }} \
+              ParameterKey=supabaseUrl,ParameterValue=${{ secrets.SUPABASE_URL }} \
+              ParameterKey=s3TempBucketName,ParameterValue=${{ vars.S3_TEMP_BUCKET_NAME }} \
+              ParameterKey=webUrl,ParameterValue=${{ vars.WEB_URL }} \
+              ParameterKey=knowledgeTableName,ParameterValue=${{ vars.KNOWLEDGE_TABLE_NAME }} \
+              ParameterKey=chunkTableName,ParameterValue=${{ vars.CHUNK_TABLE_NAME }} \
+              ParameterKey=taskTableName,ParameterValue=${{ vars.TASK_TABLE_NAME }} \
+              ParameterKey=actionTableName,ParameterValue=${{ vars.ACTION_TABLE_NAME }} \
+              ParameterKey=tenantTableName,ParameterValue=${{ vars.TENANT_TABLE_NAME }} \
+              ParameterKey=openAIKey,ParameterValue=${{ vars.OPENAI_API_KEY }}

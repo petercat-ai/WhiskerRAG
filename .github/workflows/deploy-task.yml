@@ -19,14 +19,16 @@ on:
       - 'docker/Dockerfile.aws.task'
 
 permissions:
-  id-token: write   # This is required for requesting the JWT
-  contents: read    # This is required for actions/checkout
+  id-token: write
+  contents: read
   actions: write
 
 jobs:
   deploy-task:
     runs-on: ubuntu-latest
-    environment: Preview
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+    env:
+      ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
     strategy:
       fail-fast: true
 
