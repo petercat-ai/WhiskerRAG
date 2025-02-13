@@ -2,7 +2,7 @@ import json
 import os
 from typing import List, TypedDict
 from whiskerrag_types.model import Task, Knowledge, TaskStatus
-from whiskerrag_utils.registry import init_register, get_register
+from whiskerrag_utils import get_register, RegisterTypeEnum
 import boto3
 import asyncio
 import json
@@ -37,7 +37,6 @@ def send_messages(output_messages, max_retries=3):
     try:
         output_queue_url = os.getenv("OUTPUT_QUEUE_URL")
         print(f"OUTPUT_QUEUE_URL: {output_queue_url}")
-        print(f"Output messages: {output_messages}")
         sqs = boto3.client("sqs")
         # Notice: MessageBody max size: 256kb
         response = sqs.send_message(
@@ -45,6 +44,7 @@ def send_messages(output_messages, max_retries=3):
         )
         print(f"Message sent to SQS : {response}")
     except Exception as e:
+        print(f"Output messages: {output_messages},max retries:{max_retries}")
         print(f"Error sending messages to SQS: {e}")
         if max_retries > 0:
             print(f"Retrying... {max_retries} attempts left")
@@ -59,11 +59,14 @@ def send_messages(output_messages, max_retries=3):
 async def _handle_task(task: Task, knowledge: Knowledge):
     execute_result: MessageType = {}
     try:
-        init_register()
-        loader = get_register(knowledge.source_type)
-        model = get_register(knowledge.embedding_model_name)
-        documents = await loader(knowledge).load()
-        chunk_list = await model().embed(knowledge, documents)
+        knowledge_loader = get_register(
+            RegisterTypeEnum.KNOWLEDGE_LOADER, knowledge.source_type
+        )
+        embedding_model = get_register(
+            RegisterTypeEnum.EMBEDDING, knowledge.embedding_model_name
+        )
+        documents = await knowledge_loader(knowledge).load()
+        chunk_list = await embedding_model().embed_documents(knowledge, documents)
         print(f"Task: {task.model_dump()}")
         task.status = TaskStatus.SUCCESS
         execute_result = {
@@ -85,7 +88,7 @@ async def _handle_task(task: Task, knowledge: Knowledge):
     return reference
 
 
-async def _batch_execute_task(records):
+async def _handle_records(records):
     output_messages = []
     for record in records:
         try:
@@ -113,7 +116,7 @@ def lambda_handler(event, context):
     try:
         if event:
             print(f"Event: {event},type:{type(event)}; Context: {context},")
-            asyncio.run(_batch_execute_task(event.get("Records", [])))
+            asyncio.run(_handle_records(event.get("Records", [])))
         else:
             raise Exception("No event data found")
         return {"statusCode": 200, "message": "Success"}

@@ -1,7 +1,7 @@
-import os
 import logging
-from logging.handlers import TimedRotatingFileHandler
+import os
 from datetime import datetime
+from logging.handlers import TimedRotatingFileHandler
 
 from whiskerrag_types.interface import LoggerManagerInterface
 
@@ -18,7 +18,7 @@ class ColorCodes:
 
 
 class ColoredFormatter(logging.Formatter):
-    def __init__(self, format_str):
+    def __init__(self, format_str: str) -> None:
         super().__init__(format_str)
         self.FORMATS = {
             logging.DEBUG: ColorCodes.GREY + format_str + ColorCodes.RESET,
@@ -27,7 +27,7 @@ class ColoredFormatter(logging.Formatter):
             logging.ERROR: ColorCodes.RED + format_str + ColorCodes.RESET,
         }
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt, datefmt="%Y-%m-%d %H:%M:%S")
         return formatter.format(record)

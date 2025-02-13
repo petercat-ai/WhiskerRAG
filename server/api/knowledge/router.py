@@ -1,14 +1,12 @@
-from fastapi import APIRouter, Depends
 from typing import List
 
+from fastapi import APIRouter, Depends
+from whiskerrag_types.model import KnowledgeCreate, Tenant
+
+from core.auth import get_tenant, require_auth
 from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
-from core.auth import get_tenant, require_auth
-from whiskerrag_types.model import (
-    Tenant,
-    KnowledgeCreate,
-)
 
 router = APIRouter(
     prefix="/api/knowledge",
@@ -33,5 +31,4 @@ async def add_knowledge(
         return ResponseModel(success=True, data=saved_knowledge)
     except Exception as e:
         logger.error(e)
-        # TODO: add transaction
         return ResponseModel(success=False, message=str(e))

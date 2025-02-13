@@ -1,16 +1,18 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 # Docker volumnes
 docker/volumes/db/data
 docker/volumes/storage
 
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# python
 __pycache__/
 *.pyc
 **/*.pyc
+.pytest_cache
+.mypy_cache
+
 # dependencies
 node_modules/
-
 server/temp/
-
 venv
 .venv/
 
@@ -21,11 +23,11 @@ venv
 # next.js
 .next/
 out/
-
 .ruff_cache/
 
 # production
 build
+dist/
 
 # misc
 .DS_Store
@@ -43,13 +45,13 @@ yarn-error.log*
 .env
 *.env
 *.env.local
+
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
 .yarn
 /server/.aws-sam/*
 .aws-sam/*
@@ -58,11 +60,6 @@ next-env.d.ts
 .idea
 **/.vscode/
 
-# Pytest
-.pytest_cache
-
-dist/
-
+# log
 logs
 **/logs
-.mypy_cache

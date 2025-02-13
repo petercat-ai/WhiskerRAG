@@ -1,19 +1,49 @@
 import asyncio
 import os
+from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, RedirectResponse
 
-from core.settings import settings
-from core.auth import TenantAuthMiddleware
-from core.plugin_manager import PluginManager
-from core.log import logger
-from core.response import ResponseModel
 from api.knowledge import router as knowledge_router
+from api.retrieval import router as retrieval_router
+from api.task import router as task_router
+from core.auth import TenantAuthMiddleware
+from core.log import logger
+from core.plugin_manager import PluginManager
+from core.response import ResponseModel
+from core.settings import settings
 
 
-app = FastAPI()
+async def startup_event() -> None:
+    # Load task engine and database engine plugins from the plugins folder based on the configuration
+    path = os.path.abspath(os.path.dirname(__file__))
+    logger.info("Application started")
+    PluginManager(path)
+    task_engine = PluginManager().taskPlugin
+    db_engine = PluginManager().dbPlugin
+    asyncio.create_task(task_engine.on_task_execute(db_engine))
+    logger.info("Task engine callback registered")
+
+
+async def shutdown_event() -> None:
+    task_engine = PluginManager().taskPlugin
+    await task_engine.stop_on_task_execute()
+    logger.info("Application shutdown")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):  # type: ignore
+    await startup_event()
+    try:
+        yield
+    finally:
+        await shutdown_event()
+
+
+app = FastAPI(lifespan=lifespan)
 cors_origins_whitelist = os.getenv("CORS_ORIGINS_WHITELIST", "*")
 cors_origins = (
     ["*"] if cors_origins_whitelist is None else cors_origins_whitelist.split(",")
@@ -28,53 +58,27 @@ app.add_middleware(
 )
 
 app.include_router(knowledge_router.router)
+app.include_router(retrieval_router.router)
+app.include_router(task_router.router)
 
 
 @app.get("/")
-def home_page():
+def home_page() -> RedirectResponse:
     return RedirectResponse(url=settings.WEB_URL)
 
 
 @app.get("/api/health_checker", response_model=ResponseModel)
-def health_checker():
+def health_checker() -> ResponseModel[dict]:
     res = {"env": os.getenv("ENV"), "extra": "hello"}
-    return {"success": True, "message": res}
+    return ResponseModel(success=True, data=res)
 
 
 @app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
     return JSONResponse(
-        status_code=exc.status_code,
-        content={"success": False, "message": exc.detail},
-    )
-
-
-@app.exception_handler(Exception)
-async def general_exception_handler(request: Request, exc: Exception):
-    return JSONResponse(
-        status_code=500,
+        status_code=exc.status_code or 500,
         content={"success": False, "message": str(exc)},
     )
-
-
-@app.on_event("startup")
-async def startup_event():
-    # Load task engine and database engine plugins from the plugins folder based on the configuration
-    path = os.path.abspath(os.path.dirname(__file__))
-    logger.info("Application started")
-    PluginManager(path)
-    task_engine = PluginManager().taskPlugin
-    db_engine = PluginManager().dbPlugin
-    if db_engine and task_engine.on_task_execute:
-        asyncio.create_task(task_engine.on_task_execute(db_engine))
-        logger.info("Task engine callback registered")
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    task_engine = PluginManager().taskPlugin
-    await task_engine.stop_on_task_execute()
-    logger.info("Application shutdown")
 
 
 if __name__ == "__main__":

@@ -1,12 +1,13 @@
 from typing import Callable
-from fastapi import HTTPException, Header, Request, Response
+
+from fastapi import Header, HTTPException, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from .log import logger
-from .plugin_manager import PluginManager
 from whiskerrag_types.model import Tenant
 
+from .plugin_manager import PluginManager
 
-async def verify_api_key(auth_str: str):
+
+async def verify_api_key(auth_str: str) -> bool:
     tenant_sk = get_sk_from_header(auth_str)
     db = PluginManager().dbPlugin
     validate_res = db.validate_tenant_by_sk(tenant_sk)
@@ -15,8 +16,8 @@ async def verify_api_key(auth_str: str):
     return True
 
 
-def require_auth():
-    def decorator(func: Callable):
+def require_auth() -> Callable:
+    def decorator(func: Callable) -> Callable:
         setattr(func, "require_auth", True)
         return func
 
@@ -42,12 +43,11 @@ class TenantAuthMiddleware(BaseHTTPMiddleware):
         return response
 
 
-def get_sk_from_header(header_auth):
-    api_key = header_auth.split(" ")[1]
+def get_sk_from_header(header_auth: str) -> str:
+    api_key: str = header_auth.split(" ")[1]
     return api_key
 
 
-# 定义依赖函数
 async def get_tenant(header_auth: str = Header(None, alias="Authorization")) -> Tenant:
     if not header_auth:
         raise HTTPException(status_code=401, detail="API Key is missing")

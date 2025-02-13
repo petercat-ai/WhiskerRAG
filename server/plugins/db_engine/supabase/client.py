@@ -1,23 +1,27 @@
 from typing import List, Type, TypeVar
+import typing
 
+from pydantic import BaseModel
 from supabase.client import Client, create_client
 from whiskerrag_types.interface import DBPluginInterface
 from whiskerrag_types.model import (
+    Chunk,
     Knowledge,
-    Task,
-    Tenant,
     PageParams,
     PageResponse,
-    Chunk,
+    RetrievalByKnowledgeRequest,
+    RetrievalBySpaceRequest,
+    RetrievalChunk,
+    Task,
+    Tenant,
 )
-
-from pydantic import BaseModel
+from whiskerrag_utils import RegisterTypeEnum, get_register
 
 T = TypeVar("T", bound=BaseModel)
 
 
 class SupaBasePlugin(DBPluginInterface):
-    supabase_client: Client = None
+    supabase_client: Client
 
     def _check_table_exists(self, client: Client, table_name: str) -> bool:
         try:
@@ -27,19 +31,19 @@ class SupaBasePlugin(DBPluginInterface):
                 return True
             return False
         except Exception as e:
-            self.logger.info(f"检查表 {table_name} 出错: {e}")
+            self.logger.info(f"check table {table_name} error: {e}")
             return False
 
-    def get_db_client(self):
+    def get_db_client(self) -> Client:
         return self.supabase_client
 
-    def init(self):
-        # 初始化数据库连接
-        SUPABASE_URL = self.settings.get_env("SUPABASE_URL")
-        SUPABASE_SERVICE_KEY = self.settings.get_env("SUPABASE_SERVICE_KEY")
+    def init(self) -> None:
+        SUPABASE_URL = self.settings.get_env("SUPABASE_URL", "")
+        SUPABASE_SERVICE_KEY = self.settings.get_env("SUPABASE_SERVICE_KEY", "")
+        if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+            raise Exception("SUPABASE_URL and SUPABASE_SERVICE_KEY are required")
         supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
         self.supabase_client = supabase
-        # 检查数据表是否存在
         for table_name in [
             self.settings.KNOWLEDGE_TABLE_NAME,
             self.settings.TASK_TABLE_NAME,
@@ -52,27 +56,14 @@ class SupaBasePlugin(DBPluginInterface):
                     f"Table {table_name} does not exist, please create the table first"
                 )
 
-    async def get_paginated_data(
+    @typing.no_type_check
+    async def _get_paginated_data(
         self,
         table_name: str,
         model_class: Type[T],
         page_params: PageParams,
     ) -> PageResponse[T]:
-        """
-        General pagination query method
-
-        Args:
-            table_name (str): Table name
-            model_class (Type[T]): Data model class
-            page_params (PageParams): Pagination parameters
-            eq_conditions (Dict[str, any], optional): Dictionary of equality conditions. Defaults to None
-            search_fields (List[str], optional): List of search fields. Defaults to None
-
-        Returns:
-            PageResponse[T]: Pagination response object
-        """
         query = self.supabase_client.table(table_name)
-
         if page_params.eq_conditions:
             for field, value in page_params.eq_conditions.items():
                 query = query.eq(field, value)
@@ -99,7 +90,7 @@ class SupaBasePlugin(DBPluginInterface):
 
         total_pages = (total + page_params.page_size - 1) // page_params.page_size
 
-        return PageResponse[model_class](
+        return PageResponse[Type[model_class]](
             items=items,
             total=total,
             page=page_params.page,
@@ -127,7 +118,7 @@ class SupaBasePlugin(DBPluginInterface):
     async def get_knowledge_list(
         self, space_id: str, page_params: PageParams
     ) -> PageResponse[Knowledge]:
-        return await self.get_paginated_data(
+        return await self._get_paginated_data(
             self.settings.KNOWLEDGE_TABLE_NAME,
             Knowledge,
             page_params,
@@ -141,27 +132,27 @@ class SupaBasePlugin(DBPluginInterface):
             "knowledge_id", knowledge_id
         ).execute()
 
-    async def get_chunk_by_knowledge_id(self, knowledge_id: str):
+    async def get_chunk_by_knowledge_id(self, knowledge_id: str) -> List[Chunk]:
         pass
 
     async def update_knowledge(self, knowledge: Knowledge):
-        self.supabase_client.from_(self.settings.KNOWLEDGE_TABLE_NAME).upsert(
-            knowledge
-        ).execute()
+        res = (
+            self.supabase_client.table(self.settings.KNOWLEDGE_TABLE_NAME)
+            .upsert(knowledge)
+            .execute()
+        )
+        return [Knowledge(**knowledge) for knowledge in res.data] if res.data else []
 
-    async def delete_knowledge(self, knowledge_id_list: List[str]):
-        response = (
+    async def delete_knowledge(self, knowledge_id_list: List[str]) -> List[Knowledge]:
+        res = (
             self.supabase_client.table(self.settings.KNOWLEDGE_TABLE_NAME)
             .delete()
             .in_("knowledge_id", knowledge_id_list)
             .execute()
         )
-        return response.data
+        return [Knowledge(**knowledge) for knowledge in res.data] if res.data else []
 
-    async def get_tenant_by_id(self, tenant_id: str):
-        pass
-
-    async def delete_knowledge(self, knowledge_id_list: List[str]):
+    async def get_tenant_by_id(self, tenant_id: str) -> Tenant | None:
         pass
 
     async def save_chunk_list(self, chunk_list: List[Chunk]):
@@ -190,7 +181,7 @@ class SupaBasePlugin(DBPluginInterface):
         )
         return [Task(**task) for task in res.data] if res.data else []
 
-    async def update_task_list(self, task_list: List[Task]):
+    async def update_task_list(self, task_list: List[Task]) -> List[Task]:
         task_dicts = [
             task.model_dump(exclude_unset=True, exclude_none=True) for task in task_list
         ]
@@ -217,3 +208,44 @@ class SupaBasePlugin(DBPluginInterface):
         tenant_data = res.data[0]
         tenant = Tenant(**tenant_data)
         return tenant
+
+    async def search_space_chunk_list(
+        self,
+        params: RetrievalBySpaceRequest,
+    ) -> List[RetrievalChunk]:
+        embedding_model = get_register(
+            RegisterTypeEnum.EMBEDDING, params.embedding_model_name
+        )
+        query_embedding = await embedding_model().embed_text(params.question)
+        res = self.supabase_client.rpc(
+            "search_space_list_chunk",
+            {
+                "metadata_filter": params,
+                "query_embedding": query_embedding,
+                "query_embedding_model_name": params.embedding_model_name,
+                "space_id_list": params.space_id_list,
+                "similarity_threshold": params.similarity_threshold,
+            },
+        ).execute()
+        return [RetrievalChunk(**item) for item in res.data] if res.data else []
+
+    async def search_knowledge_chunk_list(
+        self,
+        params: RetrievalByKnowledgeRequest,
+    ) -> List[RetrievalChunk]:
+        EmbeddingCls = get_register(
+            RegisterTypeEnum.EMBEDDING, params.embedding_model_name
+        )
+        embedding_instance = EmbeddingCls()
+        query_embedding = await embedding_instance.embed_text(params.question)
+        res = self.supabase_client.rpc(
+            "search_knowledge_list_chunk",
+            {
+                "metadata_filter": params.metadata_filter,
+                "query_embedding": query_embedding,
+                "query_embedding_model_name": params.embedding_model_name,
+                "knowledge_id_list": params.knowledge_id_list,
+                "similarity_threshold": params.similarity_threshold,
+            },
+        ).execute()
+        return [RetrievalChunk(**item) for item in res.data] if res.data else []

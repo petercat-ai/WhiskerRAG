@@ -3,8 +3,8 @@ import json
 from typing import List
 
 from pydantic import BaseModel
-from whiskerrag_types.model import Task, Knowledge, Chunk
 from whiskerrag_types.interface import DBPluginInterface
+from whiskerrag_types.model import Chunk, Knowledge, Task
 
 
 class TaskExecuteResult(BaseModel):
@@ -14,7 +14,6 @@ class TaskExecuteResult(BaseModel):
 
 
 class SQSMessageProcessor:
-
     def __init__(
         self,
         logger,

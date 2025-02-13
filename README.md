@@ -2,8 +2,8 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
-[![GitHub stars](https://img.shields.io/github/stars/petercat-ai/WhiskerRAG.svg)](https://github.com/petercat-ai/WhiskerRAG/stargazers)
-[![GitHub issues](https://img.shields.io/github/issues/petercat-ai/WhiskerRAG.svg)](https://github.com/petercat-ai/WhiskerRAG/issues)
+[![GitHub stars](https://img.shields.io/github/stars/petercat-ai/whiskerrag.svg)](https://github.com/petercat-ai/whiskerrag/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/petercat-ai/whiskerrag.svg)](https://github.com/petercat-ai/whiskerrag/issues)
 
 A lightweight and flexible RAG (Retrieval-Augmented Generation) framework.
 

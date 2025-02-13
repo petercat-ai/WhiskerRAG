@@ -14,23 +14,10 @@ COPY . .
 # Copy aws-lambda-adapter for Streaming response
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.1 /lambda-adapter /opt/extensions/lambda-adapter
 
-# Install Poetry
-RUN pip3 install poetry
-
-# Copy poetry files first
-COPY pyproject.toml poetry.lock ./
-
-# Configure poetry
-RUN poetry config virtualenvs.create false
-
 # Install dependencies
-RUN poetry install --no-interaction --no-ansi
-
-RUN if [ -f plugins/requirements.txt ]; then \
-pip3 install -r plugins/requirements.txt -U --no-cache-dir; \
-fi
+RUN make install
 
 # Clean up
-RUN rm -rf ~/.cache/pip ~/.cache/poetry
+RUN rm -rf ~/.cache/pip
 
 CMD ["python", "main.py"]

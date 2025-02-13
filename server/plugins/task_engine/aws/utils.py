@@ -1,10 +1,10 @@
 from typing import List
-from whiskerrag_types.model.knowledge import Knowledge, KnowledgeCreate, KnowledgeType
+
+from whiskerrag_types.model.knowledge import (Knowledge, KnowledgeCreate,
+                                              KnowledgeTypeEnum)
 from whiskerrag_types.model.tenant import Tenant
-from whiskerrag_utils.loader.github.repo_loader import (
-    GithubRepoLoader,
-    GitFileElementType,
-)
+from whiskerrag_utils.loader.github.repo_loader import (GitFileElementType,
+                                                        GithubRepoLoader)
 
 
 async def get_knowledge_list_from_github_repo(
@@ -39,7 +39,7 @@ async def get_knowledge_list_from_github_repo(
                         "metadata",
                     }
                 ),
-                knowledge_type=KnowledgeType.MARKDOWN,
+                knowledge_type=KnowledgeTypeEnum.MARKDOWN,
                 knowledge_name=f"{file.repo_name}/{file.path}",
                 source_url=file.url,
                 tenant_id=tenant.tenant_id,

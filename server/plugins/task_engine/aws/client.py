@@ -1,28 +1,29 @@
 import asyncio
 import json
-from typing import List
-import boto3
-from whiskerrag_types.interface import TaskEnginPluginInterface, DBPluginInterface
+from typing import List, Optional
+
+import boto3  # type: ignore
+from whiskerrag_types.interface import DBPluginInterface, TaskEnginPluginInterface
 from whiskerrag_types.model import (
     Knowledge,
     KnowledgeCreate,
-    KnowledgeSourceType,
-    Tenant,
+    KnowledgeSourceEnum,
     Task,
     TaskStatus,
+    Tenant,
 )
 
-from plugins.task_engine.aws.utils import get_knowledge_list_from_github_repo
 from plugins.task_engine.aws.sqs_message_processor import SQSMessageProcessor
+from plugins.task_engine.aws.utils import get_knowledge_list_from_github_repo
 
 
 class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
-    SQS_QUEUE_URL: str = None
-    OUTPUT_QUEUE_URL: str = None
+    SQS_QUEUE_URL: Optional[str] = None
+    OUTPUT_QUEUE_URL: Optional[str] = None
     max_retries: int = 3
     s3_client: boto3.client = None
     sqs_client: boto3.client = None
-    db_client: DBPluginInterface = None
+    db_client: Optional[DBPluginInterface] = None
     is_running: bool = False
 
     def init(self):
@@ -43,10 +44,10 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
 
     async def gen_knowledge_list(
         self, user_input: List[KnowledgeCreate], tenant: Tenant
-    ) -> List[Task]:
+    ) -> List[Knowledge]:
         knowledge_list: List[Knowledge] = []
         for record in user_input:
-            if record.source_type == KnowledgeSourceType.GITHUB_REPO:
+            if record.source_type == KnowledgeSourceEnum.GITHUB_REPO:
                 repo_knowledge_list = await get_knowledge_list_from_github_repo(
                     record, tenant
                 )
@@ -65,7 +66,7 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
     ) -> List[Task]:
         task_list: List[Task] = []
         for knowledge in knowledge_list:
-            task = Task(
+            task = Task(  # type: ignore
                 status=TaskStatus.PENDING,
                 knowledge_id=knowledge.knowledge_id,
                 space_id=knowledge.space_id,
@@ -76,7 +77,7 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
 
     async def batch_execute_task(
         self, task_list: List[Task], knowledge_list: List[Knowledge]
-    ) -> List[Task]:
+    ) -> List[dict]:
         batch_size = 5
         knowledge_dict = {
             knowledge.knowledge_id: knowledge for knowledge in knowledge_list
