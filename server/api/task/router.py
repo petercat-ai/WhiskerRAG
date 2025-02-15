@@ -5,7 +5,6 @@ from whiskerrag_types.model import PageParams, PageResponse, Tenant
 
 from core.auth import get_tenant, require_auth
 from core.response import ResponseModel
-from core.log import logger
 from core.plugin_manager import PluginManager
 
 router = APIRouter(

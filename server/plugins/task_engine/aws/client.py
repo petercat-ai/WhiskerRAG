@@ -6,15 +6,12 @@ import boto3  # type: ignore
 from whiskerrag_types.interface import DBPluginInterface, TaskEnginPluginInterface
 from whiskerrag_types.model import (
     Knowledge,
-    KnowledgeCreate,
-    KnowledgeSourceEnum,
     Task,
     TaskStatus,
     Tenant,
 )
 
 from plugins.task_engine.aws.sqs_message_processor import SQSMessageProcessor
-from plugins.task_engine.aws.utils import get_knowledge_list_from_github_repo
 
 
 class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
@@ -42,31 +39,12 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
                 f"Missing environment variables: {', '.join(missing_vars)}. Please set these variables in the .env file located in the plugins folder."
             )
 
-    async def gen_knowledge_list(
-        self, user_input: List[KnowledgeCreate], tenant: Tenant
-    ) -> List[Knowledge]:
-        knowledge_list: List[Knowledge] = []
-        for record in user_input:
-            if record.source_type == KnowledgeSourceEnum.GITHUB_REPO:
-                repo_knowledge_list = await get_knowledge_list_from_github_repo(
-                    record, tenant
-                )
-                knowledge_list.extend(repo_knowledge_list)
-                continue
-            knowledge = Knowledge(
-                **record.model_dump(),
-                tenant_id=tenant.tenant_id,
-            )
-            knowledge_list.append(knowledge)
-
-        return knowledge_list
-
     async def init_task_from_knowledge(
         self, knowledge_list: List[Knowledge], tenant: Tenant
     ) -> List[Task]:
         task_list: List[Task] = []
         for knowledge in knowledge_list:
-            task = Task(  # type: ignore
+            task = Task(
                 status=TaskStatus.PENDING,
                 knowledge_id=knowledge.knowledge_id,
                 space_id=knowledge.space_id,
@@ -106,9 +84,6 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
             await process_batch(batch)
 
         return task_list
-
-    async def execute_task(self, task_id: str) -> List[Task]:
-        pass
 
     async def on_task_execute(self, db):
         self.db_client = db

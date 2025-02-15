@@ -1,1 +1,3 @@
 whiskerrag>=0.0.2
+supabase
+dotenv

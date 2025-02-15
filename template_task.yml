@@ -11,10 +11,31 @@ Parameters:
     Type: String
     Description: Environment marker for S3_TEMP_BUCKET_NAME
     Default: "1"
+
   openAIKey:
     Type: String
     Description: Environment marker for OPENAI_API_KEY
     Default: "1"
+
+  supabaseServiceKey:
+    Type: String
+    Description: Environment marker for SUPABASE_SERVICE_KEY
+    Default: "1"
+
+  supabaseUrl:
+    Type: String
+    Description: Environment marker for SUPABASE_URL
+    Default: "1"
+
+  chunkTableName:
+    Type: String
+    Description: Environment marker for CHUNK_TABLE_NAME
+    Default: "chunk"
+
+  taskTableName:
+    Type: String
+    Description: Environment marker for TASK_TABLE_NAME
+    Default: "task"
 
 Resources:
   InputQueue:
@@ -31,12 +52,6 @@ Resources:
     Properties:
       QueueName: !Sub '${AWS::StackName}-input-dlq'
 
-  OutputQueue:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub '${AWS::StackName}-output-queue'
-      VisibilityTimeout: 300
-
   InputQueuePolicy:
     Type: AWS::SQS::QueuePolicy
     Properties:
@@ -50,19 +65,6 @@ Resources:
             Action: 'sqs:SendMessage'
             Resource: !GetAtt InputQueue.Arn
 
-  OutputQueuePolicy:
-    Type: AWS::SQS::QueuePolicy
-    Properties:
-      Queues:
-        - !Ref OutputQueue
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal: "*"
-            Action: 'sqs:SendMessage'
-            Resource: !GetAtt OutputQueue.Arn
-
   TaskFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -73,9 +75,12 @@ Resources:
       Environment:
         Variables:
           AWS_ACCOUNT_ID: !Ref AWS::AccountId
-          OUTPUT_QUEUE_URL: !Ref OutputQueue
           S3_TEMP_BUCKET_NAME: !Ref s3TempBucketName
           OPENAI_API_KEY: !Ref openAIKey
+          SUPABASE_SERVICE_KEY: !Ref supabaseServiceKey
+          SUPABASE_URL: !Ref supabaseUrl
+          CHUNK_TABLE_NAME: !Ref chunkTableName
+          TASK_TABLE_NAME: !Ref taskTableName
       Events:
         SQSTrigger:
           Type: SQS
@@ -98,7 +103,6 @@ Resources:
                 - sqs:GetQueueAttributes
               Resource: 
                 - !GetAtt InputQueue.Arn
-                - !GetAtt OutputQueue.Arn
             - Sid: AllObjectActions
               Effect: Allow
               Action:
@@ -123,12 +127,6 @@ Outputs:
   InputQueueUrl:
     Description: "URL of the Input SQS Queue"
     Value: !Ref InputQueue
-  OutputQueueUrl:
-    Description: "URL of the Output SQS Queue"
-    Value: !Ref OutputQueue
   InputQueueArn:
     Description: "ARN of the Input SQS Queue"
     Value: !GetAtt InputQueue.Arn
-  OutputQueueArn:
-    Description: "ARN of the Output SQS Queue"
-    Value: !GetAtt OutputQueue.Arn

@@ -65,12 +65,12 @@ Resources:
       MemorySize: 512
       Environment:
         Variables:
+          WEB_URL: !Ref webUrl
           AWS_LWA_INVOKE_MODE: RESPONSE_STREAM
           AWS_ACCOUNT_ID: !Ref AWS::AccountId
           S3_TEMP_BUCKET_NAME: !Ref s3TempBucketName
           SUPABASE_SERVICE_KEY: !Ref supabaseServiceKey
           SUPABASE_URL: !Ref supabaseUrl
-          WEB_URL: !Ref webUrl
           KNOWLEDGE_TABLE_NAME: !Ref knowledgeTableName
           CHUNK_TABLE_NAME: !Ref chunkTableName
           TASK_TABLE_NAME: !Ref taskTableName
