@@ -22,15 +22,10 @@ async def startup_event() -> None:
     path = os.path.abspath(os.path.dirname(__file__))
     logger.info("Application started")
     PluginManager(path)
-    task_engine = PluginManager().taskPlugin
-    db_engine = PluginManager().dbPlugin
-    asyncio.create_task(task_engine.on_task_execute(db_engine))
     logger.info("Task engine callback registered")
 
 
 async def shutdown_event() -> None:
-    task_engine = PluginManager().taskPlugin
-    await task_engine.stop_on_task_execute()
     logger.info("Application shutdown")
 
 

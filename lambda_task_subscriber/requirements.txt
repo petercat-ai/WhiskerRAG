@@ -1,3 +1,3 @@
-whiskerrag>=0.0.2
+whiskerrag==0.0.3a1
 supabase
 python-dotenv>=1.0.0,<2.0.0

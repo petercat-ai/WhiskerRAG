@@ -11,12 +11,9 @@ from whiskerrag_types.model import (
     Tenant,
 )
 
-from plugins.task_engine.aws.sqs_message_processor import SQSMessageProcessor
-
 
 class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
     SQS_QUEUE_URL: Optional[str] = None
-    OUTPUT_QUEUE_URL: Optional[str] = None
     max_retries: int = 3
     s3_client: boto3.client = None
     sqs_client: boto3.client = None
@@ -27,13 +24,10 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
         self.s3_client = boto3.client("s3")
         self.sqs_client = boto3.client("sqs")
         self.SQS_QUEUE_URL = self.settings.get_env("SQS_QUEUE_URL", "")
-        self.OUTPUT_QUEUE_URL = self.settings.get_env("OUTPUT_QUEUE_URL", "")
 
         missing_vars = []
         if self.SQS_QUEUE_URL is None:
             missing_vars.append("SQS_QUEUE_URL")
-        if self.OUTPUT_QUEUE_URL is None:
-            missing_vars.append("OUTPUT_QUEUE_URL")
         if missing_vars:
             raise Exception(
                 f"Missing environment variables: {', '.join(missing_vars)}. Please set these variables in the .env file located in the plugins folder."
@@ -56,7 +50,7 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
     async def batch_execute_task(
         self, task_list: List[Task], knowledge_list: List[Knowledge]
     ) -> List[Task]:
-        batch_size = 5
+        batch_size = 20
         knowledge_dict = {
             knowledge.knowledge_id: knowledge for knowledge in knowledge_list
         }
@@ -84,31 +78,3 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
             await process_batch(batch)
 
         return task_list
-
-    async def on_task_execute(self, db):
-        self.db_client = db
-        self.is_running = True
-        while self.is_running:
-            try:
-                response = await asyncio.to_thread(
-                    self.sqs_client.receive_message,
-                    QueueUrl=self.OUTPUT_QUEUE_URL,
-                    MaxNumberOfMessages=10,
-                    WaitTimeSeconds=20,
-                    AttributeNames=["All"],
-                )
-                processor = SQSMessageProcessor(
-                    self.logger,
-                    self.db_client,
-                    self.sqs_client,
-                    self.s3_client,
-                    self.OUTPUT_QUEUE_URL,
-                    self.max_retries,
-                )
-                await processor.handle_response(response)
-            except Exception as e:
-                self.logger.error(f"Error polling queue: {e}")
-                await asyncio.sleep(10)
-
-    async def stop_on_task_execute(self):
-        self.is_running = False

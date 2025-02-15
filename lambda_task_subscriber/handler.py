@@ -14,7 +14,7 @@ import logging
 
 
 memory_limit = (
-    int(get_env_variable["AWS_LAMBDA_FUNCTION_MEMORY_SIZE"], 250) * 1024 * 1024
+    int(get_env_variable("AWS_LAMBDA_FUNCTION_MEMORY_SIZE", 250)) * 1024 * 1024
 )
 
 
