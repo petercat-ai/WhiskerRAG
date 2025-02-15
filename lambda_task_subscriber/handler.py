@@ -1,5 +1,4 @@
 import multiprocessing
-import os
 from typing import Dict, List
 from whiskerrag_types.model import Task, Knowledge, TaskStatus
 from whiskerrag_utils import get_register, RegisterTypeEnum
@@ -63,7 +62,6 @@ class TaskExecutor:
     def __init__(self):
         self._is_running = False
         self.task_dao = TaskDao()
-        self.knowledge_dao = KnowledgeDao()
         self.chunk_dao = ChunkDao()
         print(f"max size is {memory_limit * 0.6}")
         self.pool = TaskPool(max_size=memory_limit * 0.6)
