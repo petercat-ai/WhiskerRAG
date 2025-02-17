@@ -13,7 +13,7 @@ router = APIRouter(
 )
 
 
-@router.post("/list")
+@router.post("/list", operation_id="get_task_list")
 @require_auth()
 async def get_task_list(
     body: PageParams[Task], tenant: Tenant = Depends(get_tenant)
@@ -25,7 +25,7 @@ async def get_task_list(
     return ResponseModel(data=task_list, success=True)
 
 
-@router.get("/detail")
+@router.get("/detail", operation_id="get_task_detail")
 @require_auth()
 async def get_task_list(
     task_id: str, tenant: Tenant = Depends(get_tenant)

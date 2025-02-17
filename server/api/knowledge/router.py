@@ -21,7 +21,7 @@ router = APIRouter(
 )
 
 
-@router.post("/add")
+@router.post("/add", operation_id="add_knowledge")
 @require_auth()
 async def add_knowledge(
     body: List[KnowledgeCreate], tenant: Tenant = Depends(get_tenant)
@@ -36,7 +36,7 @@ async def add_knowledge(
     return ResponseModel(success=True, data=saved_knowledge)
 
 
-@router.post("/list")
+@router.post("/list", operation_id="get_knowledge_list")
 @require_auth()
 async def get_knowledge_list(
     body: PageParams[Knowledge], tenant: Tenant = Depends(get_tenant)
@@ -48,7 +48,7 @@ async def get_knowledge_list(
     return ResponseModel(data=knowledge_list, success=True)
 
 
-@router.get("/detail")
+@router.get("/detail", operation_id="get_knowledge_by_id")
 @require_auth()
 async def get_knowledge_by_id(
     knowledge_id: str, tenant: Tenant = Depends(get_tenant)

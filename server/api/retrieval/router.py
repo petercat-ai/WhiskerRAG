@@ -20,7 +20,7 @@ router = APIRouter(
 )
 
 
-@router.post("/knowledge")
+@router.post("/knowledge", operation_id="retrieve_knowledge_content")
 @require_auth()
 async def retrieve_knowledge_content(
     body: RetrievalByKnowledgeRequest,
@@ -34,7 +34,7 @@ async def retrieve_knowledge_content(
     return ResponseModel(success=True, data=res)
 
 
-@router.post("/space")
+@router.post("/space", operation_id="retrieve_space_content")
 @require_auth()
 async def retrieve_space_content(
     body: RetrievalBySpaceRequest,

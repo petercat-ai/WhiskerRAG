@@ -261,6 +261,7 @@ class SupaBasePlugin(DBPluginInterface):
     # =============== retrieval ===============
     async def search_space_chunk_list(
         self,
+        tenant_id: str,
         params: RetrievalBySpaceRequest,
     ) -> List[RetrievalChunk]:
         embedding_model = get_register(
@@ -281,6 +282,7 @@ class SupaBasePlugin(DBPluginInterface):
 
     async def search_knowledge_chunk_list(
         self,
+        tenant_id: str,
         params: RetrievalByKnowledgeRequest,
     ) -> List[RetrievalChunk]:
         EmbeddingCls = get_register(

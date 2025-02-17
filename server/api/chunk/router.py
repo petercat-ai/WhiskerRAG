@@ -18,7 +18,10 @@ router = APIRouter(
 )
 
 
-@router.post("/list")
+@router.post(
+    "/list",
+    operation_id="get_chunk_list",
+)
 @require_auth()
 async def get_chunk_list(
     body: PageParams[Chunk], tenant: Tenant = Depends(get_tenant)
