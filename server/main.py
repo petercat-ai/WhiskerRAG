@@ -1,4 +1,3 @@
-import asyncio
 import os
 from contextlib import asynccontextmanager
 
@@ -9,6 +8,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 
 from api.knowledge import router as knowledge_router
 from api.retrieval import router as retrieval_router
+from api.chunk import router as chunk_router
 from api.task import router as task_router
 from core.auth import TenantAuthMiddleware
 from core.log import logger
@@ -55,6 +55,7 @@ app.add_middleware(
 app.include_router(knowledge_router.router)
 app.include_router(retrieval_router.router)
 app.include_router(task_router.router)
+app.include_router(chunk_router.router)
 
 
 @app.get("/")

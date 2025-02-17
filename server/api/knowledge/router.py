@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from whiskerrag_types.model import (
     KnowledgeCreate,
     Tenant,
@@ -10,7 +10,6 @@ from whiskerrag_types.model import (
 )
 
 from core.auth import get_tenant, require_auth
-from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
 from plugins.task_engine.aws.utils import gen_knowledge_list
@@ -40,10 +39,26 @@ async def add_knowledge(
 @router.post("/list")
 @require_auth()
 async def get_knowledge_list(
-    body: PageParams, tenant: Tenant = Depends(get_tenant)
-) -> ResponseModel:
+    body: PageParams[Knowledge], tenant: Tenant = Depends(get_tenant)
+) -> ResponseModel[PageResponse[Knowledge]]:
     db_engine = PluginManager().dbPlugin
     knowledge_list: PageResponse[Knowledge] = await db_engine.get_knowledge_list(
         tenant.tenant_id, body
     )
     return ResponseModel(data=knowledge_list, success=True)
+
+
+@router.get("/detail")
+@require_auth()
+async def get_knowledge_by_id(
+    knowledge_id: str, tenant: Tenant = Depends(get_tenant)
+) -> ResponseModel:
+    db_engine = PluginManager().dbPlugin
+    knowledge: PageResponse[Knowledge] = await db_engine.get_knowledge(
+        tenant.tenant_id, knowledge_id
+    )
+    if not knowledge:
+        raise HTTPException(
+            status_code=404, detail=f"Knowledge {knowledge_id} not found"
+        )
+    return ResponseModel(data=knowledge, success=True)

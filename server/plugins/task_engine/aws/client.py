@@ -47,21 +47,9 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
             task_list.append(task)
         return task_list
 
-    async def batch_execute_task(
-        self, task_list: List[Task], knowledge_list: List[Knowledge]
-    ) -> List[Task]:
-        batch_size = 20
-        knowledge_dict = {
-            knowledge.knowledge_id: knowledge for knowledge in knowledge_list
-        }
-        combined_list = []
-        for task in task_list:
-            knowledge = knowledge_dict.get(task.knowledge_id)
-            if knowledge:
-                combined_list.append(
-                    {"task": task.model_dump(), "knowledge": knowledge.model_dump()}
-                )
-
+    async def send_combined_list(
+        self, combined_list: List[dict], batch_size: int
+    ) -> None:
         async def process_batch(batch) -> Any:
             message_body = json.dumps(batch)
             return self.sqs_client.send_message_batch(
@@ -77,4 +65,44 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
             await asyncio.sleep(len(combined_list) / batch_size)
             await process_batch(batch)
 
+    async def batch_execute_task(
+        self, task_list: List[Task], knowledge_list: List[Knowledge]
+    ) -> List[Task]:
+        batch_size = 20
+        knowledge_dict = {
+            knowledge.knowledge_id: knowledge for knowledge in knowledge_list
+        }
+        combined_list = []
+        for task in task_list:
+            knowledge = knowledge_dict.get(task.knowledge_id)
+            if knowledge:
+                combined_list.append(
+                    {
+                        "task": task.model_dump(),
+                        "knowledge": knowledge.model_dump(),
+                        "execute_type": "add",
+                    }
+                )
+        await self.send_combined_list(combined_list, batch_size)
+        return task_list
+
+    async def batch_skip_task(
+        self, task_list: List[Task], knowledge_list: List[Knowledge]
+    ) -> List[Task]:
+        batch_size = 20
+        knowledge_dict = {
+            knowledge.knowledge_id: knowledge for knowledge in knowledge_list
+        }
+        combined_list = []
+        for task in task_list:
+            knowledge = knowledge_dict.get(task.knowledge_id)
+            if knowledge:
+                combined_list.append(
+                    {
+                        "task": task.model_dump(),
+                        "knowledge": knowledge.model_dump(),
+                        "execute_type": "skip",
+                    }
+                )
+        await self.send_combined_list(combined_list, batch_size)
         return task_list

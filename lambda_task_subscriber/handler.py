@@ -32,20 +32,26 @@ class TaskPool:
         self.waiting_pool.remove((task, knowledge))
 
     def finish_task(self, task: Task, knowledge: Knowledge) -> None:
-        """将任务标记为已完成"""
         self.running_tasks.pop(task.task_id)
         self.current_running_size -= knowledge.file_size
 
+    def skip_task(self, task: Task, knowledge: Knowledge) -> None:
+        try:
+            self.running_tasks.pop(task.task_id)
+        except Exception as e:
+            print(e)
+        try:
+            self.waiting_pool.remove((task, knowledge))
+        except Exception as e:
+            print(e)
+
     def add_to_waiting(self, task: Task, knowledge: Knowledge) -> None:
-        """添加任务到等待池"""
         self.waiting_pool.append((task, knowledge))
 
     def can_execute(self, file_size: int) -> bool:
-        """检查是否可以执行新任务"""
         return self.current_running_size + file_size <= self.max_size
 
     def get_executable_tasks(self) -> List[Tuple[Task, Knowledge]]:
-        """获取当前可以执行的任务"""
         executable_tasks = []
         for task, knowledge in self.waiting_pool:
             if self.can_execute(knowledge.file_size):
@@ -53,17 +59,15 @@ class TaskPool:
         return executable_tasks
 
     def is_empty(self) -> bool:
-        """检查是否还有待执行的任务"""
         return len(self.waiting_pool) == 0
 
 
 class TaskExecutor:
-
     def __init__(self):
         self._is_running = False
         self.task_dao = TaskDao()
         self.chunk_dao = ChunkDao()
-        print(f"max size is {memory_limit * 0.6}")
+        print(f"max size is {memory_limit * 0.6} bytes")
         self.pool = TaskPool(max_size=memory_limit * 0.6)
         self.logger = logging.getLogger(__name__)
         self.semaphore = asyncio.Semaphore(min(multiprocessing.cpu_count() * 3, 10))
@@ -76,6 +80,11 @@ class TaskExecutor:
             self.task_dao.update_task_list([task])
             return
         self.pool.add_to_waiting(task, knowledge)
+
+    def skip_task(self, task: Task, knowledge: Knowledge):
+        self.pool.skip_task(task, knowledge)
+        task.status = TaskStatus.SKIPPED
+        self.task_dao.update_task_list([task])
 
     async def _handle_task(self, task: Task, knowledge: Knowledge):
         async with self.semaphore:
@@ -154,9 +163,13 @@ async def handle_records(records):
                     raise ValueError(
                         "Missing 'task' or 'knowledge' in the record body item"
                     )
+                execute_type = item.get("execute_type", "add")
                 task = Task(**item["task"])
                 knowledge = Knowledge(**item["knowledge"])
-                executor.add_task(task, knowledge)
+                if execute_type == "add":
+                    executor.add_task(task, knowledge)
+                elif execute_type == "skip":
+                    executor.skip_task(task, knowledge)
             await executor.run()
         except Exception as e:
             print(f"Error parsing record: {e}, record: {record}")
