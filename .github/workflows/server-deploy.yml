@@ -9,7 +9,7 @@ on:
     branches: ["test","main","preview","test/*","preview/*"]
     paths:
       - 'server/**'
-      - '.github/workflows/deploy-server.yml'
+      - '.github/workflows/server-deploy.yml'
       - '.aws/server_samconfig.toml'
       - 'template_server.yml'
       - 'docker/Dockerfile.aws.server'
@@ -17,7 +17,7 @@ on:
     branches: ["test","main","preview","test/*","preview/*"]
     paths:
       - 'server/**'
-      - '.github/workflows/deploy-server.yml'
+      - '.github/workflows/server-deploy.yml'
       - '.aws/server_samconfig.toml'
       - 'template_server.yml'
       - 'docker/Dockerfile.aws.server'
@@ -28,13 +28,16 @@ permissions:
   actions: write
 
 jobs:
-  deploy-server:
+  server-deploy:
     runs-on: ubuntu-latest
     environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
     env:
       ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
     strategy:
       fail-fast: true
+    defaults:
+      run:
+        working-directory: ./server
 
     steps:
       - name: Print specific variables

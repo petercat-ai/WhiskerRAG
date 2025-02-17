@@ -13,6 +13,10 @@ $(VENV):
 	@echo "Virtual environment created."
 	@$(PIP) install --upgrade pip
 
+setup: install
+	@echo "Setting up..."
+	@pre-commit install
+
 install: $(VENV)
 	@echo "Installing production dependencies..."
 	@echo $(PIP)
@@ -22,10 +26,8 @@ install: $(VENV)
 	fi
 	@echo "Installing development dependencies..."
 	@$(PIP) install -r requirements-dev.txt
-	@pre-commit install
 	@echo "Dev installation complete."
 	@echo "Installation complete."
-
 
 install-plugin: 
 	@echo "Installing plugin dependencies..."
