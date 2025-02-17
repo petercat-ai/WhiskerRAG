@@ -63,7 +63,7 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
     async def batch_execute_task(
         self, task_list: List[Task], knowledge_list: List[Knowledge]
     ) -> List[Task]:
-        batch_size = 20
+        batch_size = 5
         knowledge_dict = {
             knowledge.knowledge_id: knowledge for knowledge in knowledge_list
         }

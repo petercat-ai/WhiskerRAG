@@ -180,6 +180,11 @@ def lambda_handler(event, context):
         if event:
             print(f"Event: {event},type:{type(event)}; Context: {context},")
             asyncio.run(handle_records(event.get("Records", [])))
+            executor = get_task_executor()
+            return {
+                "statusCode": 200,
+                "message": f"Success. current running size: {executor.pool.current_running_size}",
+            }
         else:
             raise Exception("No event data found")
         return {"statusCode": 200, "message": "Success"}

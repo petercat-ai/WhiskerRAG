@@ -1,10 +1,8 @@
-from asyncio import Task
-
 from core.auth import get_tenant, require_auth
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
 from fastapi import APIRouter, Depends
-from whiskerrag_types.model import PageParams, PageResponse, Tenant
+from whiskerrag_types.model import PageParams, PageResponse, Tenant, Task
 
 router = APIRouter(
     prefix="/api/task",
@@ -17,7 +15,7 @@ router = APIRouter(
 @require_auth()
 async def get_task_list(
     body: PageParams[Task], tenant: Tenant = Depends(get_tenant)
-) -> ResponseModel:
+) -> ResponseModel[PageResponse[Task]]:
     db_engine = PluginManager().dbPlugin
     task_list: PageResponse[Task] = await db_engine.get_task_list(
         tenant.tenant_id, body
@@ -27,7 +25,7 @@ async def get_task_list(
 
 @router.get("/detail", operation_id="get_task_detail")
 @require_auth()
-async def get_task_list(
+async def get_task_detail(
     task_id: str, tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel:
     db_engine = PluginManager().dbPlugin

@@ -57,12 +57,11 @@ class SupaBasePlugin(DBPluginInterface):
                     f"Table {table_name} does not exist, please create the table first"
                 )
 
-    @typing.no_type_check
     async def _get_paginated_data(
         self,
         tenant_id: str,
         table_name: str,
-        model_class: Type[T],
+        model_class: T,
         page_params: PageParams,
     ) -> PageResponse[T]:
         query = self.supabase_client.table(table_name).select("*", count="exact")
