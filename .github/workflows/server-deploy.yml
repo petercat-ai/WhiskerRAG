@@ -40,7 +40,6 @@ jobs:
     steps:
       - name: Print specific variables
         run: |
-          echo "$(ls)"
           echo "Current github.ref : ${{ github.ref }}"
           echo "Deploying to ${{ env.ENVIRONMENT }}"
           echo "Current AWS_REGION: ${{ vars.AWS_REGION }}"
