@@ -30,14 +30,15 @@ permissions:
 jobs:
   server-deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./server
+
     environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
     env:
       ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
     strategy:
       fail-fast: true
-    defaults:
-      run:
-        working-directory: ./server
 
     steps:
       - name: Print specific variables
