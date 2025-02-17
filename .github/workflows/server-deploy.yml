@@ -30,9 +30,6 @@ permissions:
 jobs:
   server-deploy:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./server
 
     environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
     env:
@@ -43,6 +40,7 @@ jobs:
     steps:
       - name: Print specific variables
         run: |
+          echo "$(ls)"
           echo "Current github.ref : ${{ github.ref }}"
           echo "Deploying to ${{ env.ENVIRONMENT }}"
           echo "Current AWS_REGION: ${{ vars.AWS_REGION }}"
