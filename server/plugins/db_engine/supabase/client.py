@@ -1,8 +1,8 @@
-from typing import List, Type, TypeVar
 import typing
+from typing import List, Type, TypeVar
 
-from pydantic import BaseModel
 from fastapi import HTTPException, status
+from pydantic import BaseModel
 from supabase.client import Client, create_client
 from whiskerrag_types.interface import DBPluginInterface
 from whiskerrag_types.model import (

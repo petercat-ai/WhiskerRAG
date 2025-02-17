@@ -3,10 +3,9 @@ import logging
 import os
 import sys
 
-from whiskerrag_types.interface import DBPluginInterface, TaskEnginPluginInterface
-
 from core.log import logger
 from core.settings import settings
+from whiskerrag_types.interface import DBPluginInterface, TaskEnginPluginInterface
 
 
 def singleton(cls):

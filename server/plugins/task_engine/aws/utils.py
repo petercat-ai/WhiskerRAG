@@ -3,8 +3,8 @@ from typing import List
 from whiskerrag_types.model import (
     Knowledge,
     KnowledgeCreate,
-    KnowledgeTypeEnum,
     KnowledgeSourceEnum,
+    KnowledgeTypeEnum,
     Tenant,
 )
 from whiskerrag_utils.loader.github.repo_loader import (

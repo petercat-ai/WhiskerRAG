@@ -2,19 +2,18 @@ import os
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
-
+from api.chunk import router as chunk_router
 from api.knowledge import router as knowledge_router
 from api.retrieval import router as retrieval_router
-from api.chunk import router as chunk_router
 from api.task import router as task_router
 from core.auth import TenantAuthMiddleware
 from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
 from core.settings import settings
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, RedirectResponse
 
 
 async def startup_event() -> None:

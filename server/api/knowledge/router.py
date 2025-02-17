@@ -1,18 +1,17 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
-from whiskerrag_types.model import (
-    KnowledgeCreate,
-    Tenant,
-    PageParams,
-    PageResponse,
-    Knowledge,
-)
-
 from core.auth import get_tenant, require_auth
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
+from fastapi import APIRouter, Depends, HTTPException
 from plugins.task_engine.aws.utils import gen_knowledge_list
+from whiskerrag_types.model import (
+    Knowledge,
+    KnowledgeCreate,
+    PageParams,
+    PageResponse,
+    Tenant,
+)
 
 router = APIRouter(
     prefix="/api/knowledge",

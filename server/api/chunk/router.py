@@ -1,15 +1,8 @@
-from fastapi import APIRouter, Depends
-from whiskerrag_types.model import (
-    Tenant,
-    PageParams,
-    Chunk,
-    PageResponse,
-    Knowledge,
-)
-
 from core.auth import get_tenant, require_auth
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
+from fastapi import APIRouter, Depends
+from whiskerrag_types.model import Chunk, Knowledge, PageParams, PageResponse, Tenant
 
 router = APIRouter(
     prefix="/api/chunk",

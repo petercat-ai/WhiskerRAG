@@ -1,5 +1,8 @@
 from typing import List
 
+from core.auth import get_tenant, require_auth
+from core.plugin_manager import PluginManager
+from core.response import ResponseModel
 from fastapi import APIRouter, Depends
 from whiskerrag_types.model import (
     PageResponse,
@@ -8,10 +11,6 @@ from whiskerrag_types.model import (
     RetrievalChunk,
     Tenant,
 )
-
-from core.auth import get_tenant, require_auth
-from core.plugin_manager import PluginManager
-from core.response import ResponseModel
 
 router = APIRouter(
     prefix="/api/retrieval",

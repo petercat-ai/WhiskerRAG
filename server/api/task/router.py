@@ -1,10 +1,10 @@
 from asyncio import Task
-from fastapi import APIRouter, Depends
-from whiskerrag_types.model import PageParams, PageResponse, Tenant
 
 from core.auth import get_tenant, require_auth
-from core.response import ResponseModel
 from core.plugin_manager import PluginManager
+from core.response import ResponseModel
+from fastapi import APIRouter, Depends
+from whiskerrag_types.model import PageParams, PageResponse, Tenant
 
 router = APIRouter(
     prefix="/api/task",
