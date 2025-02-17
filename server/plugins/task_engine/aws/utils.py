@@ -1,10 +1,36 @@
 from typing import List
 
-from whiskerrag_types.model.knowledge import (Knowledge, KnowledgeCreate,
-                                              KnowledgeTypeEnum)
-from whiskerrag_types.model.tenant import Tenant
-from whiskerrag_utils.loader.github.repo_loader import (GitFileElementType,
-                                                        GithubRepoLoader)
+from whiskerrag_types.model import (
+    Knowledge,
+    KnowledgeCreate,
+    KnowledgeTypeEnum,
+    KnowledgeSourceEnum,
+    Tenant,
+)
+from whiskerrag_utils.loader.github.repo_loader import (
+    GitFileElementType,
+    GithubRepoLoader,
+)
+
+
+async def gen_knowledge_list(
+    user_input: List[KnowledgeCreate], tenant: Tenant
+) -> List[Knowledge]:
+    knowledge_list: List[Knowledge] = []
+    for record in user_input:
+        if record.source_type == KnowledgeSourceEnum.GITHUB_REPO:
+            repo_knowledge_list = await get_knowledge_list_from_github_repo(
+                record, tenant
+            )
+            knowledge_list.extend(repo_knowledge_list)
+            continue
+        knowledge = Knowledge(
+            **record.model_dump(),
+            tenant_id=tenant.tenant_id,
+        )
+        knowledge_list.append(knowledge)
+
+    return knowledge_list
 
 
 async def get_knowledge_list_from_github_repo(

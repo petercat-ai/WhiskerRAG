@@ -1,4 +1,3 @@
-import asyncio
 import os
 from contextlib import asynccontextmanager
 
@@ -9,6 +8,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 
 from api.knowledge import router as knowledge_router
 from api.retrieval import router as retrieval_router
+from api.chunk import router as chunk_router
 from api.task import router as task_router
 from core.auth import TenantAuthMiddleware
 from core.log import logger
@@ -22,15 +22,10 @@ async def startup_event() -> None:
     path = os.path.abspath(os.path.dirname(__file__))
     logger.info("Application started")
     PluginManager(path)
-    task_engine = PluginManager().taskPlugin
-    db_engine = PluginManager().dbPlugin
-    asyncio.create_task(task_engine.on_task_execute(db_engine))
     logger.info("Task engine callback registered")
 
 
 async def shutdown_event() -> None:
-    task_engine = PluginManager().taskPlugin
-    await task_engine.stop_on_task_execute()
     logger.info("Application shutdown")
 
 
@@ -60,6 +55,7 @@ app.add_middleware(
 app.include_router(knowledge_router.router)
 app.include_router(retrieval_router.router)
 app.include_router(task_router.router)
+app.include_router(chunk_router.router)
 
 
 @app.get("/")
@@ -73,11 +69,19 @@ def health_checker() -> ResponseModel[dict]:
     return ResponseModel(success=True, data=res)
 
 
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.error(f"Global exception handler Request path: {request.url.path}")
+
+    if isinstance(exc, HTTPException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content=ResponseModel(success=False, message=str(exc.detail)).model_dump(),
+        )
+
     return JSONResponse(
-        status_code=exc.status_code or 500,
-        content={"success": False, "message": str(exc)},
+        status_code=500,
+        content=ResponseModel(success=False, message=str(exc)).model_dump(),
     )
 
 

@@ -3,13 +3,10 @@ import logging
 import os
 import sys
 
-from whiskerrag_types.interface import (DBPluginInterface,
-                                        TaskEnginPluginInterface)
+from whiskerrag_types.interface import DBPluginInterface, TaskEnginPluginInterface
 
 from core.log import logger
 from core.settings import settings
-
-# from dotenv import load_dotenv
 
 
 def singleton(cls):
@@ -68,14 +65,6 @@ class PluginManager:
                 f"Failed to load module '{module_name}' from '{module_path}': {e}"
             )
             raise e
-
-    # def _load_env_files(directory):
-    #     for root, _, files in os.walk(directory):
-    #         for file in files:
-    #             if file.endswith(".env"):
-    #                 env_path = os.path.join(root, file)
-    #                 load_dotenv(env_path)
-    #                 logger.info(f"Loaded environment variables from {env_path}")
 
     def load_plugins(self, pluginAbsPath):
         plugins_dir = os.path.join(pluginAbsPath, "plugins")

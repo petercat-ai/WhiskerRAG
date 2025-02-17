@@ -2,6 +2,7 @@ from typing import List, Type, TypeVar
 import typing
 
 from pydantic import BaseModel
+from fastapi import HTTPException, status
 from supabase.client import Client, create_client
 from whiskerrag_types.interface import DBPluginInterface
 from whiskerrag_types.model import (
@@ -59,17 +60,20 @@ class SupaBasePlugin(DBPluginInterface):
     @typing.no_type_check
     async def _get_paginated_data(
         self,
+        tenant_id: str,
         table_name: str,
         model_class: Type[T],
         page_params: PageParams,
     ) -> PageResponse[T]:
-        query = self.supabase_client.table(table_name)
+        query = self.supabase_client.table(table_name).select("*", count="exact")
         if page_params.eq_conditions:
             for field, value in page_params.eq_conditions.items():
+                if field == "tenant_id" and value != tenant_id:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail=f"Tenant {value} is not allowed to access this data.",
+                    )
                 query = query.eq(field, value)
-
-        total_count = query.count().execute()
-        total = total_count.count if total_count else 0
 
         if page_params.order_by:
             order_fields = page_params.order_by.split(",")
@@ -82,15 +86,16 @@ class SupaBasePlugin(DBPluginInterface):
             page_params.offset, page_params.offset + page_params.limit - 1
         )
 
-        response = await query.execute()
+        response = query.execute()
         data = response.data if response else []
+        total = response.count if response else 0
 
         # Convert to a list of model objects
         items = [model_class(**item) for item in data]
 
         total_pages = (total + page_params.page_size - 1) // page_params.page_size
 
-        return PageResponse[Type[model_class]](
+        return PageResponse[T](
             items=items,
             total=total,
             page=page_params.page,
@@ -98,6 +103,7 @@ class SupaBasePlugin(DBPluginInterface):
             total_pages=total_pages,
         )
 
+    # =============== knowledge ===============
     async def save_knowledge_list(
         self, knowledge_list: List[Knowledge]
     ) -> List[Knowledge]:
@@ -116,24 +122,21 @@ class SupaBasePlugin(DBPluginInterface):
         )
 
     async def get_knowledge_list(
-        self, space_id: str, page_params: PageParams
+        self, tenant_id: str, page_params: PageParams[Knowledge]
     ) -> PageResponse[Knowledge]:
         return await self._get_paginated_data(
-            self.settings.KNOWLEDGE_TABLE_NAME,
-            Knowledge,
-            page_params,
-            eq_conditions={
-                "space_id": space_id,
-            },
+            tenant_id, self.settings.KNOWLEDGE_TABLE_NAME, Knowledge, page_params
         )
 
-    async def get_knowledge(self, knowledge_id: str) -> Knowledge:
-        self.supabase_client.from_(self.settings.KNOWLEDGE_TABLE_NAME).select("*").eq(
-            "knowledge_id", knowledge_id
-        ).execute()
-
-    async def get_chunk_by_knowledge_id(self, knowledge_id: str) -> List[Chunk]:
-        pass
+    async def get_knowledge(self, tenant_id: str, knowledge_id: str) -> Knowledge:
+        res = (
+            self.supabase_client.from_(self.settings.KNOWLEDGE_TABLE_NAME)
+            .select("*")
+            .eq("knowledge_id", knowledge_id)
+            .eq("tenant_id", tenant_id)
+            .execute()
+        )
+        return Knowledge(**res.data[0]) if res.data else None
 
     async def update_knowledge(self, knowledge: Knowledge):
         res = (
@@ -143,18 +146,19 @@ class SupaBasePlugin(DBPluginInterface):
         )
         return [Knowledge(**knowledge) for knowledge in res.data] if res.data else []
 
-    async def delete_knowledge(self, knowledge_id_list: List[str]) -> List[Knowledge]:
+    async def delete_knowledge(
+        self, tenant_id: str, knowledge_id_list: List[str]
+    ) -> List[Knowledge]:
         res = (
             self.supabase_client.table(self.settings.KNOWLEDGE_TABLE_NAME)
             .delete()
             .in_("knowledge_id", knowledge_id_list)
+            .eq("tenant_id", tenant_id)
             .execute()
         )
         return [Knowledge(**knowledge) for knowledge in res.data] if res.data else []
 
-    async def get_tenant_by_id(self, tenant_id: str) -> Tenant | None:
-        pass
-
+    # =============== chunk ===============
     async def save_chunk_list(self, chunk_list: List[Chunk]):
         res = (
             self.supabase_client.table(self.settings.CHUNK_TABLE_NAME)
@@ -168,6 +172,27 @@ class SupaBasePlugin(DBPluginInterface):
         )
         return [Chunk(**chunk) for chunk in res.data] if res.data else []
 
+    async def get_chunk_list(
+        self, tenant_id: str, page_params: PageParams[Chunk]
+    ) -> PageResponse[Chunk]:
+        return await self._get_paginated_data(
+            tenant_id,
+            self.settings.CHUNK_TABLE_NAME,
+            Chunk,
+            page_params,
+        )
+
+    async def get_chunk_by_id(self, tenant_id: str, chunk_id: str) -> Chunk:
+        res = (
+            self.supabase_client.table(self.settings.CHUNK_TABLE_NAME)
+            .select("*")
+            .eq("chunk_id", chunk_id)
+            .eq("tenant_id", tenant_id)
+            .execute()
+        )
+        return Chunk(**res.data[0]) if res.data else None
+
+    # =============== task ===============
     async def save_task_list(self, task_list: List[Task]):
         res = (
             self.supabase_client.table(self.settings.TASK_TABLE_NAME)
@@ -192,6 +217,30 @@ class SupaBasePlugin(DBPluginInterface):
         )
         return [Task(**task) for task in res.data] if res.data else []
 
+    async def get_task_list(
+        self, tenant_id: str, page_params: PageParams[Task]
+    ) -> PageResponse[Task]:
+        return await self._get_paginated_data(
+            tenant_id,
+            self.settings.TASK_TABLE_NAME,
+            Task,
+            page_params,
+        )
+
+    async def get_task_by_id(self, tenant_id: str, task_id: str) -> Task | None:
+        res = (
+            self.supabase_client.table(self.settings.TASK_TABLE_NAME)
+            .select("*")
+            .eq("tenant_id", tenant_id)
+            .eq("task_id", task_id)
+            .execute()
+        )
+        return Task(**res.data[0]) if res.data else None
+
+    # =============== tenant ===============
+    async def get_tenant_by_id(self, tenant_id: str) -> Tenant | None:
+        pass
+
     async def validate_tenant_by_sk(self, secret_key: str) -> bool:
         return self.get_tenant_by_sk(secret_key) is not None
 
@@ -209,8 +258,10 @@ class SupaBasePlugin(DBPluginInterface):
         tenant = Tenant(**tenant_data)
         return tenant
 
+    # =============== retrieval ===============
     async def search_space_chunk_list(
         self,
+        tenant_id: str,
         params: RetrievalBySpaceRequest,
     ) -> List[RetrievalChunk]:
         embedding_model = get_register(
@@ -231,6 +282,7 @@ class SupaBasePlugin(DBPluginInterface):
 
     async def search_knowledge_chunk_list(
         self,
+        tenant_id: str,
         params: RetrievalByKnowledgeRequest,
     ) -> List[RetrievalChunk]:
         EmbeddingCls = get_register(
