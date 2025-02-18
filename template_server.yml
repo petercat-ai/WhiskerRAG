@@ -94,9 +94,6 @@ Resources:
           OPENAI_API_KEY: !Ref openAIKey
           DB_ENGINE_CLASSNAME: !Ref dbEngineClassName
           TASK_ENGINE_CLASSNAME: !Ref taskEngineClassName
-      FunctionUrlConfig:
-        AuthType: NONE
-        InvokeMode: RESPONSE_STREAM
       Policies:
       - Statement:
         - Sid: BedrockInvokePolicy
@@ -128,12 +125,14 @@ Resources:
 
   ServerApiDeployment:
     Type: AWS::ApiGateway::Deployment
-    DependsOn: ServerApiProxy
+    DependsOn: 
+      - ServerApiProxyMethod
     Properties:
       RestApiId: !Ref ServerApi
 
   ServerApiStage:
     Type: AWS::ApiGateway::Stage
+    DependsOn: ServerApiDeployment
     Properties:
       RestApiId: !Ref ServerApi
       DeploymentId: !Ref ServerApiDeployment
@@ -170,14 +169,11 @@ Resources:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref WhiskerServer
+      FunctionName: !GetAtt WhiskerServer.Arn
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ServerApi}/*/*
 
 Outputs:
-  WhiskerServerUrl:
-    Description: "Function URL for FastAPI function"
-    Value: !GetAtt WhiskerServerUrl.FunctionUrl
   WhiskerServer:
     Description: "FastAPI Lambda Function ARN"
     Value: !GetAtt WhiskerServer.Arn
