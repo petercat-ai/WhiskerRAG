@@ -79,3 +79,4 @@ jobs:
               ParameterKey=openAIKey,ParameterValue=${{ vars.OPENAI_API_KEY }} \
               ParameterKey=taskTableName,ParameterValue=${{ vars.DB_ENGINE_CLASSNAME }} \
               ParameterKey=taskTableName,ParameterValue=${{ vars.TASK_ENGINE_CLASSNAME }} \
+              ParameterKey=whiskerEnv,ParameterValue=${{ vars.WHISKER_ENV }} \

@@ -67,6 +67,11 @@ Parameters:
     Description: Environment marker for TASK_ENGINE_CLASSNAME
     Default: "1"
 
+  whiskerEnv:
+    Type: String
+    Description: Environment marker for WHISKER_ENV
+    Default: "prod"
+
 Resources:
   WhiskerServer:
     Type: AWS::Serverless::Function
@@ -113,6 +118,62 @@ Resources:
       Dockerfile: ../docker/Dockerfile.aws.server
       DockerTag: v1
 
+  ServerApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Sub ${AWS::StackName}-api
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  ServerApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn: ServerApiProxy
+    Properties:
+      RestApiId: !Ref ServerApi
+
+  ServerApiStage:
+    Type: AWS::ApiGateway::Stage
+    Properties:
+      RestApiId: !Ref ServerApi
+      DeploymentId: !Ref ServerApiDeployment
+      StageName: !Ref whiskerEnv
+
+  ServerApiProxy:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref ServerApi
+      ParentId: !GetAtt ServerApi.RootResourceId
+      PathPart: '{proxy+}'
+
+  ServerApiProxyMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref ServerApi
+      ResourceId: !Ref ServerApiProxy
+      HttpMethod: ANY
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WhiskerServer.Arn}/invocations
+        PassthroughBehavior: WHEN_NO_MATCH
+        IntegrationResponses:
+          - StatusCode: 200
+        RequestTemplates:
+          application/json: '{ "statusCode": 200 }'
+      RequestParameters:
+        method.request.header.Authorization: false
+        method.request.path.proxy: true
+
+  ServerApiLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref WhiskerServer
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ServerApi}/*/*
+
 Outputs:
   WhiskerServerUrl:
     Description: "Function URL for FastAPI function"
@@ -120,3 +181,6 @@ Outputs:
   WhiskerServer:
     Description: "FastAPI Lambda Function ARN"
     Value: !GetAtt WhiskerServer.Arn
+  ServerApiEndpoint:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub https://${ServerApi}.execute-api.${AWS::Region}.amazonaws.com/${whiskerEnv}/
