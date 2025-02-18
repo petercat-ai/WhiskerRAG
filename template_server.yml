@@ -57,6 +57,16 @@ Parameters:
     Description: Environment marker for OPENAI_API_KEY
     Default: "1"
 
+  dbEngineClassName:
+    Type: String
+    Description: Environment marker for DB_ENGINE_CLASSNAME
+    Default: "1"
+
+  taskEngineClassName:
+    Type: String
+    Description: Environment marker for TASK_ENGINE_CLASSNAME
+    Default: "1"
+
 Resources:
   WhiskerServer:
     Type: AWS::Serverless::Function
@@ -77,6 +87,8 @@ Resources:
           ACTION_TABLE_NAME: !Ref actionTableName
           TENANT_TABLE_NAME: !Ref tenantTableName
           OPENAI_API_KEY: !Ref openAIKey
+          DB_ENGINE_CLASSNAME: !Ref dbEngineClassName
+          TASK_ENGINE_CLASSNAME: !Ref taskEngineClassName
       FunctionUrlConfig:
         AuthType: NONE
         InvokeMode: RESPONSE_STREAM
