@@ -58,7 +58,8 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
         for i in range(0, len(combined_list), batch_size):
             batch = combined_list[i : i + batch_size]
             await asyncio.sleep(len(combined_list) / batch_size)
-            await process_batch(batch)
+            res = await process_batch(batch)
+            print(res)
 
     async def batch_execute_task(
         self, task_list: List[Task], knowledge_list: List[Knowledge]
@@ -78,7 +79,7 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
                         "execute_type": "add",
                     }
                 )
-        await self.send_combined_list(combined_list, batch_size)
+        asyncio.create_task(self.send_combined_list(combined_list, batch_size))
         return task_list
 
     async def batch_skip_task(
