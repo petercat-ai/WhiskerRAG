@@ -107,7 +107,6 @@ Resources:
             - POST
             - PUT
             - DELETE
-            - OPTIONS
           AllowOrigins:
             - '*'
           MaxAge: 300
