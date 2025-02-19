@@ -110,68 +110,35 @@ Resources:
           Resource:
             - !Sub 'arn:aws:s3:::${s3TempBucketName}/*'
       Tracing: Active
+      Events:
+        HttpApiEvent:
+          Type: HttpApi
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+            PayloadFormatVersion: "2.0"
+      Architecture: x86_64
     Metadata:
       DockerContext: server
       Dockerfile: ../docker/Dockerfile.aws.server
       DockerTag: v1
 
-  ServerApi:
-    Type: AWS::ApiGateway::RestApi
+  WhiskerHttpApi:
+    Type: AWS::Serverless::HttpApi
     Properties:
-      Name: !Sub ${AWS::StackName}-api
-      EndpointConfiguration:
-        Types:
-          - REGIONAL
-
-  ServerApiDeployment:
-    Type: AWS::ApiGateway::Deployment
-    DependsOn: 
-      - ServerApiProxyMethod
-    Properties:
-      RestApiId: !Ref ServerApi
-
-  ServerApiStage:
-    Type: AWS::ApiGateway::Stage
-    DependsOn: ServerApiDeployment
-    Properties:
-      RestApiId: !Ref ServerApi
-      DeploymentId: !Ref ServerApiDeployment
       StageName: !Ref whiskerEnv
-
-  ServerApiProxy:
-    Type: AWS::ApiGateway::Resource
-    Properties:
-      RestApiId: !Ref ServerApi
-      ParentId: !GetAtt ServerApi.RootResourceId
-      PathPart: '{proxy+}'
-
-  ServerApiProxyMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      RestApiId: !Ref ServerApi
-      ResourceId: !Ref ServerApiProxy
-      HttpMethod: ANY
-      AuthorizationType: NONE
-      Integration:
-        Type: AWS_PROXY
-        IntegrationHttpMethod: POST
-        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${WhiskerServer.Arn}/invocations
-        PassthroughBehavior: WHEN_NO_MATCH
-        IntegrationResponses:
-          - StatusCode: 200
-        RequestTemplates:
-          application/json: '{ "statusCode": 200 }'
-      RequestParameters:
-        method.request.header.Authorization: false
-        method.request.path.proxy: true
-
-  ServerApiLambdaPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !GetAtt WhiskerServer.Arn
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ServerApi}/*/*
+      CorsConfiguration:
+        AllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        AllowHeaders:
+          - '*'
+        AllowOrigins:
+          - '*'
+        MaxAge: 300
 
 Outputs:
   WhiskerServer:
@@ -179,4 +146,7 @@ Outputs:
     Value: !GetAtt WhiskerServer.Arn
   ServerApiEndpoint:
     Description: "API Gateway endpoint URL"
-    Value: !Sub https://${ServerApi}.execute-api.${AWS::Region}.amazonaws.com/${whiskerEnv}/
+    Value: !Sub ${WhiskerHttpApi.ApiEndpoint}/${whiskerEnv}/
+  ServerApiBaseUrl:
+    Description: "API Gateway base URL"
+    Value: !Sub ${WhiskerHttpApi.ApiEndpoint}
