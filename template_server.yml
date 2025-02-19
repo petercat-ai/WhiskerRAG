@@ -98,18 +98,7 @@ Resources:
           TASK_ENGINE_CLASSNAME: !Ref taskEngineClassName
       FunctionUrlConfig:
         AuthType: NONE
-        Cors:
-          AllowCredentials: false
-          AllowHeaders:
-            - '*'
-          AllowMethods:
-            - GET
-            - POST
-            - PUT
-            - DELETE
-          AllowOrigins:
-            - '*'
-          MaxAge: 300
+        InvokeMode: RESPONSE_STREAM
       Policies:
         - Statement:
             - Sid: BedrockInvokePolicy
@@ -135,16 +124,6 @@ Resources:
       DockerContext: server
       Dockerfile: ../docker/Dockerfile.aws.server
       DockerTag: v1
-
-  # 保存 Function URL 到 SSM Parameter Store
-  WhiskerUrlParameter:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: /whisker/function-url
-      Type: String
-      Tier: Standard
-      Value: !GetAtt WhiskerServer.FunctionUrl
-      Description: Whisker Function URL
 
 Outputs:
   WhiskerServer:
