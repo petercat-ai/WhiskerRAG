@@ -65,6 +65,7 @@ def home_page() -> RedirectResponse:
 @app.get("/api/health_checker", response_model=ResponseModel)
 def health_checker() -> ResponseModel[dict]:
     res = {"env": os.getenv("ENV"), "extra": "hello"}
+    logger.info(f"health check: {res}")
     return ResponseModel(success=True, data=res)
 
 

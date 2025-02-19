@@ -114,6 +114,7 @@ Resources:
         HttpApiEvent:
           Type: HttpApi
           Properties:
+            ApiId: !Ref WhiskerHttpApi
             Path: /{proxy+}
             Method: ANY
             PayloadFormatVersion: "2.0"
@@ -124,7 +125,11 @@ Resources:
 
   WhiskerHttpApi:
     Type: AWS::Serverless::HttpApi
+    DeletionPolicy: Retain
     Properties:
+      Name: whisker-http-api
+      ProtocolType: HTTP
+      ApiId: whiskerapi
       StageName: !Ref whiskerEnv
       CorsConfiguration:
         AllowMethods:
