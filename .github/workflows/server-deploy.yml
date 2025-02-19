@@ -80,3 +80,4 @@ jobs:
               ParameterKey=dbEngineClassName,ParameterValue=${{ vars.DB_ENGINE_CLASSNAME }} \
               ParameterKey=taskEngineClassName,ParameterValue=${{ vars.TASK_ENGINE_CLASSNAME }} \
               ParameterKey=whiskerEnv,ParameterValue=${{ vars.WHISKER_ENV }} \
+              ParameterKey=sqsQueueUrl,ParameterValue=${{ vars.SQS_QUEUE_URL }} \

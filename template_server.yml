@@ -72,6 +72,11 @@ Parameters:
     Description: Environment marker for WHISKER_ENV
     Default: "prod"
 
+  sqsQueueUrl:
+    Type: String
+    Description: Environment marker for SQS_QUEUE_URL
+    Default: "1"
+
 Resources:
   WhiskerServer:
     Type: AWS::Serverless::Function
@@ -96,6 +101,7 @@ Resources:
           OPENAI_API_KEY: !Ref openAIKey
           DB_ENGINE_CLASSNAME: !Ref dbEngineClassName
           TASK_ENGINE_CLASSNAME: !Ref taskEngineClassName
+          SQS_QUEUE_URL: !Ref sqsQueueUrl
       FunctionUrlConfig:
         AuthType: NONE
         InvokeMode: RESPONSE_STREAM
