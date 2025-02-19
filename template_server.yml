@@ -117,7 +117,6 @@ Resources:
             Path: /{proxy+}
             Method: ANY
             PayloadFormatVersion: "2.0"
-      Architecture: x86_64
     Metadata:
       DockerContext: server
       Dockerfile: ../docker/Dockerfile.aws.server
