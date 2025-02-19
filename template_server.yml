@@ -128,8 +128,6 @@ Resources:
     DeletionPolicy: Retain
     Properties:
       Name: whisker-http-api
-      ProtocolType: HTTP
-      ApiId: whiskerapi
       StageName: !Ref whiskerEnv
       CorsConfiguration:
         AllowMethods:
