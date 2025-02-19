@@ -100,25 +100,20 @@ Resources:
         AuthType: NONE
         InvokeMode: RESPONSE_STREAM
       Policies:
-        - Statement:
-            - Sid: BedrockInvokePolicy
-              Effect: Allow
-              Action:
-                - bedrock:InvokeModelWithResponseStream
-              Resource: '*'
-            - Sid: AllObjectActions
-              Effect: Allow
-              Action:
-                - s3:PutObject
-                - s3:GetObject
-                - s3:DeleteObject
-              Resource:
-                - !Sub 'arn:aws:s3:::${s3TempBucketName}/*'
-            - Sid: SSMAccess
-              Effect: Allow
-              Action:
-                - ssm:GetParameter
-              Resource: !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/whisker/*'
+      - Statement:
+          - Sid: BedrockInvokePolicy
+            Effect: Allow
+            Action:
+              - bedrock:InvokeModelWithResponseStream
+            Resource: '*'
+          - Sid: AllObjectActions
+            Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetObject
+              - s3:DeleteObject
+            Resource:
+              - !Sub 'arn:aws:s3:::${s3TempBucketName}/*'
       Tracing: Active
     Metadata:
       DockerContext: server
@@ -132,6 +127,3 @@ Outputs:
   WhiskerFunctionUrl:
     Description: "Lambda Function URL"
     Value: !GetAtt WhiskerServer.FunctionUrl
-  WhiskerSsmParameter:
-    Description: "SSM Parameter Name for Function URL"
-    Value: /whisker/function-url
