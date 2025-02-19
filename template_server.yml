@@ -10,7 +10,7 @@ Parameters:
   s3TempBucketName:
     Type: String
     Description: Environment marker for S3_TEMP_BUCKET_NAME
-    Default: "1"
+    Default: "whisker-rag"
 
   supabaseServiceKey:
     Type: String
@@ -60,12 +60,12 @@ Parameters:
   dbEngineClassName:
     Type: String
     Description: Environment marker for DB_ENGINE_CLASSNAME
-    Default: "1"
+    Default: "SupaBasePlugin"
 
   taskEngineClassName:
     Type: String
     Description: Environment marker for TASK_ENGINE_CLASSNAME
-    Default: "1"
+    Default: "AWSLambdaTaskEnginePlugin"
 
   whiskerEnv:
     Type: String
