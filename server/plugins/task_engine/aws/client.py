@@ -79,6 +79,8 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
                         "execute_type": "add",
                     }
                 )
+        self.logger.info("-----------", combined_list)
+        self.logger.info(self.SQS_QUEUE_URL)
         asyncio.create_task(self.send_combined_list(combined_list, batch_size))
         return task_list
 
