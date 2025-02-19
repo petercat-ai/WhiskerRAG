@@ -57,7 +57,6 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
 
         for i in range(0, len(combined_list), batch_size):
             batch = combined_list[i : i + batch_size]
-            await asyncio.sleep(len(combined_list) / batch_size)
             res = await process_batch(batch)
             print(res)
 
