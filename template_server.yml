@@ -126,4 +126,4 @@ Outputs:
     Value: !GetAtt WhiskerServer.Arn
   WhiskerFunctionUrl:
     Description: "Lambda Function URL"
-    Value: !GetAtt WhiskerServer.FunctionUrl
+    Value: !GetAtt WhiskerServerUrl.FunctionUrl
