@@ -91,7 +91,7 @@ class TaskExecutor:
             try:
                 print("start task", task.task_id)
                 self.pool.start_task(task, knowledge)
-                task.status = TaskStatus.RUNNING
+                task.update(status=TaskStatus.RUNNING)
                 self.task_dao.update_task_list([task])
 
                 async def process():
@@ -107,7 +107,7 @@ class TaskExecutor:
                 chunk_list = await asyncio.wait_for(process(), timeout=60)
 
                 self.logger.info(f"Successfully processed task: {task.task_id}")
-                task.status = TaskStatus.SUCCESS
+                task.update(status=TaskStatus.SUCCESS)
             except asyncio.TimeoutError:
                 self.logger.error(f"Task {task.task_id} timed out after 60 seconds")
                 task.status = TaskStatus.FAILED
@@ -115,8 +115,7 @@ class TaskExecutor:
                 await asyncio.sleep(10)
             except Exception as e:
                 self.logger.error(f"Error processing task {task.task_id}: {str(e)}")
-                task.status = TaskStatus.FAILED
-                task.error_message = str(e)
+                task.update(status=TaskStatus.FAILED, error_message=str(e))
                 await asyncio.sleep(10)
             finally:
                 self.pool.finish_task(task, knowledge)
