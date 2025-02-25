@@ -66,7 +66,9 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
         for i in range(0, len(combined_list), batch_size):
             batch = combined_list[i : i + batch_size]
             res = await process_batch(batch)
-            print(res)
+            self.logger.info(
+                f"sqs send response: {res}",
+            )
 
     async def batch_execute_task(
         self, task_list: List[Task], knowledge_list: List[Knowledge]
@@ -83,30 +85,7 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
                     {
                         "task": task.model_dump(),
                         "knowledge": knowledge.model_dump(),
-                        "execute_type": "add",
                     }
                 )
-        self.logger.debug(self.SQS_QUEUE_URL)
         asyncio.create_task(self.send_combined_list(combined_list, batch_size))
-        return task_list
-
-    async def batch_skip_task(
-        self, task_list: List[Task], knowledge_list: List[Knowledge]
-    ) -> List[Task]:
-        batch_size = 20
-        knowledge_dict = {
-            knowledge.knowledge_id: knowledge for knowledge in knowledge_list
-        }
-        combined_list = []
-        for task in task_list:
-            knowledge = knowledge_dict.get(task.knowledge_id)
-            if knowledge:
-                combined_list.append(
-                    {
-                        "task": task.model_dump(),
-                        "knowledge": knowledge.model_dump(),
-                        "execute_type": "skip",
-                    }
-                )
-        await self.send_combined_list(combined_list, batch_size)
         return task_list

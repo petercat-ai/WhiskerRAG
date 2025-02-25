@@ -81,6 +81,7 @@ Resources:
           SUPABASE_URL: !Ref supabaseUrl
           CHUNK_TABLE_NAME: !Ref chunkTableName
           TASK_TABLE_NAME: !Ref taskTableName
+          INPUT_DLQ_URL: !Ref InputDLQ
       Events:
         SQSTrigger:
           Type: SQS
