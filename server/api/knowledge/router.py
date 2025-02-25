@@ -4,7 +4,6 @@ from core.auth import get_tenant
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
 from fastapi import APIRouter, Depends, HTTPException
-from plugins.task_engine.aws.utils import gen_knowledge_list
 from whiskerrag_types.model import (
     Knowledge,
     KnowledgeCreate,
@@ -12,6 +11,9 @@ from whiskerrag_types.model import (
     PageResponse,
     Tenant,
 )
+
+from .utils import gen_knowledge_list
+
 
 router = APIRouter(
     prefix="/api/knowledge",
