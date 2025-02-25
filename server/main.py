@@ -39,7 +39,7 @@ async def lifespan(app: FastAPI):  # type: ignore
         await shutdown_event()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, version="1.0.0")
 
 
 @app.exception_handler(Exception)

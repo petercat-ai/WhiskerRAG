@@ -1,6 +1,5 @@
 import logging
 import multiprocessing
-from typing import Dict, List
 from whiskerrag_types.model import Task, Knowledge, TaskStatus
 from whiskerrag_utils import get_register, RegisterTypeEnum
 import asyncio
@@ -8,7 +7,6 @@ import json
 
 from dao.chunk_dao import ChunkDao
 from dao.task_dao import TaskDao
-from dao.base import get_env_variable
 import asyncio
 
 

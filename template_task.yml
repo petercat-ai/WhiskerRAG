@@ -87,7 +87,10 @@ Resources:
           Type: SQS
           Properties:
             Queue: !GetAtt InputQueue.Arn
-            BatchSize: 1
+            BatchSize: 5          # 5 messages at a time
+            MaximumBatchingWindow: 5  # max wait time for batch is 5 seconds
+            ScalingConfig:
+              MaximumConcurrency: 1    # max 1 concurrent invocations
       Policies:
         - Statement:
             - Sid: BedrockInvokePolicy
