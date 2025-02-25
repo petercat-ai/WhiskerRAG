@@ -1,6 +1,6 @@
 from typing import List
 
-from core.auth import get_tenant, require_auth
+from core.auth import get_tenant
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
 from fastapi import APIRouter, Depends, HTTPException
@@ -17,17 +17,19 @@ router = APIRouter(
     prefix="/api/knowledge",
     tags=["knowledge"],
     responses={404: {"description": "Not found"}},
+    dependencies=[Depends(get_tenant)],
 )
 
 
 @router.post("/add", operation_id="add_knowledge")
-@require_auth()
 async def add_knowledge(
     body: List[KnowledgeCreate], tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel[List[Knowledge]]:
     db_engine = PluginManager().dbPlugin
     task_engine = PluginManager().taskPlugin
     knowledge_list = await gen_knowledge_list(body, tenant)
+    if not knowledge_list:
+        raise HTTPException(status_code=400, detail="knowledge is already exist")
     saved_knowledge = await db_engine.save_knowledge_list(knowledge_list)
     task_list = await task_engine.init_task_from_knowledge(saved_knowledge, tenant)
     saved_task = await db_engine.save_task_list(task_list)
@@ -36,7 +38,6 @@ async def add_knowledge(
 
 
 @router.post("/list", operation_id="get_knowledge_list")
-@require_auth()
 async def get_knowledge_list(
     body: PageParams[Knowledge], tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel[PageResponse[Knowledge]]:
@@ -48,7 +49,6 @@ async def get_knowledge_list(
 
 
 @router.get("/detail", operation_id="get_knowledge_by_id")
-@require_auth()
 async def get_knowledge_by_id(
     knowledge_id: str, tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel[Knowledge]:

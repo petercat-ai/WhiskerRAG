@@ -70,7 +70,7 @@ class PluginManager:
         if plugins_dir not in sys.path:
             sys.path.insert(0, plugins_dir)
         self.pluginPath = plugins_dir
-        logger.info(f"pluginAbsPath: {pluginAbsPath}")
+        logger.info(f"pluginAbsPath: {plugins_dir}")
         settings.load_plugin_dir_env(plugins_dir)
         for root, _, files in os.walk(plugins_dir):
             for file in files:

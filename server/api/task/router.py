@@ -1,4 +1,4 @@
-from core.auth import get_tenant, require_auth
+from core.auth import get_tenant
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
 from fastapi import APIRouter, Depends
@@ -8,11 +8,11 @@ router = APIRouter(
     prefix="/api/task",
     tags=["task"],
     responses={404: {"description": "Not found"}},
+    dependencies=[Depends(get_tenant)],
 )
 
 
 @router.post("/list", operation_id="get_task_list")
-@require_auth()
 async def get_task_list(
     body: PageParams[Task], tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel[PageResponse[Task]]:
@@ -24,10 +24,9 @@ async def get_task_list(
 
 
 @router.get("/detail", operation_id="get_task_detail")
-@require_auth()
 async def get_task_detail(
     task_id: str, tenant: Tenant = Depends(get_tenant)
-) -> ResponseModel:
+) -> ResponseModel[Task]:
     db_engine = PluginManager().dbPlugin
     res = await db_engine.get_task_by_id(
         tenant.tenant_id,

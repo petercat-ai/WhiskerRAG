@@ -4,7 +4,13 @@ from typing import Any, List, Optional
 
 import boto3  # type: ignore
 from whiskerrag_types.interface import DBPluginInterface, TaskEnginPluginInterface
-from whiskerrag_types.model import Knowledge, Task, TaskStatus, Tenant
+from whiskerrag_types.model import (
+    Knowledge,
+    Task,
+    TaskStatus,
+    Tenant,
+    KnowledgeTypeEnum,
+)
 
 
 class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
@@ -33,6 +39,8 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
     ) -> List[Task]:
         task_list: List[Task] = []
         for knowledge in knowledge_list:
+            if knowledge.knowledge_type is KnowledgeTypeEnum.FOLDER:
+                continue
             task = Task(
                 status=TaskStatus.PENDING,
                 knowledge_id=knowledge.knowledge_id,
