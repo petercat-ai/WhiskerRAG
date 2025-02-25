@@ -26,7 +26,6 @@ async def is_knowledge_saved(knowledge_create: KnowledgeCreate, tenant: Tenant) 
     }
     if knowledge_create.file_sha:
         eq_conditions["file_sha"] = knowledge_create.file_sha
-    print("-----conditions:", tenant.tenant_id, eq_conditions)
     res: PageResponse[Knowledge] = await db_engine.get_knowledge_list(
         tenant_id=tenant.tenant_id,
         page_params=PageParams(
@@ -35,7 +34,6 @@ async def is_knowledge_saved(knowledge_create: KnowledgeCreate, tenant: Tenant) 
             eq_conditions=eq_conditions,
         ),
     )
-    print("------res:", res)
     return len(res.items) > 0
 
 

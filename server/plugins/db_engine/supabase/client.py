@@ -88,8 +88,8 @@ class SupaBasePlugin(DBPluginInterface):
         query = query.range(
             page_params.offset, page_params.offset + page_params.limit - 1
         )
-
         response = query.execute()
+        print("++++++", response)
         data = response.data if response else []
         total = response.count if response else 0
 
