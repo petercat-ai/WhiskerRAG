@@ -26,6 +26,7 @@ async def is_knowledge_saved(knowledge_create: KnowledgeCreate, tenant: Tenant) 
     }
     if knowledge_create.file_sha:
         eq_conditions["file_sha"] = knowledge_create.file_sha
+    print("--------------------", eq_conditions)
     res: PageResponse[Knowledge] = await db_engine.get_knowledge_list(
         tenant_id=tenant.tenant_id,
         page_params=PageParams(
@@ -42,7 +43,9 @@ async def gen_knowledge_list(
 ) -> List[Knowledge]:
     knowledge_list: List[Knowledge] = []
     for record in user_input:
-        if await is_knowledge_saved(record, tenant):
+        is_saved = await is_knowledge_saved(record, tenant)
+        if is_saved:
+            print(f"knowledge {record.knowledge_name} is already saved")
             continue
         if (
             record.source_type == KnowledgeSourceEnum.GITHUB_REPO
