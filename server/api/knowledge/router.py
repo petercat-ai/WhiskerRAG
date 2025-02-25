@@ -11,6 +11,7 @@ from whiskerrag_types.model import (
     PageResponse,
     Tenant,
 )
+from core.log import logger
 
 from .utils import gen_knowledge_list
 
@@ -30,6 +31,7 @@ async def add_knowledge(
     db_engine = PluginManager().dbPlugin
     task_engine = PluginManager().taskPlugin
     knowledge_list = await gen_knowledge_list(body, tenant)
+    logger.info(f"knowledge_list: {knowledge_list}")
     if not knowledge_list:
         raise HTTPException(status_code=400, detail="knowledge is already exist")
     saved_knowledge = await db_engine.save_knowledge_list(knowledge_list)
