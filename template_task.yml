@@ -43,14 +43,6 @@ Resources:
     Properties:
       QueueName: !Sub '${AWS::StackName}-input-queue'
       VisibilityTimeout: 300
-      RedrivePolicy:
-        deadLetterTargetArn: !GetAtt InputDLQ.Arn
-        maxReceiveCount: 3
-
-  InputDLQ:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub '${AWS::StackName}-input-dlq'
 
   InputQueuePolicy:
     Type: AWS::SQS::QueuePolicy
@@ -81,7 +73,6 @@ Resources:
           SUPABASE_URL: !Ref supabaseUrl
           CHUNK_TABLE_NAME: !Ref chunkTableName
           TASK_TABLE_NAME: !Ref taskTableName
-          INPUT_DLQ_URL: !Ref InputDLQ
       Events:
         SQSTrigger:
           Type: SQS

@@ -20,13 +20,13 @@ class TaskExecutor:
         self.task_dao = TaskDao()
         self.chunk_dao = ChunkDao()
         self.semaphore = asyncio.Semaphore(min(multiprocessing.cpu_count() * 3, 10))
-        self.logger = logging.getLogger(__name__)
 
     async def handle_add_knowledge_task(self, task: Task, knowledge: Knowledge):
         async with self.semaphore:
+            logger.info(f"semaphore is : {self.semaphore}")
             chunk_list = []
             try:
-                print("start task", task.task_id)
+                print("=== start task ===", task.task_id)
                 task.update(status=TaskStatus.RUNNING)
                 self.task_dao.update_task_list([task])
 
@@ -41,18 +41,18 @@ class TaskExecutor:
                     return await embedding_model().embed_documents(knowledge, documents)
 
                 chunk_list = await asyncio.wait_for(process(), timeout=60)
-                self.logger.info(f"Successfully processed task: {task.task_id}")
+                logger.info(f"Successfully processed task: {task.task_id}")
                 task.update(status=TaskStatus.SUCCESS)
             except asyncio.TimeoutError:
-                self.logger.error(f"Task {task.task_id} timed out after 60 seconds")
+                logger.error(f"Task {task.task_id} timed out after 60 seconds")
                 task.status = TaskStatus.FAILED
                 task.error_message = f"Task timed out after 60 seconds, you can try again or reset knowledge split config"
                 await asyncio.sleep(10)
             except Exception as e:
-                self.logger.error(f"Error processing task {task.task_id}: {str(e)}")
+                logger.error(f"Error processing task {task.task_id}: {str(e)}")
                 task.update(status=TaskStatus.FAILED, error_message=str(e))
             finally:
-                print("end task", task.task_id)
+                logger.info(f"=== End task ===: {task.task_id}")
             if chunk_list and len(chunk_list) > 0:
                 # delete existing chunks and save new chunks
                 self.chunk_dao.delete_knowledge_chunks(knowledge)
