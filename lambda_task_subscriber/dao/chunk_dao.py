@@ -1,7 +1,7 @@
 from typing import List
 from dao.base import BaseDAO, get_env_variable
 
-from whiskerrag_types.model import Chunk
+from whiskerrag_types.model import Chunk, Knowledge
 
 
 class ChunkDao(BaseDAO):
@@ -19,3 +19,12 @@ class ChunkDao(BaseDAO):
                     for chunk in chunk_batch
                 ]
             ).execute()
+
+    def delete_knowledge_chunks(self, knowledge: Knowledge):
+        res = (
+            self.client.table(self.CHUNK_TABLE_NAME)
+            .delete()
+            .eq("knowledge_id", knowledge.knowledge_id)
+            .execute()
+        )
+        return res

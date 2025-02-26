@@ -22,7 +22,7 @@ class TaskExecutor:
         self.semaphore = asyncio.Semaphore(min(multiprocessing.cpu_count() * 3, 10))
         self.logger = logging.getLogger(__name__)
 
-    async def handle_task(self, task: Task, knowledge: Knowledge):
+    async def handle_add_knowledge_task(self, task: Task, knowledge: Knowledge):
         async with self.semaphore:
             chunk_list = []
             try:
@@ -51,11 +51,13 @@ class TaskExecutor:
             except Exception as e:
                 self.logger.error(f"Error processing task {task.task_id}: {str(e)}")
                 task.update(status=TaskStatus.FAILED, error_message=str(e))
-                await asyncio.sleep(10)
             finally:
                 print("end task", task.task_id)
             if chunk_list and len(chunk_list) > 0:
+                # delete existing chunks and save new chunks
+                self.chunk_dao.delete_knowledge_chunks(knowledge)
                 self.chunk_dao.save_chunk_list(chunk_list)
+            # TODO: or delete successful task ?
             self.task_dao.update_task_list([task])
 
 
@@ -90,7 +92,9 @@ async def process_single_record(record: Dict[str, Any]) -> tuple[bool, str]:
 
             task = Task(**item["task"])
             knowledge = Knowledge(**item["knowledge"])
-            asyncio_task_list.append(executor.handle_task(task, knowledge))
+            asyncio_task_list.append(
+                executor.handle_add_knowledge_task(task, knowledge)
+            )
 
         await asyncio.gather(*asyncio_task_list)
         logger.info(f"Successfully processed record {record['messageId']}")
