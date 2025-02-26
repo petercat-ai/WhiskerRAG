@@ -1,5 +1,6 @@
 import logging
 import multiprocessing
+from typing import Any, Dict, List
 from whiskerrag_types.model import Task, Knowledge, TaskStatus
 from whiskerrag_utils import get_register, RegisterTypeEnum
 import asyncio
@@ -8,6 +9,9 @@ import json
 from dao.chunk_dao import ChunkDao
 from dao.task_dao import TaskDao
 import asyncio
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 class TaskExecutor:
@@ -65,39 +69,76 @@ def get_task_executor() -> TaskExecutor:
     return _task_executor
 
 
-async def handle_records(records):
-    executor = get_task_executor()
+async def process_single_record(record: Dict[str, Any]) -> tuple[bool, str]:
+    try:
+        executor = get_task_executor()
+        body = record["body"]
+        if not body:
+            raise ValueError("Record body is missing")
+
+        if isinstance(body, str):
+            body = json.loads(body)
+
+        tasks = body if isinstance(body, list) else [body]
+        asyncio_task_list = []
+
+        for item in tasks:
+            if "task" not in item or "knowledge" not in item:
+                raise ValueError(
+                    "Missing 'task' or 'knowledge' in the record body item"
+                )
+
+            task = Task(**item["task"])
+            knowledge = Knowledge(**item["knowledge"])
+            asyncio_task_list.append(executor.handle_task(task, knowledge))
+
+        await asyncio.gather(*asyncio_task_list)
+        logger.info(f"Successfully processed record {record['messageId']}")
+        return True, record["messageId"]
+
+    except Exception as e:
+        logger.error(f"Error processing record {record['messageId']}: {str(e)}")
+        return False, record["messageId"]
+
+
+async def handle_records(
+    records: List[Dict[str, Any]]
+) -> Dict[str, List[Dict[str, str]]]:
+    failed_records = []
+
     for record in records:
-        try:
-            body = record["body"]
-            if not body:
-                raise ValueError("Record body is missing")
-            if isinstance(body, str):
-                body = json.loads(body)
-            tasks = body if isinstance(body, list) else [body]
-            asyncio_task_list = []
-            for item in tasks:
-                if "task" not in item or "knowledge" not in item:
-                    raise ValueError(
-                        "Missing 'task' or 'knowledge' in the record body item"
-                    )
-                task = Task(**item["task"])
-                knowledge = Knowledge(**item["knowledge"])
-                asyncio_task_list.append(executor.handle_task(task, knowledge))
-            await asyncio.gather(*asyncio_task_list)
-            print("done")
-        except Exception as e:
-            print(f"Error parsing record: {e}, record: {record}")
+        success, message_id = await process_single_record(record)
+        if not success:
+            failed_records.append({"itemIdentifier": message_id})
+
+    return {"batchItemFailures": failed_records}
 
 
-def lambda_handler(event, context):
+def lambda_handler(
+    event: Dict[str, Any], context: Any
+) -> Dict[str, List[Dict[str, str]]]:
     try:
         loop = asyncio.get_event_loop()
         if loop.is_closed():
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
-        return loop.run_until_complete(handle_records(event.get("Records", [])))
+        records = event.get("Records", [])
+        logger.info(f"Processing {len(records)} records")
+
+        result = loop.run_until_complete(handle_records(records))
+
+        failed_count = len(result["batchItemFailures"])
+        if failed_count > 0:
+            logger.warning(f"{failed_count} records failed and will be retried")
+
+        return result
+
     except Exception as e:
-        print(f"Unexpected error: {str(e)}")
-        raise Exception("Processing failed")
+        logger.error(f"Unexpected error in lambda handler: {str(e)}", exc_info=True)
+        return {
+            "batchItemFailures": [
+                {"itemIdentifier": record["messageId"]}
+                for record in event.get("Records", [])
+            ]
+        }
