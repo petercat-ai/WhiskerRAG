@@ -84,12 +84,12 @@ class SupaBasePlugin(DBPluginInterface):
                 field = field.strip()
                 is_desc = page_params.order_direction.lower() == "desc"
                 query = query.order(field, desc=is_desc)
-
+        print("------page_params", page_params)
+        print("------page_params model dump", page_params.model_dump())
         query = query.range(
             page_params.offset, page_params.offset + page_params.limit - 1
         )
         response = query.execute()
-        print("++++++", response)
         data = response.data if response else []
         total = response.count if response else 0
 
