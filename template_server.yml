@@ -10,7 +10,7 @@ Parameters:
   s3TempBucketName:
     Type: String
     Description: Environment marker for S3_TEMP_BUCKET_NAME
-    Default: "1"
+    Default: "whisker-rag"
 
   supabaseServiceKey:
     Type: String
@@ -57,9 +57,31 @@ Parameters:
     Description: Environment marker for OPENAI_API_KEY
     Default: "1"
 
+  dbEngineClassName:
+    Type: String
+    Description: Environment marker for DB_ENGINE_CLASSNAME
+    Default: "SupaBasePlugin"
+
+  taskEngineClassName:
+    Type: String
+    Description: Environment marker for TASK_ENGINE_CLASSNAME
+    Default: "AWSLambdaTaskEnginePlugin"
+
+  whiskerEnv:
+    Type: String
+    Description: Environment marker for WHISKER_ENV
+    Default: "prod"
+
+  sqsQueueUrl:
+    Type: String
+    Description: Environment marker for SQS_QUEUE_URL
+    Default: "1"
+
 Resources:
   WhiskerServer:
     Type: AWS::Serverless::Function
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       PackageType: Image
       MemorySize: 512
@@ -77,24 +99,27 @@ Resources:
           ACTION_TABLE_NAME: !Ref actionTableName
           TENANT_TABLE_NAME: !Ref tenantTableName
           OPENAI_API_KEY: !Ref openAIKey
+          DB_ENGINE_CLASSNAME: !Ref dbEngineClassName
+          TASK_ENGINE_CLASSNAME: !Ref taskEngineClassName
+          SQS_QUEUE_URL: !Ref sqsQueueUrl
       FunctionUrlConfig:
         AuthType: NONE
         InvokeMode: RESPONSE_STREAM
       Policies:
       - Statement:
-        - Sid: BedrockInvokePolicy
-          Effect: Allow
-          Action:
-            - bedrock:InvokeModelWithResponseStream
-          Resource: '*'
-        - Sid: AllObjectActions
-          Effect: Allow
-          Action:
-            - s3:PutObject
-            - s3:GetObject
-            - s3:DeleteObject
-          Resource:
-            - !Sub 'arn:aws:s3:::${s3TempBucketName}/*'
+          - Sid: BedrockInvokePolicy
+            Effect: Allow
+            Action:
+              - bedrock:InvokeModelWithResponseStream
+            Resource: '*'
+          - Sid: AllObjectActions
+            Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetObject
+              - s3:DeleteObject
+            Resource:
+              - !Sub 'arn:aws:s3:::${s3TempBucketName}/*'
       Tracing: Active
     Metadata:
       DockerContext: server
@@ -102,9 +127,9 @@ Resources:
       DockerTag: v1
 
 Outputs:
-  WhiskerServerUrl:
-    Description: "Function URL for FastAPI function"
-    Value: !GetAtt WhiskerServerUrl.FunctionUrl
   WhiskerServer:
     Description: "FastAPI Lambda Function ARN"
     Value: !GetAtt WhiskerServer.Arn
+  WhiskerFunctionUrl:
+    Description: "Lambda Function URL"
+    Value: !GetAtt WhiskerServerUrl.FunctionUrl

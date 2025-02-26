@@ -9,7 +9,7 @@ on:
     branches: ["test","main","preview","test/*","preview/*"]
     paths:
       - 'server/**'
-      - '.github/workflows/deploy-server.yml'
+      - '.github/workflows/server-deploy.yml'
       - '.aws/server_samconfig.toml'
       - 'template_server.yml'
       - 'docker/Dockerfile.aws.server'
@@ -17,7 +17,7 @@ on:
     branches: ["test","main","preview","test/*","preview/*"]
     paths:
       - 'server/**'
-      - '.github/workflows/deploy-server.yml'
+      - '.github/workflows/server-deploy.yml'
       - '.aws/server_samconfig.toml'
       - 'template_server.yml'
       - 'docker/Dockerfile.aws.server'
@@ -28,8 +28,9 @@ permissions:
   actions: write
 
 jobs:
-  deploy-server:
+  server-deploy:
     runs-on: ubuntu-latest
+
     environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
     env:
       ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
@@ -75,4 +76,8 @@ jobs:
               ParameterKey=taskTableName,ParameterValue=${{ vars.TASK_TABLE_NAME }} \
               ParameterKey=actionTableName,ParameterValue=${{ vars.ACTION_TABLE_NAME }} \
               ParameterKey=tenantTableName,ParameterValue=${{ vars.TENANT_TABLE_NAME }} \
-              ParameterKey=openAIKey,ParameterValue=${{ vars.OPENAI_API_KEY }}
+              ParameterKey=openAIKey,ParameterValue=${{ secrets.OPENAI_API_KEY }} \
+              ParameterKey=dbEngineClassName,ParameterValue=${{ vars.DB_ENGINE_CLASSNAME }} \
+              ParameterKey=taskEngineClassName,ParameterValue=${{ vars.TASK_ENGINE_CLASSNAME }} \
+              ParameterKey=whiskerEnv,ParameterValue=${{ vars.WHISKER_ENV }} \
+              ParameterKey=sqsQueueUrl,ParameterValue=${{ vars.SQS_QUEUE_URL }} \

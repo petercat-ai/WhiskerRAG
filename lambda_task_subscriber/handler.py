@@ -1,5 +1,6 @@
+import logging
 import multiprocessing
-from typing import Dict, List
+from typing import Any, Dict, List
 from whiskerrag_types.model import Task, Knowledge, TaskStatus
 from whiskerrag_utils import get_register, RegisterTypeEnum
 import asyncio
@@ -7,59 +8,10 @@ import json
 
 from dao.chunk_dao import ChunkDao
 from dao.task_dao import TaskDao
-from dao.base import get_env_variable
-from typing import List, Tuple
 import asyncio
-import logging
 
-
-memory_limit = (
-    int(get_env_variable("AWS_LAMBDA_FUNCTION_MEMORY_SIZE", 250)) * 1024 * 1024
-)
-
-
-class TaskPool:
-    def __init__(self, max_size: int):
-        self.waiting_pool: List[Tuple[Task, Knowledge]] = []
-        self.running_tasks: Dict[str, Tuple[Task, Knowledge]] = {}
-        self.max_size = max_size
-        self.current_running_size = 0
-
-    def start_task(self, task: Task, knowledge: Knowledge) -> None:
-        """将任务标记为开始执行"""
-        self.running_tasks[task.task_id] = (task, knowledge)
-        self.current_running_size += knowledge.file_size
-        self.waiting_pool.remove((task, knowledge))
-
-    def finish_task(self, task: Task, knowledge: Knowledge) -> None:
-        self.running_tasks.pop(task.task_id)
-        self.current_running_size -= knowledge.file_size
-
-    def skip_task(self, task: Task, knowledge: Knowledge) -> None:
-        try:
-            self.running_tasks.pop(task.task_id)
-        except Exception as e:
-            print(e)
-        try:
-            self.waiting_pool.remove((task, knowledge))
-        except Exception as e:
-            print(e)
-
-    def add_to_waiting(self, task: Task, knowledge: Knowledge) -> None:
-        self.waiting_pool.append((task, knowledge))
-
-    def can_execute(self, file_size: int) -> bool:
-        return self.current_running_size + file_size <= self.max_size
-
-    def get_executable_tasks(self) -> List[Tuple[Task, Knowledge]]:
-        executable_tasks = []
-        for task, knowledge in self.waiting_pool:
-            if self.can_execute(knowledge.file_size):
-                executable_tasks.append((task, knowledge))
-        return executable_tasks
-
-    def is_empty(self) -> bool:
-        return len(self.waiting_pool) == 0
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 class TaskExecutor:
@@ -67,75 +19,46 @@ class TaskExecutor:
         self._is_running = False
         self.task_dao = TaskDao()
         self.chunk_dao = ChunkDao()
-        print(f"max size is {memory_limit * 0.6} bytes")
-        self.pool = TaskPool(max_size=memory_limit * 0.6)
-        self.logger = logging.getLogger(__name__)
         self.semaphore = asyncio.Semaphore(min(multiprocessing.cpu_count() * 3, 10))
 
-    def add_task(self, task: Task, knowledge: Knowledge) -> None:
-        if knowledge.file_size > self.pool.max_size:
-            # File too large, mark task as failed
-            task.status = TaskStatus.FAILED
-            task.error_message = "file_size exceeds maximum limit"
-            self.task_dao.update_task_list([task])
-            return
-        self.pool.add_to_waiting(task, knowledge)
-
-    def skip_task(self, task: Task, knowledge: Knowledge):
-        self.pool.skip_task(task, knowledge)
-        task.status = TaskStatus.SKIPPED
-        self.task_dao.update_task_list([task])
-
-    async def _handle_task(self, task: Task, knowledge: Knowledge):
+    async def handle_add_knowledge_task(self, task: Task, knowledge: Knowledge):
         async with self.semaphore:
+            logger.info(f"semaphore is : {self.semaphore}")
             chunk_list = []
             try:
-                self.pool.start_task(task, knowledge)
-                task.status = TaskStatus.RUNNING
+                print("=== start task ===", task.task_id)
+                task.update(status=TaskStatus.RUNNING)
                 self.task_dao.update_task_list([task])
 
-                knowledge_loader = get_register(
-                    RegisterTypeEnum.KNOWLEDGE_LOADER, knowledge.source_type
-                )
-                embedding_model = get_register(
-                    RegisterTypeEnum.EMBEDDING, knowledge.embedding_model_name
-                )
-                documents = await knowledge_loader(knowledge).load()
-                chunk_list = await embedding_model().embed_documents(
-                    knowledge, documents
-                )
-                self.logger.info(f"Successfully processed task: {task.task_id}")
-                task.status = TaskStatus.SUCCESS
+                async def process():
+                    knowledge_loader = get_register(
+                        RegisterTypeEnum.KNOWLEDGE_LOADER, knowledge.source_type
+                    )
+                    embedding_model = get_register(
+                        RegisterTypeEnum.EMBEDDING, knowledge.embedding_model_name
+                    )
+                    documents = await knowledge_loader(knowledge).load()
+                    return await embedding_model().embed_documents(knowledge, documents)
 
-            except Exception as e:
-                self.logger.error(f"Error processing task {task.task_id}: {str(e)}")
+                chunk_list = await asyncio.wait_for(process(), timeout=60)
+                logger.info(f"Successfully processed task: {task.task_id}")
+                task.update(status=TaskStatus.SUCCESS)
+            except asyncio.TimeoutError:
+                logger.error(f"Task {task.task_id} timed out after 60 seconds")
                 task.status = TaskStatus.FAILED
-                task.error_message = str(e)
+                task.error_message = f"Task timed out after 60 seconds, you can try again or reset knowledge split config"
+                await asyncio.sleep(10)
+            except Exception as e:
+                logger.error(f"Error processing task {task.task_id}: {str(e)}")
+                task.update(status=TaskStatus.FAILED, error_message=str(e))
             finally:
-                self.pool.finish_task(task, knowledge)
-                if chunk_list and len(chunk_list) > 0:
-                    self.chunk_dao.save_chunk_list(chunk_list)
-                self.task_dao.update_task_list([task])
-
-    async def run(self):
-        if self._is_running:
-            return
-        self._is_running = True
-        while self._is_running:
-            if self.pool.is_empty():
-                self._is_running = False
-            executable_tasks = self.pool.get_executable_tasks()
-            if not executable_tasks:
-                # Wait for some running tasks to complete and free up space
-                await asyncio.sleep(3)
-                continue
-
-            await asyncio.gather(
-                *[
-                    self._handle_task(task, knowledge)
-                    for task, knowledge in executable_tasks
-                ]
-            )
+                logger.info(f"=== End task ===: {task.task_id}")
+            if chunk_list and len(chunk_list) > 0:
+                # delete existing chunks and save new chunks
+                self.chunk_dao.delete_knowledge_chunks(knowledge)
+                self.chunk_dao.save_chunk_list(chunk_list)
+            # TODO: or delete successful task ?
+            self.task_dao.update_task_list([task])
 
 
 _task_executor = TaskExecutor()
@@ -148,41 +71,78 @@ def get_task_executor() -> TaskExecutor:
     return _task_executor
 
 
-async def handle_records(records):
-    executor = get_task_executor()
-    for record in records:
-        try:
-            body = record["body"]
-            if not body:
-                raise ValueError("Record body is missing")
-            if isinstance(body, str):
-                body = json.loads(body)
-            tasks = body if isinstance(body, list) else [body]
-            for item in tasks:
-                if "task" not in item or "knowledge" not in item:
-                    raise ValueError(
-                        "Missing 'task' or 'knowledge' in the record body item"
-                    )
-                execute_type = item.get("execute_type", "add")
-                task = Task(**item["task"])
-                knowledge = Knowledge(**item["knowledge"])
-                if execute_type == "add":
-                    executor.add_task(task, knowledge)
-                elif execute_type == "skip":
-                    executor.skip_task(task, knowledge)
-            await executor.run()
-        except Exception as e:
-            print(f"Error parsing record: {e}, record: {record}")
-
-
-def lambda_handler(event, context):
+async def process_single_record(record: Dict[str, Any]) -> tuple[bool, str]:
     try:
-        if event:
-            print(f"Event: {event},type:{type(event)}; Context: {context},")
-            asyncio.run(handle_records(event.get("Records", [])))
-        else:
-            raise Exception("No event data found")
-        return {"statusCode": 200, "message": "Success"}
+        executor = get_task_executor()
+        body = record["body"]
+        if not body:
+            raise ValueError("Record body is missing")
+
+        if isinstance(body, str):
+            body = json.loads(body)
+
+        tasks = body if isinstance(body, list) else [body]
+        asyncio_task_list = []
+
+        for item in tasks:
+            if "task" not in item or "knowledge" not in item:
+                raise ValueError(
+                    "Missing 'task' or 'knowledge' in the record body item"
+                )
+
+            task = Task(**item["task"])
+            knowledge = Knowledge(**item["knowledge"])
+            asyncio_task_list.append(
+                executor.handle_add_knowledge_task(task, knowledge)
+            )
+
+        await asyncio.gather(*asyncio_task_list)
+        logger.info(f"Successfully processed record {record['messageId']}")
+        return True, record["messageId"]
+
     except Exception as e:
-        print(f"Error: {e}")
-        return {"statusCode": 500, "message": f"{e}"}
+        logger.error(f"Error processing record {record['messageId']}: {str(e)}")
+        return False, record["messageId"]
+
+
+async def handle_records(
+    records: List[Dict[str, Any]]
+) -> Dict[str, List[Dict[str, str]]]:
+    failed_records = []
+
+    for record in records:
+        success, message_id = await process_single_record(record)
+        if not success:
+            failed_records.append({"itemIdentifier": message_id})
+
+    return {"batchItemFailures": failed_records}
+
+
+def lambda_handler(
+    event: Dict[str, Any], context: Any
+) -> Dict[str, List[Dict[str, str]]]:
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+        records = event.get("Records", [])
+        logger.info(f"Processing {len(records)} records")
+
+        result = loop.run_until_complete(handle_records(records))
+
+        failed_count = len(result["batchItemFailures"])
+        if failed_count > 0:
+            logger.warning(f"{failed_count} records failed and will be retried")
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Unexpected error in lambda handler: {str(e)}", exc_info=True)
+        return {
+            "batchItemFailures": [
+                {"itemIdentifier": record["messageId"]}
+                for record in event.get("Records", [])
+            ]
+        }

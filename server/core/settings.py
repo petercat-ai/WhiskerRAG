@@ -31,13 +31,14 @@ class Settings(SettingsInterface):
     def load_plugin_dir_env(self, plugin_env_path: str) -> dict:
         if not plugin_env_path or not os.path.exists(plugin_env_path):
             return {}
-        plugin_env: dict = {}
         for root, _, files in os.walk(plugin_env_path):
             for file in files:
                 if file.endswith(".env"):
                     env_path = os.path.join(root, file)
                     load_dotenv(env_path, override=True)
-        return plugin_env
+                    env_dict = dotenv_values(env_path)
+                    self.PLUGIN_ENV.update(env_dict)
+        return self.PLUGIN_ENV
 
     def get_env(self, name, default_value=None):
         return os.getenv(name) or default_value

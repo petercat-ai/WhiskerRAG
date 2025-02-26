@@ -3,9 +3,8 @@ import os
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 
-from whiskerrag_types.interface import LoggerManagerInterface
-
 from core.settings import settings
+from whiskerrag_types.interface import LoggerManagerInterface
 
 
 class ColorCodes:
@@ -45,6 +44,7 @@ class LoggerManager(LoggerManagerInterface):
 
     def _initialize_logger(self):
         if settings.IS_IN_Lambda:
+            self._logger.setLevel(logging.INFO)
             self._logger = logging.getLogger()
             # In AWS Lambda environment, log files will be automatically uploaded
             return
@@ -52,29 +52,24 @@ class LoggerManager(LoggerManagerInterface):
         # Get the log file path, defaulting to the logs folder in the current directory
         log_dir = os.getenv("LOG_DIR", "./logs")
 
-        # 确保日志目录存在
         os.makedirs(log_dir, exist_ok=True)
 
-        # 创建 logger
         self._logger = logging.getLogger("app_logger")
         self._logger.setLevel(logging.DEBUG)
 
-        # 创建一个按日期轮转的文件处理器
         log_filename = os.path.join(
             log_dir, f'app_{datetime.now().strftime("%Y-%m-%d")}.log'
         )
         file_handler = TimedRotatingFileHandler(
             filename=log_filename,
-            when="midnight",  # 在每天午夜切换日志文件
-            interval=1,  # 每天切换一次
-            backupCount=30,  # 保留最近30天的日志文件
+            when="midnight",
+            interval=1,
+            backupCount=30,
             encoding="utf-8",
         )
 
-        # 控制台处理器（带颜色）
         console_handler = logging.StreamHandler()
 
-        # 设置日志格式
         format_str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
         file_formatter = logging.Formatter(format_str, datefmt="%Y-%m-%d %H:%M:%S")
@@ -83,7 +78,6 @@ class LoggerManager(LoggerManagerInterface):
         file_handler.setFormatter(file_formatter)
         console_handler.setFormatter(console_formatter)
 
-        # 添加处理器
         self._logger.addHandler(file_handler)
         self._logger.addHandler(console_handler)
 

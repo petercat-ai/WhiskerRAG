@@ -7,13 +7,15 @@ PYTEST_ARGS = -v
 
 .PHONY: all venv install install-dev clean test run format type-check help
 
-all: venv install
-
 $(VENV):
 	@echo "Creating virtual environment..."
 	@$(PYTHON) -m venv $(VENV)
 	@echo "Virtual environment created."
 	@$(PIP) install --upgrade pip
+
+setup: install
+	@echo "Setting up..."
+	@pre-commit install
 
 install: $(VENV)
 	@echo "Installing production dependencies..."
@@ -22,14 +24,18 @@ install: $(VENV)
 	@if [ -f plugins/requirements.txt ]; then \
 		$(PIP) install -r plugins/requirements.txt; \
 	fi
-	@echo "Installation complete."
-
-dev-install: install
 	@echo "Installing development dependencies..."
 	@$(PIP) install -r requirements-dev.txt
+	@echo "Dev installation complete."
+	@echo "Installation complete."
+
+install-plugin: 
+	@echo "Installing plugin dependencies..."
+	@$(PIP) install -r plugins/requirements.txt
 	@pre-commit install
 	@echo "Dev installation complete."
-
+	@echo "Installation complete."
+	
 clean:
 	rm -rf $(VENV)
 	find . -type d -name "__pycache__" -exec rm -rf {} +
@@ -48,7 +54,9 @@ run:
 	@python main.py
 
 format:
+	echo "Formatting code..."
 	$(VENV_BIN)/black .
+	echo "Formatting imports..."
 	$(VENV_BIN)/isort .
 
 type-check:
@@ -64,7 +72,6 @@ help:
 	@echo "Available targets:"
 	@echo "  all            - Create virtual environment and install dependencies"
 	@echo "  install        - Install dependencies"
-	@echo "  install-dev    - Install development dependencies"
 	@echo "  clean          - Clean up generated files"
 	@echo "  test           - Run tests"
 	@echo "  test-cov       - Run tests with coverage"

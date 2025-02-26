@@ -43,14 +43,6 @@ Resources:
     Properties:
       QueueName: !Sub '${AWS::StackName}-input-queue'
       VisibilityTimeout: 300
-      RedrivePolicy:
-        deadLetterTargetArn: !GetAtt InputDLQ.Arn
-        maxReceiveCount: 3
-
-  InputDLQ:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub '${AWS::StackName}-input-dlq'
 
   InputQueuePolicy:
     Type: AWS::SQS::QueuePolicy
@@ -86,7 +78,7 @@ Resources:
           Type: SQS
           Properties:
             Queue: !GetAtt InputQueue.Arn
-            BatchSize: 1
+            BatchSize: 5          # 5 messages at a time
       Policies:
         - Statement:
             - Sid: BedrockInvokePolicy
