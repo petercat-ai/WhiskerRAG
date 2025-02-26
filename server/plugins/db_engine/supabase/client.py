@@ -1,3 +1,4 @@
+from enum import Enum
 import json
 from typing import List, TypeVar
 
@@ -72,6 +73,8 @@ class SupaBasePlugin(DBPluginInterface):
                         status_code=status.HTTP_403_FORBIDDEN,
                         detail=f"Tenant {value} is not allowed to access this data.",
                     )
+                if isinstance(value, Enum):
+                    value = value.value
                 if isinstance(value, BaseModel):
                     value = value.model_dump()
                     query.filter(field, "eq", json.dumps(value))
@@ -84,8 +87,6 @@ class SupaBasePlugin(DBPluginInterface):
                 field = field.strip()
                 is_desc = page_params.order_direction.lower() == "desc"
                 query = query.order(field, desc=is_desc)
-        print("------page_params", page_params)
-        print("------page_params model dump", page_params.model_dump())
         query = query.range(
             page_params.offset, page_params.offset + page_params.limit - 1
         )

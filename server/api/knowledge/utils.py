@@ -34,7 +34,7 @@ async def is_knowledge_saved(knowledge_create: KnowledgeCreate, tenant: Tenant) 
             eq_conditions=eq_conditions,
         ),
     )
-    return len(res.items) > 0
+    return res.total > 0
 
 
 async def gen_knowledge_list(
