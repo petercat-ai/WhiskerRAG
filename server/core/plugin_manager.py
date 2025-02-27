@@ -100,7 +100,6 @@ class PluginManager:
                                 and module_class is not DBPluginInterface
                             ):
                                 logger.debug(f"Found db plugin class: {name}")
-                                # db_plugin_instance = module_class(logger, settings)
                                 self._db_plugin_module_dict[name] = module_class
                             # init task plugin
                             if (
@@ -109,7 +108,6 @@ class PluginManager:
                                 and module_class is not TaskEnginPluginInterface
                             ):
                                 logger.debug(f"Found task plugin class: { name}")
-                                # task_plugin_instance = module_class(logger, settings)
                                 self._task_plugin_module_dict[name] = module_class
 
                     except Exception as e:
