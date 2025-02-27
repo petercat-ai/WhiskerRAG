@@ -21,36 +21,46 @@ def singleton(cls):
 
 @singleton
 class PluginManager:
-    _db_plugin_dict = {}
-    _task_plugin_dict = {}
+    _db_plugin_module_dict = {}
+    _task_plugin_module_dict = {}
+    _db_plugin_instance_dict = {}
+    _task_plugin_instance_dict = {}
     pluginPath = None
 
     @property
     def dbPlugin(self) -> DBPluginInterface:
-        if not self._db_plugin_dict:
+        db_engine_classname = settings.get_env("DB_ENGINE_CLASSNAME")
+        if not self._db_plugin_module_dict:
             raise Exception("db plugin is not found")
-        engine = self._db_plugin_dict.get(self.db_engine_classname)
-        if not engine:
-            raise Exception(
-                f"db plugin {self.db_engine_classname} is not found in {list(self._db_plugin_dict.keys())}"
-            )
-        return engine
+        db_engine_instance = self._db_plugin_instance_dict.get(db_engine_classname)
+        if db_engine_instance:
+            return db_engine_instance
+        else:
+            module_class = self._db_plugin_module_dict.get(db_engine_classname)
+            db_plugin_instance = module_class(logger, settings)
+            self._db_plugin_instance_dict[db_engine_classname] = db_plugin_instance
+            return db_plugin_instance
 
     @property
     def taskPlugin(self) -> TaskEnginPluginInterface:
-        if not self._task_plugin_dict:
+        task_engine_classname = settings.get_env("TASK_ENGINE_CLASSNAME")
+        if not self._task_plugin_module_dict:
             raise Exception("task plugin is not found")
-        engine = self._task_plugin_dict.get(self.task_engine_classname)
-        if not engine:
-            raise Exception(
-                f"task plugin {self.task_engine_classname} is not found in {list(self._task_plugin_dict.keys())}"
+        task_engine_instance = self._task_plugin_instance_dict.get(
+            task_engine_classname
+        )
+        if task_engine_instance:
+            return task_engine_instance
+        else:
+            module_class = self._task_plugin_module_dict.get(task_engine_classname)
+            task_plugin_instance = module_class(logger, settings)
+            self._task_plugin_instance_dict[task_engine_classname] = (
+                task_plugin_instance
             )
-        return engine
+            return task_plugin_instance
 
     def __init__(self, PluginsAbsPath=None):
         self.load_plugins(PluginsAbsPath)
-        self.task_engine_classname = settings.get_env("TASK_ENGINE_CLASSNAME")
-        self.db_engine_classname = settings.get_env("DB_ENGINE_CLASSNAME")
 
     def _load_module(self, module_name, module_path):
         try:
@@ -90,8 +100,8 @@ class PluginManager:
                                 and module_class is not DBPluginInterface
                             ):
                                 logger.debug(f"Found db plugin class: {name}")
-                                db_plugin_instance = module_class(logger, settings)
-                                self._db_plugin_dict[name] = db_plugin_instance
+                                # db_plugin_instance = module_class(logger, settings)
+                                self._db_plugin_module_dict[name] = module_class
                             # init task plugin
                             if (
                                 isinstance(module_class, type)
@@ -99,8 +109,8 @@ class PluginManager:
                                 and module_class is not TaskEnginPluginInterface
                             ):
                                 logger.debug(f"Found task plugin class: { name}")
-                                task_plugin_instance = module_class(logger, settings)
-                                self._task_plugin_dict[name] = task_plugin_instance
+                                # task_plugin_instance = module_class(logger, settings)
+                                self._task_plugin_module_dict[name] = module_class
 
                     except Exception as e:
                         logger.error(f"Failed to load plugin from '{module_path}': {e}")
