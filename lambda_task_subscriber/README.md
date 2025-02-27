@@ -1,1 +1,1 @@
-lambda 存放将要部署到 lambda function 的代码。用于处理 sqs 触发的任务。
+version = '0.0.1'
