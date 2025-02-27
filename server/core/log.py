@@ -44,8 +44,8 @@ class LoggerManager(LoggerManagerInterface):
 
     def _initialize_logger(self):
         if settings.IS_IN_Lambda:
-            self._logger.setLevel(logging.INFO)
             self._logger = logging.getLogger()
+            self._logger.setLevel(logging.INFO)
             # In AWS Lambda environment, log files will be automatically uploaded
             return
 
