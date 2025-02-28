@@ -96,7 +96,7 @@ async def get_repo_all_knowledge(
     return knowledge_list
 
 
-def get_diff_knowledge_lists(
+def get_diff_knowledge_by_sha(
     origin_list: List[Knowledge] = None, new_list: List[Knowledge] = None
 ) -> DiffResult:
     try:
@@ -203,7 +203,7 @@ async def gen_knowledge_list(
             )
             if is_saved:
                 # check diff
-                diff_result = get_diff_knowledge_lists(
+                diff_result = get_diff_knowledge_by_sha(
                     origin_repo_knowledge_list, current_repo_knowledge_list
                 )
                 delete_knowledge_ids = [

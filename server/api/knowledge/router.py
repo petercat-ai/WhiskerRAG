@@ -26,6 +26,10 @@ router = APIRouter(
 async def add_knowledge(
     body: List[KnowledgeCreate], tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel[List[Knowledge]]:
+    """
+    Duplicate file_sha entries are prohibited.
+    Any modifications to split_config or embedding model_name parameters must be performed using dedicated API endpoints."
+    """
     db_engine = PluginManager().dbPlugin
     task_engine = PluginManager().taskPlugin
     knowledge_list = await gen_knowledge_list(body, tenant)

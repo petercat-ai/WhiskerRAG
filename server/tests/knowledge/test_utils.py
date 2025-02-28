@@ -4,11 +4,11 @@ from whiskerrag_types.model import (
     KnowledgeSplitConfig,
 )
 
-from server.api.knowledge.utils import get_diff_knowledge_lists
+from server.api.knowledge.utils import get_diff_knowledge_by_sha
 
 
 def test_get_diff_knowledge_lists_empty_lists():
-    result = get_diff_knowledge_lists([], [])
+    result = get_diff_knowledge_by_sha([], [])
     assert result["to_add"] == []
     assert result["to_delete"] == []
     assert result["unchanged"] == []
@@ -25,7 +25,7 @@ def test_get_diff_knowledge_lists_no_changes():
         ),
         split_config=KnowledgeSplitConfig(chunk_size=100, chunk_overlap=50),
     )
-    result = get_diff_knowledge_lists([knowledge_item], [knowledge_item])
+    result = get_diff_knowledge_by_sha([knowledge_item], [knowledge_item])
     assert result["to_add"] == []
     assert result["to_delete"] == []
     assert result["unchanged"][0].file_sha == knowledge_item.file_sha
@@ -42,7 +42,7 @@ def test_get_diff_knowledge_lists_to_add():
         ),
         split_config=KnowledgeSplitConfig(chunk_size=100, chunk_overlap=50),
     )
-    result = get_diff_knowledge_lists([], [knowledge_item])
+    result = get_diff_knowledge_by_sha([], [knowledge_item])
     assert result["to_add"][0].file_sha == knowledge_item.file_sha
     assert result["to_delete"] == []
     assert result["unchanged"] == []
@@ -59,7 +59,7 @@ def test_get_diff_knowledge_lists_to_delete():
         ),
         split_config=KnowledgeSplitConfig(chunk_size=100, chunk_overlap=50),
     )
-    result = get_diff_knowledge_lists([knowledge_item], [])
+    result = get_diff_knowledge_by_sha([knowledge_item], [])
     assert result["to_add"] == []
     assert result["to_delete"][0].file_sha == knowledge_item.file_sha
     assert result["unchanged"] == []
@@ -96,7 +96,7 @@ def test_get_diff_knowledge_lists_mixed():
         ),
         split_config=KnowledgeSplitConfig(chunk_size=100, chunk_overlap=50),
     )
-    result = get_diff_knowledge_lists(
+    result = get_diff_knowledge_by_sha(
         [knowledge_item1, knowledge_item2], [knowledge_item2, knowledge_item3]
     )
     assert result["to_add"][0].file_sha == knowledge_item3.file_sha
