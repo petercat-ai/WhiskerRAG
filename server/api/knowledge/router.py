@@ -14,7 +14,6 @@ from whiskerrag_types.model import (
 
 from .utils import gen_knowledge_list
 
-
 router = APIRouter(
     prefix="/api/knowledge",
     tags=["knowledge"],
