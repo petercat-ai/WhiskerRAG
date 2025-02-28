@@ -11,7 +11,6 @@ from whiskerrag_types.model import (
     PageResponse,
     Tenant,
 )
-from core.log import logger
 
 from .utils import gen_knowledge_list
 

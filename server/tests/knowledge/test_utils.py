@@ -28,7 +28,6 @@ def test_get_diff_knowledge_lists_no_changes():
     result = get_diff_knowledge_lists([knowledge_item], [knowledge_item])
     assert result["to_add"] == []
     assert result["to_delete"] == []
-    print("-------", result["unchanged"])
     assert result["unchanged"][0].file_sha == knowledge_item.file_sha
 
 

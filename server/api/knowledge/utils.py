@@ -109,7 +109,7 @@ def get_diff_knowledge_lists(
 async def gen_knowledge_list(
     user_input: List[KnowledgeCreate], tenant: Tenant
 ) -> List[Knowledge]:
-    knowledge_list: List[Knowledge] = []
+    pre_add_knowledge_list: List[Knowledge] = []
     db_engine = PluginManager().dbPlugin
     for record in user_input:
         is_saved = await is_knowledge_saved(record, tenant)
@@ -122,12 +122,12 @@ async def gen_knowledge_list(
                 **record.model_dump(),
                 tenant_id=tenant.tenant_id,
             )
-            current_repo_knowledge_list = await get_repo_all_knowledge(tenant, record)
+            origin_repo_knowledge_list = await get_repo_all_knowledge(tenant, record)
+            current_repo_knowledge_list = await get_knowledge_list_from_github_repo(
+                record, tenant, repo_knowledge
+            )
             if is_saved:
                 # check diff
-                origin_repo_knowledge_list = await get_knowledge_list_from_github_repo(
-                    record, tenant, repo_knowledge
-                )
                 diff_result = get_diff_knowledge_lists(
                     origin_repo_knowledge_list, current_repo_knowledge_list
                 )
@@ -135,10 +135,10 @@ async def gen_knowledge_list(
                     tenant.tenant_id,
                     [item.knowledge_id for item in diff_result.get("to_delete")],
                 )
-                knowledge_list.extend(diff_result.get("to_add"))
+                pre_add_knowledge_list.extend(diff_result.get("to_add"))
             else:
-                knowledge_list.append(repo_knowledge)
-                knowledge_list.extend(current_repo_knowledge_list)
+                pre_add_knowledge_list.append(repo_knowledge)
+                pre_add_knowledge_list.extend(current_repo_knowledge_list)
             continue
         # ========= other knowledge =====
         if is_saved:
@@ -148,8 +148,8 @@ async def gen_knowledge_list(
             **record.model_dump(),
             tenant_id=tenant.tenant_id,
         )
-        knowledge_list.append(knowledge)
-    return knowledge_list
+        pre_add_knowledge_list.append(knowledge)
+    return pre_add_knowledge_list
 
 
 async def get_knowledge_list_from_github_repo(
