@@ -153,6 +153,11 @@ class SupaBasePlugin(DBPluginInterface):
     async def delete_knowledge(
         self, tenant_id: str, knowledge_id_list: List[str]
     ) -> List[Knowledge]:
+        if not knowledge_id_list:
+            return []
+        # delete task  and delete chunks
+        await self.delete_knowledge_task(tenant_id, knowledge_id_list)
+        await self.delete_knowledge_chunk(tenant_id, knowledge_id_list)
         res = (
             self.supabase_client.table(self.settings.KNOWLEDGE_TABLE_NAME)
             .delete()
@@ -164,6 +169,8 @@ class SupaBasePlugin(DBPluginInterface):
 
     # =============== chunk ===============
     async def save_chunk_list(self, chunk_list: List[Chunk]):
+        if not chunk_list:
+            return []
         res = (
             self.supabase_client.table(self.settings.CHUNK_TABLE_NAME)
             .insert(
@@ -191,6 +198,18 @@ class SupaBasePlugin(DBPluginInterface):
             self.supabase_client.table(self.settings.CHUNK_TABLE_NAME)
             .select("*")
             .eq("chunk_id", chunk_id)
+            .eq("tenant_id", tenant_id)
+            .execute()
+        )
+        return Chunk(**res.data[0]) if res.data else None
+
+    async def delete_knowledge_chunk(
+        self, tenant_id: str, knowledge_ids: str
+    ) -> List[Chunk] | None:
+        res = (
+            self.supabase_client.table(self.settings.CHUNK_TABLE_NAME)
+            .delete()
+            .in_("knowledge_id", knowledge_ids)
             .eq("tenant_id", tenant_id)
             .execute()
         )
@@ -240,6 +259,18 @@ class SupaBasePlugin(DBPluginInterface):
             .execute()
         )
         return Task(**res.data[0]) if res.data else None
+
+    async def delete_knowledge_task(
+        self, tenant_id: str, knowledge_ids: str
+    ) -> List[Task] | None:
+        res = (
+            self.supabase_client.table(self.settings.TASK_TABLE_NAME)
+            .delete()
+            .in_("knowledge_id", knowledge_ids)
+            .eq("tenant_id", tenant_id)
+            .execute()
+        )
+        return res
 
     # =============== tenant ===============
     async def save_tenant(self, tenant: Tenant) -> Tenant | None:
