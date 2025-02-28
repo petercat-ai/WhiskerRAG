@@ -153,6 +153,8 @@ class SupaBasePlugin(DBPluginInterface):
     async def delete_knowledge(
         self, tenant_id: str, knowledge_id_list: List[str]
     ) -> List[Knowledge]:
+        if not knowledge_id_list:
+            return []
         res = (
             self.supabase_client.table(self.settings.KNOWLEDGE_TABLE_NAME)
             .delete()
@@ -164,6 +166,8 @@ class SupaBasePlugin(DBPluginInterface):
 
     # =============== chunk ===============
     async def save_chunk_list(self, chunk_list: List[Chunk]):
+        if not chunk_list:
+            return []
         res = (
             self.supabase_client.table(self.settings.CHUNK_TABLE_NAME)
             .insert(

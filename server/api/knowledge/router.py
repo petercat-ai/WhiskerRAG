@@ -31,9 +31,8 @@ async def add_knowledge(
     db_engine = PluginManager().dbPlugin
     task_engine = PluginManager().taskPlugin
     knowledge_list = await gen_knowledge_list(body, tenant)
-    logger.info(f"knowledge_list: {knowledge_list}")
     if not knowledge_list:
-        raise HTTPException(status_code=400, detail="knowledge is already exist")
+        return ResponseModel(success=True, data=[], message="No knowledge to add")
     saved_knowledge = await db_engine.save_knowledge_list(knowledge_list)
     task_list = await task_engine.init_task_from_knowledge(saved_knowledge, tenant)
     saved_task = await db_engine.save_task_list(task_list)
