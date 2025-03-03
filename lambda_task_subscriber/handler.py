@@ -1,5 +1,4 @@
 import logging
-import multiprocessing
 from typing import Any, Dict, List
 from whiskerrag_types.model import Task, Knowledge, TaskStatus
 from whiskerrag_utils import get_register, RegisterTypeEnum
@@ -19,7 +18,7 @@ class TaskExecutor:
         self._is_running = False
         self.task_dao = TaskDao()
         self.chunk_dao = ChunkDao()
-        self.semaphore = asyncio.Semaphore(min(multiprocessing.cpu_count() * 3, 10))
+        self.semaphore = asyncio.Semaphore(50)
 
     async def handle_add_knowledge_task(self, task: Task, knowledge: Knowledge):
         async with self.semaphore:
