@@ -16,13 +16,11 @@ from whiskerrag_types.model import (
 class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
     SQS_QUEUE_URL: Optional[str] = None
     max_retries: int = 3
-    s3_client: boto3.client = None
     sqs_client: boto3.client = None
     db_client: Optional[DBPluginInterface] = None
     is_running: bool = False
 
     def init(self):
-        self.s3_client = boto3.client("s3")
         self.sqs_client = boto3.client("sqs")
         self.SQS_QUEUE_URL = self.settings.get_env("SQS_QUEUE_URL", "")
 
