@@ -108,10 +108,8 @@ async def handle_records(
     records: List[Dict[str, Any]]
 ) -> Dict[str, List[Dict[str, str]]]:
     failed_records = []
-
     tasks = [process_single_record(record) for record in records]
     results = await asyncio.gather(*tasks, return_exceptions=True)
-
     for record, result in zip(records, results):
         if isinstance(result, Exception):
             logger.error(
