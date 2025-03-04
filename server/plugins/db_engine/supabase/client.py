@@ -16,6 +16,7 @@ from whiskerrag_types.model import (
     RetrievalChunk,
     Task,
     Tenant,
+    KnowledgeSourceEnum,
 )
 from whiskerrag_utils import RegisterTypeEnum, get_register
 
@@ -128,9 +129,18 @@ class SupaBasePlugin(DBPluginInterface):
     async def get_knowledge_list(
         self, tenant_id: str, page_params: PageParams[Knowledge]
     ) -> PageResponse[Knowledge]:
-        return await self._get_paginated_data(
+        res = await self._get_paginated_data(
             tenant_id, self.settings.KNOWLEDGE_TABLE_NAME, Knowledge, page_params
         )
+        for item in res.items:
+            if (
+                item.source_type == KnowledgeSourceEnum.GITHUB_REPO
+                and item.source_config
+                and hasattr(item.source_config, "auth_info")
+            ):
+                item.source_config.auth_info = "***"
+
+        return res
 
     async def get_knowledge(self, tenant_id: str, knowledge_id: str) -> Knowledge:
         res = (

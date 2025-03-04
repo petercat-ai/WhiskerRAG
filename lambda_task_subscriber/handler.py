@@ -108,11 +108,18 @@ async def handle_records(
     records: List[Dict[str, Any]]
 ) -> Dict[str, List[Dict[str, str]]]:
     failed_records = []
-
-    for record in records:
-        success, message_id = await process_single_record(record)
-        if not success:
-            failed_records.append({"itemIdentifier": message_id})
+    tasks = [process_single_record(record) for record in records]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    for record, result in zip(records, results):
+        if isinstance(result, Exception):
+            logger.error(
+                f"Error processing record {record['messageId']}: {str(result)}"
+            )
+            failed_records.append({"itemIdentifier": record["messageId"]})
+        else:
+            success, message_id = result
+            if not success:
+                failed_records.append({"itemIdentifier": message_id})
 
     return {"batchItemFailures": failed_records}
 
