@@ -1,4 +1,4 @@
-from typing import List, Optional, TypedDict
+from typing import List, Optional, Tuple, TypedDict
 from whiskerrag_types.model import (
     Knowledge,
     KnowledgeCreate,
@@ -96,27 +96,36 @@ async def get_repo_all_knowledge(
     return knowledge_list
 
 
+def get_unique_origin_list(
+    origin_list: List[Knowledge],
+) -> Tuple[List[Knowledge], List[Knowledge]]:
+    to_delete = []
+    seen_file_shas = set()
+    unique_origin_list = []
+    for item in origin_list:
+        if item.file_sha not in seen_file_shas:
+            seen_file_shas.add(item.file_sha)
+            unique_origin_list.append(item)
+        else:
+            to_delete.append(item)
+    return to_delete, unique_origin_list
+
+
 def get_diff_knowledge_by_sha(
     origin_list: List[Knowledge] = None, new_list: List[Knowledge] = None
 ) -> DiffResult:
     try:
         origin_list = origin_list or []
         new_list = new_list or []
-        origin_map = {item.file_sha: item for item in origin_list}
+
         to_add = []
         unchanged = []
         to_delete = []
-        # unique origin
-        seen_file_shas = set()
-        unique_origin_list = []
-        for item in origin_list:
-            if item.file_sha not in seen_file_shas:
-                seen_file_shas.add(item.file_sha)
-                unique_origin_list.append(item)
-            else:
-                to_delete.append(item)
-        origin_list = unique_origin_list
-        for new_item in new_list:
+        to_delete_origin, unique_origin_list = get_unique_origin_list(origin_list)
+        to_delete.extend(to_delete_origin)
+        to_delete_new, unique_new_list = get_unique_origin_list(new_list)
+        origin_map = {item.file_sha: item for item in unique_origin_list}
+        for new_item in unique_new_list:
             if new_item.file_sha not in origin_map:
                 to_add.append(new_item)
             else:
