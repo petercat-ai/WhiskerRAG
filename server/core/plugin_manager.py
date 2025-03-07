@@ -29,7 +29,7 @@ class PluginManager:
 
     @property
     def dbPlugin(self) -> DBPluginInterface:
-        db_engine_classname = settings.get_env("DB_ENGINE_CLASSNAME")
+        db_engine_classname = settings.DB_ENGINE_CLASSNAME
         if not self._db_plugin_module_dict:
             raise Exception("db plugin is not found")
         db_engine_instance = self._db_plugin_instance_dict.get(db_engine_classname)
@@ -43,7 +43,7 @@ class PluginManager:
 
     @property
     def taskPlugin(self) -> TaskEnginPluginInterface:
-        task_engine_classname = settings.get_env("TASK_ENGINE_CLASSNAME")
+        task_engine_classname = settings.TASK_ENGINE_CLASSNAME
         if not self._task_plugin_module_dict:
             raise Exception("task plugin is not found")
         task_engine_instance = self._task_plugin_instance_dict.get(
