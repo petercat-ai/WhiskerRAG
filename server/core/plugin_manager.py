@@ -59,8 +59,8 @@ class PluginManager:
             )
             return task_plugin_instance
 
-    def __init__(self, PluginsAbsPath=None):
-        self.load_plugins(PluginsAbsPath)
+    def __init__(self, Plugin_dir_abs_path=None):
+        self._load_plugins(Plugin_dir_abs_path)
 
     def _load_module(self, module_name, module_path):
         try:
@@ -75,18 +75,17 @@ class PluginManager:
             )
             raise e
 
-    def load_plugins(self, pluginAbsPath):
-        plugins_dir = os.path.join(pluginAbsPath, "plugins")
-        if plugins_dir not in sys.path:
-            sys.path.insert(0, plugins_dir)
-        self.pluginPath = plugins_dir
-        logger.info(f"pluginAbsPath: {plugins_dir}")
-        settings.load_plugin_dir_env(plugins_dir)
-        for root, _, files in os.walk(plugins_dir):
+    def _load_plugins(self, plugin_dir_path):
+        if plugin_dir_path not in sys.path:
+            sys.path.insert(0, plugin_dir_path)
+        self.pluginPath = plugin_dir_path
+        logger.info(f"pluginAbsPath: {plugin_dir_path}")
+        settings.load_plugin_dir_env(plugin_dir_path)
+        for root, _, files in os.walk(plugin_dir_path):
             for file in files:
                 if file.endswith(".py"):
                     module_path = os.path.join(root, file)
-                    relative_path = os.path.relpath(module_path, plugins_dir)
+                    relative_path = os.path.relpath(module_path, plugin_dir_path)
                     module_name = os.path.splitext(relative_path)[0].replace(
                         os.sep, "."
                     )
@@ -99,7 +98,7 @@ class PluginManager:
                                 and issubclass(module_class, DBPluginInterface)
                                 and module_class is not DBPluginInterface
                             ):
-                                logger.debug(f"Found db plugin class: {name}")
+                                logger.info(f"Found db plugin class: {name}")
                                 self._db_plugin_module_dict[name] = module_class
                             # init task plugin
                             if (
@@ -107,7 +106,7 @@ class PluginManager:
                                 and issubclass(module_class, TaskEnginPluginInterface)
                                 and module_class is not TaskEnginPluginInterface
                             ):
-                                logger.debug(f"Found task plugin class: { name}")
+                                logger.info(f"Found task plugin class: { name}")
                                 self._task_plugin_module_dict[name] = module_class
 
                     except Exception as e:

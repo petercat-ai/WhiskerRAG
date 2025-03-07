@@ -3,23 +3,52 @@ import os
 from dotenv import dotenv_values, load_dotenv
 from whiskerrag_types.interface import SettingsInterface
 
+# load main env first
 load_dotenv()
 
 
 class Settings(SettingsInterface):
-    WEB_URL: str = os.getenv("WEB_URL", "")
-    # table name
-    KNOWLEDGE_TABLE_NAME: str = os.getenv("KNOWLEDGE_TABLE_NAME", "")
-    CHUNK_TABLE_NAME: str = os.getenv("CHUNK_TABLE_NAME", "")
-    TASK_TABLE_NAME: str = os.getenv("TASK_TABLE_NAME", "")
-    ACTION_TABLE_NAME: str = os.getenv("ACTION_TABLE_NAME", "")
-    TENANT_TABLE_NAME: str = os.getenv("TENANT_TABLE_NAME", "")
+    @property
+    def WEB_URL(self) -> str:
+        return os.getenv("WEB_URL", "")
+
+    @property
+    def KNOWLEDGE_TABLE_NAME(self) -> str:
+        return os.getenv("KNOWLEDGE_TABLE_NAME", "")
+
+    @property
+    def CHUNK_TABLE_NAME(self) -> str:
+        return os.getenv("CHUNK_TABLE_NAME", "")
+
+    @property
+    def TASK_TABLE_NAME(self) -> str:
+        return os.getenv("TASK_TABLE_NAME", "")
+
+    @property
+    def ACTION_TABLE_NAME(self) -> str:
+        return os.getenv("ACTION_TABLE_NAME", "")
+
+    @property
+    def TENANT_TABLE_NAME(self) -> str:
+        return os.getenv("TENANT_TABLE_NAME", "")
+
+    @property
+    def PLUGIN_PATH(self) -> str:
+        return os.getenv("WHISKER_PLUGIN_PATH", "./plugins")
+
     # log dir
-    LOG_DIR: str = os.getenv("LOG_DIR", "./logs")
+    @property
+    def LOG_DIR(self) -> str:
+        return os.getenv("LOG_DIR", "./logs")
+
+    # dev env
+    @property
+    def IS_DEV(self) -> str:
+        return os.getenv("WHISKER_ENV") == "dev"
+
     # plugin env
     PLUGIN_ENV: dict = {}
-    # dev env
-    IS_DEV: bool = os.getenv("WHISKER_ENV") == "dev"
+
     IS_IN_Lambda: bool = all(
         [
             os.getenv("AWS_LAMBDA_FUNCTION_NAME"),
