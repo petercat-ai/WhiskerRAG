@@ -5,7 +5,7 @@ VENV_ACTIVATE:= $(VENV_BIN)/activate
 PIP := $(VENV_BIN)/pip
 PYTEST_ARGS = -v
 
-.PHONY: all venv install install-dev clean test run format type-check help
+.PHONY: all venv install clean test run format type-check help
 
 $(VENV):
 	@echo "Creating virtual environment..."

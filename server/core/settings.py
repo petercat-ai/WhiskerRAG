@@ -1,4 +1,5 @@
 import os
+from typing import Any
 
 from dotenv import dotenv_values, load_dotenv
 from whiskerrag_types.interface import SettingsInterface
@@ -11,6 +12,14 @@ class Settings(SettingsInterface):
     @property
     def WEB_URL(self) -> str:
         return os.getenv("WEB_URL", "")
+
+    @property
+    def DB_ENGINE_CLASSNAME(self) -> str:
+        return os.getenv("DB_ENGINE_CLASSNAME", "")
+
+    @property
+    def TASK_ENGINE_CLASSNAME(self) -> str:
+        return os.getenv("TASK_ENGINE_CLASSNAME", "")
 
     @property
     def KNOWLEDGE_TABLE_NAME(self) -> str:
@@ -34,7 +43,7 @@ class Settings(SettingsInterface):
 
     @property
     def PLUGIN_PATH(self) -> str:
-        return os.getenv("WHISKER_PLUGIN_PATH", "./plugins")
+        return os.getenv("WHISKER_PLUGIN_PATH", "")
 
     # log dir
     @property
@@ -43,7 +52,7 @@ class Settings(SettingsInterface):
 
     # dev env
     @property
-    def IS_DEV(self) -> str:
+    def IS_DEV(self) -> bool:
         return os.getenv("WHISKER_ENV") == "dev"
 
     # plugin env
@@ -69,8 +78,8 @@ class Settings(SettingsInterface):
                     self.PLUGIN_ENV.update(env_dict)
         return self.PLUGIN_ENV
 
-    def get_env(self, name, default_value=None):
-        return os.getenv(name) or default_value
+    def get_env(self, name: str, default_value: Any = None) -> Any:
+        return os.getenv(name, default_value)
 
 
 settings = Settings()
