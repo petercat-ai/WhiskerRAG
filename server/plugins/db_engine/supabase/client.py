@@ -51,7 +51,7 @@ class SupaBasePlugin(DBPluginInterface):
             self.settings.KNOWLEDGE_TABLE_NAME,
             self.settings.TASK_TABLE_NAME,
             self.settings.ACTION_TABLE_NAME,
-            self.settings.TENANT_TABLE_NAME,
+            self.settings.CHUNK_TABLE_NAME,
             self.settings.TENANT_TABLE_NAME,
         ]:
             if not self._check_table_exists(supabase, table_name):
