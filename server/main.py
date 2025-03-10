@@ -23,9 +23,9 @@ def resolve_plugin_path() -> str:
         return str(Path.cwd() / "plugins")
     path = Path(env_path)
     if path.is_absolute():
-        return str(path)
+        return str(path.resolve())
 
-    return str(Path.cwd() / path)
+    return str((Path.cwd() / path).resolve())
 
 
 async def startup_event() -> None:
@@ -101,13 +101,14 @@ def health_checker() -> ResponseModel[dict]:
 
 if __name__ == "__main__":
     if settings.IS_DEV:
+        plugin_abs_path = resolve_plugin_path()
         uvicorn.run(
             "main:app",
             host="0.0.0.0",
             port=8002,
             reload=True,
             reload_dirs=["./"],
-            reload_includes=["*.py", ".env", "./plugins/.env"],
+            reload_includes=["*.py", ".env", plugin_abs_path],
             reload_excludes=["*.pyc", "__pycache__/*", "./logs"],
         )
     else:
