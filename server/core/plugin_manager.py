@@ -76,39 +76,58 @@ class PluginManager:
             raise e
 
     def _load_plugins(self, plugin_dir_path):
-        if plugin_dir_path not in sys.path:
-            sys.path.insert(0, plugin_dir_path)
-        self.pluginPath = plugin_dir_path
-        logger.info(f"pluginAbsPath: {plugin_dir_path}")
+        plugin_abs_path = os.path.abspath(plugin_dir_path)
+        init_file = os.path.join(plugin_abs_path, "__init__.py")
+        if not os.path.isfile(init_file):
+            logger.warning(f"Missing __init__.py in: {plugin_abs_path}")
+            return
+
+        parent_dir = os.path.dirname(plugin_abs_path)
+        if parent_dir not in sys.path:
+            sys.path.insert(0, parent_dir)
+
+        plugin_package_name = os.path.basename(plugin_abs_path)
+        try:
+            self._load_module(plugin_package_name, init_file)
+        except Exception as e:
+            logger.error(f"Failed to load plugin package: {e}")
+            return
         settings.load_plugin_dir_env(plugin_dir_path)
+        plugin_files = []
         for root, _, files in os.walk(plugin_dir_path):
             for file in files:
-                if file.endswith(".py"):
+                if file.endswith(".py") and file != "__init__.py":
                     module_path = os.path.join(root, file)
                     relative_path = os.path.relpath(module_path, plugin_dir_path)
-                    module_name = os.path.splitext(relative_path)[0].replace(
-                        os.sep, "."
-                    )
-                    try:
-                        module_list = self._load_module(module_name, module_path)
-                        for name, module_class in module_list.__dict__.items():
-                            # init db plugin
-                            if (
-                                isinstance(module_class, type)
-                                and issubclass(module_class, DBPluginInterface)
-                                and module_class is not DBPluginInterface
-                            ):
-                                logger.info(f"Found db plugin class: {name}")
-                                self._db_plugin_module_dict[name] = module_class
-                            # init task plugin
-                            if (
-                                isinstance(module_class, type)
-                                and issubclass(module_class, TaskEnginPluginInterface)
-                                and module_class is not TaskEnginPluginInterface
-                            ):
-                                logger.info(f"Found task plugin class: { name}")
-                                self._task_plugin_module_dict[name] = module_class
+                    depth = len(relative_path.split(os.sep))
+                    plugin_files.append((depth, module_path))
 
-                    except Exception as e:
-                        logger.error(f"Failed to load plugin from '{module_path}': {e}")
-                        continue
+        plugin_files.sort(key=lambda x: x[0])
+
+        for _, module_path in plugin_files:
+            relative_path = os.path.relpath(module_path, plugin_dir_path)
+            module_name = f"{plugin_package_name}.{os.path.splitext(relative_path)[0].replace(os.sep, '.')}"
+            try:
+
+                module_list = self._load_module(module_name, module_path)
+                for name, module_class in module_list.__dict__.items():
+                    # init db plugin
+                    if (
+                        isinstance(module_class, type)
+                        and issubclass(module_class, DBPluginInterface)
+                        and module_class is not DBPluginInterface
+                    ):
+                        logger.info(f"Found db plugin class: {name}")
+                        self._db_plugin_module_dict[name] = module_class
+                    # init task plugin
+                    if (
+                        isinstance(module_class, type)
+                        and issubclass(module_class, TaskEnginPluginInterface)
+                        and module_class is not TaskEnginPluginInterface
+                    ):
+                        logger.info(f"Found task plugin class: { name}")
+                        self._task_plugin_module_dict[name] = module_class
+
+            except Exception as e:
+                logger.error(f"Failed to load plugin from '{module_path}': {e}")
+                continue
