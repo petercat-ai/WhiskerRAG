@@ -366,7 +366,6 @@ class SupaBasePlugin(DBPluginInterface):
                 "knowledge_id_list": params.knowledge_id_list,
                 "similarity_threshold": params.similarity_threshold,
                 "top": params.top,
-                "tenant_id": tenant_id,
             },
         ).execute()
         return [RetrievalChunk(**item) for item in res.data] if res.data else []
