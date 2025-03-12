@@ -51,7 +51,7 @@ class SupaBasePlugin(DBPluginInterface):
             self.settings.KNOWLEDGE_TABLE_NAME,
             self.settings.TASK_TABLE_NAME,
             self.settings.ACTION_TABLE_NAME,
-            self.settings.TENANT_TABLE_NAME,
+            self.settings.CHUNK_TABLE_NAME,
             self.settings.TENANT_TABLE_NAME,
         ]:
             if not self._check_table_exists(supabase, table_name):
@@ -360,12 +360,12 @@ class SupaBasePlugin(DBPluginInterface):
             "search_knowledge_list_chunk",
             {
                 "metadata_filter": params.metadata_filter,
+                "query_tenant_id": tenant_id,
                 "query_embedding": query_embedding,
                 "query_embedding_model_name": params.embedding_model_name,
                 "knowledge_id_list": params.knowledge_id_list,
                 "similarity_threshold": params.similarity_threshold,
                 "top": params.top,
-                "tenant_id": tenant_id,
             },
         ).execute()
         return [RetrievalChunk(**item) for item in res.data] if res.data else []

@@ -1,5 +1,6 @@
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import uvicorn
 from api.chunk import router as chunk_router
@@ -16,14 +17,23 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 
 
+def resolve_plugin_path() -> str:
+    env_path = settings.PLUGIN_PATH
+    if not env_path:
+        return str(Path.cwd() / "plugins")
+    path = Path(env_path)
+    if path.is_absolute():
+        return str(path.resolve())
+
+    return str((Path.cwd() / path).resolve())
+
+
 async def startup_event() -> None:
-    # Load task engine and database engine plugins from the plugins folder based on the configuration
-    path = os.path.abspath(os.path.dirname(__file__))
-    logger.info(
-        f"Application started with path : {path}",
-    )
-    PluginManager(path)
-    logger.info("Task engine callback registered")
+    plugin_abs_path = resolve_plugin_path()
+    PluginManager(plugin_abs_path)
+    PluginManager().dbPlugin
+    PluginManager().taskPlugin
+    logger.info("app startup event success")
 
 
 async def shutdown_event() -> None:
@@ -39,7 +49,7 @@ async def lifespan(app: FastAPI):  # type: ignore
         await shutdown_event()
 
 
-app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.1")
+app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.2")
 
 
 @app.exception_handler(Exception)
@@ -91,13 +101,14 @@ def health_checker() -> ResponseModel[dict]:
 
 if __name__ == "__main__":
     if settings.IS_DEV:
+        plugin_abs_path = resolve_plugin_path()
         uvicorn.run(
             "main:app",
             host="0.0.0.0",
             port=8002,
             reload=True,
             reload_dirs=["./"],
-            reload_includes=["*.py", ".env", "./plugins/.env"],
+            reload_includes=["*.py", ".env", plugin_abs_path],
             reload_excludes=["*.pyc", "__pycache__/*", "./logs"],
         )
     else:

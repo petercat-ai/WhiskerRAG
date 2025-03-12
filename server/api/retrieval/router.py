@@ -5,7 +5,6 @@ from core.plugin_manager import PluginManager
 from core.response import ResponseModel
 from fastapi import APIRouter, Depends
 from whiskerrag_types.model import (
-    PageResponse,
     RetrievalByKnowledgeRequest,
     RetrievalBySpaceRequest,
     RetrievalChunk,
