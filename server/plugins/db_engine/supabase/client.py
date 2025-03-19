@@ -214,7 +214,7 @@ class SupaBasePlugin(DBPluginInterface):
         return Chunk(**res.data[0]) if res.data else None
 
     async def delete_knowledge_chunk(
-        self, tenant_id: str, knowledge_ids: str
+        self, tenant_id: str, knowledge_ids: List[str]
     ) -> List[Chunk] | None:
         res = (
             self.supabase_client.table(self.settings.CHUNK_TABLE_NAME)
@@ -271,7 +271,7 @@ class SupaBasePlugin(DBPluginInterface):
         return Task(**res.data[0]) if res.data else None
 
     async def delete_knowledge_task(
-        self, tenant_id: str, knowledge_ids: str
+        self, tenant_id: str, knowledge_ids: List[str]
     ) -> List[Task] | None:
         res = (
             self.supabase_client.table(self.settings.TASK_TABLE_NAME)
@@ -280,7 +280,7 @@ class SupaBasePlugin(DBPluginInterface):
             .eq("tenant_id", tenant_id)
             .execute()
         )
-        return res
+        return Task(**res.data[0]) if res.data else None
 
     # =============== tenant ===============
     async def save_tenant(self, tenant: Tenant) -> Tenant | None:
