@@ -66,3 +66,22 @@ async def get_knowledge_by_id(
             status_code=404, detail=f"Knowledge {knowledge_id} not found"
         )
     return ResponseModel(data=knowledge, success=True)
+
+
+@router.delete("/delete", operation_id="delete_knowledge")
+async def delete_knowledge(
+    knowledge_id: str, tenant: Tenant = Depends(get_tenant)
+) -> ResponseModel[None]:
+    """
+    Deletes a knowledge entry by its ID.
+    """
+    db_engine = PluginManager().dbPlugin
+    knowledge = await db_engine.get_knowledge(tenant.tenant_id, knowledge_id)
+    if not knowledge:
+        raise HTTPException(
+            status_code=404, detail=f"Knowledge {knowledge_id} not found"
+        )
+    await db_engine.delete_knowledge(tenant.tenant_id, [knowledge_id])
+    return ResponseModel(
+        success=True, message=f"Knowledge {knowledge_id} deleted successfully"
+    )
