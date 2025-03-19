@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict, List
 from whiskerrag_types.model import Task, Knowledge, TaskStatus
-from whiskerrag_utils import get_register, RegisterTypeEnum
+from whiskerrag_utils import get_chunks_by_knowledge
 import asyncio
 import json
 
@@ -28,18 +28,9 @@ class TaskExecutor:
                 print("=== start task ===", task.task_id)
                 task.update(status=TaskStatus.RUNNING)
                 self.task_dao.update_task_list([task])
-
-                async def process():
-                    knowledge_loader = get_register(
-                        RegisterTypeEnum.KNOWLEDGE_LOADER, knowledge.source_type
-                    )
-                    embedding_model = get_register(
-                        RegisterTypeEnum.EMBEDDING, knowledge.embedding_model_name
-                    )
-                    documents = await knowledge_loader(knowledge).load()
-                    return await embedding_model().embed_documents(knowledge, documents)
-
-                chunk_list = await asyncio.wait_for(process(), timeout=60)
+                chunk_list = await asyncio.wait_for(
+                    get_chunks_by_knowledge(knowledge), timeout=60 * 3
+                )
                 logger.info(f"Successfully processed task: {task.task_id}")
                 task.update(status=TaskStatus.SUCCESS)
             except asyncio.TimeoutError:
@@ -105,7 +96,7 @@ async def process_single_record(record: Dict[str, Any]) -> tuple[bool, str]:
 
 
 async def handle_records(
-    records: List[Dict[str, Any]]
+    records: List[Dict[str, Any]],
 ) -> Dict[str, List[Dict[str, str]]]:
     failed_records = []
     tasks = [process_single_record(record) for record in records]
