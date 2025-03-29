@@ -1,0 +1,5 @@
+supabase
+boto3
+asyncpg
+huggingface_hub
+sentence_transformers

@@ -30,13 +30,17 @@ def resolve_plugin_path() -> str:
 
 async def startup_event() -> None:
     plugin_abs_path = resolve_plugin_path()
+    logger.info(f"plugin_abs_path: {plugin_abs_path}")
     PluginManager(plugin_abs_path)
-    PluginManager().dbPlugin
-    PluginManager().taskPlugin
+    await PluginManager().dbPlugin.ensure_initialized()
+    await PluginManager().taskPlugin.ensure_initialized(PluginManager().dbPlugin)
     logger.info("app startup event success")
 
 
 async def shutdown_event() -> None:
+    dbPlugin = PluginManager().dbPlugin
+    if dbPlugin:
+        await dbPlugin.cleanup()
     logger.info("Application shutdown")
 
 

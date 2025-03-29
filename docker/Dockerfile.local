@@ -1,0 +1,22 @@
+# Install Python environment
+FROM python:3.12-slim-bullseye
+
+# Set working directory
+WORKDIR /app
+
+# Copy project files into the container. Note: This should align with the context in docker-compose.yml
+COPY . .
+
+# Install server dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /app/server/requirements.txt && \
+    if [ -f /app/server/requirements-dev.txt ]; then \
+        pip install --no-cache-dir -r /app/server/requirements-dev.txt; \
+    fi && \
+    if [ -f /app/server/plugins/requirements.txt ]; then \
+        pip install --no-cache-dir -r /app/server/plugins/requirements.txt; \
+    fi
+
+# Start the server
+USER root
+CMD ["python", "server/main.py"]
