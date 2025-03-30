@@ -1,0 +1,76 @@
+services:
+  postgres:
+    image: ankane/pgvector
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-whisker}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-whisker}
+      - POSTGRES_DB=${POSTGRES_DB:-whisker}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - app_network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    networks:
+      - app_network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  server:
+    build: 
+      context: ./
+      dockerfile: docker/Dockerfile.local
+    container_name: whisker-server
+    environment:
+      - WHISKER_ENV=${WHISKER_ENV:-prod}
+      - WHISKER_PLUGIN_PATH=${WEB_URL:-/app/server/plugins}
+      - POSTGRES_DB_HOST=${DB_HOST:-localhost}
+      - POSTGRES_DB_PORT=${DB_PORT:-5432}
+      - POSTGRES_DB_NAME=${DB_NAME:-whisker}
+      - POSTGRES_DB_USER=${DB_USER:-whisker}
+      - POSTGRES_DB_PASSWORD=${DB_PASSWORD:-whisker}
+      - WEB_URL=${WEB_URL:-http://localhost:3000}
+      - POSTGRES_USER=${POSTGRES_USER:-whisker}
+      - KNOWLEDGE_TABLE_NAME=${KNOWLEDGE_TABLE_NAME:-knowledge}
+      - CHUNK_TABLE_NAME=${CHUNK_TABLE_NAME:-chunk}
+      - TASK_TABLE_NAME=${TASK_TABLE_NAME:-task}
+      - ACTION_TABLE_NAME=${ACTION_TABLE_NAME:-action}
+      - TENANT_TABLE_NAME=${TENANT_TABLE_NAME:-tenant}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-your_openai_key}
+      - DB_ENGINE_CLASSNAME=${DB_ENGINE_CLASSNAME:-LocalEnginePlugin}
+      - TASK_ENGINE_CLASSNAME=${TASK_ENGINE_CLASSNAME:-PostgresDBPlugin}
+      - HF_CACHE=${HF_CACHE:-/app/huggingface}
+
+    ports:
+      - "8000:8000"
+    networks:
+      - app_network
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local

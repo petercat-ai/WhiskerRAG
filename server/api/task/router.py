@@ -12,7 +12,6 @@ from whiskerrag_types.model import (
     TaskStatus,
 )
 
-
 router = APIRouter(
     prefix="/api/task",
     tags=["task"],

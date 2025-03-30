@@ -2,6 +2,8 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+from whiskerrag_utils import init_register
+from core.settings import settings
 import uvicorn
 from api.chunk import router as chunk_router
 from api.knowledge import router as knowledge_router
@@ -11,7 +13,6 @@ from api.tenant import router as tenant_router
 from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
-from core.settings import settings
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -29,14 +30,19 @@ def resolve_plugin_path() -> str:
 
 
 async def startup_event() -> None:
+    init_register("whiskerrag_utils")
     plugin_abs_path = resolve_plugin_path()
+    logger.info(f"plugin_abs_path: {plugin_abs_path}")
     PluginManager(plugin_abs_path)
-    PluginManager().dbPlugin
-    PluginManager().taskPlugin
+    await PluginManager().dbPlugin.ensure_initialized()
+    await PluginManager().taskPlugin.ensure_initialized(PluginManager().dbPlugin)
     logger.info("app startup event success")
 
 
 async def shutdown_event() -> None:
+    dbPlugin = PluginManager().dbPlugin
+    if dbPlugin:
+        await dbPlugin.cleanup()
     logger.info("Application shutdown")
 
 
