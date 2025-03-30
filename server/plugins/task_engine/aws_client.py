@@ -20,7 +20,7 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
     db_client: Optional[DBPluginInterface] = None
     is_running: bool = False
 
-    def init(self):
+    async def init(self):
         self.sqs_client = boto3.client("sqs")
         self.SQS_QUEUE_URL = self.settings.get_env("SQS_QUEUE_URL", "")
 

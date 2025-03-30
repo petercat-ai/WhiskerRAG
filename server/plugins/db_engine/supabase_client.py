@@ -40,7 +40,7 @@ class SupaBasePlugin(DBPluginInterface):
     def get_db_client(self) -> Client:
         return self.supabase_client
 
-    def init(self) -> None:
+    async def init(self) -> None:
         SUPABASE_URL = self.settings.get_env("SUPABASE_URL", "")
         SUPABASE_SERVICE_KEY = self.settings.get_env("SUPABASE_SERVICE_KEY", "")
         if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
