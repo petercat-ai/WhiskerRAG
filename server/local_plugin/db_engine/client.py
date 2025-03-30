@@ -19,6 +19,7 @@ from whiskerrag_types.model import (
     GenericConverter,
 )
 from whiskerrag_utils import RegisterTypeEnum, get_register
+from pgvector.asyncpg import register_vector
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -32,9 +33,6 @@ class PostgresDBPlugin(DBPluginInterface):
         return value
 
     async def _check_table_exists(self, pool: asyncpg.Pool, table_name: str) -> bool:
-        """
-        检查表是否存在
-        """
         try:
             async with pool.acquire() as conn:
                 query = """
@@ -57,9 +55,6 @@ class PostgresDBPlugin(DBPluginInterface):
         return self.pool
 
     async def init(self) -> None:
-        """
-        初始化数据库连接
-        """
         try:
             POSTGRES_DB_HOST = self.settings.get_env("DB_HOST", "localhost")
             POSTGRES_DB_PORT = self.settings.get_env("DB_PORT", "5432")
@@ -87,7 +82,16 @@ class PostgresDBPlugin(DBPluginInterface):
                 password=POSTGRES_DB_PASSWORD,
                 min_size=5,
                 max_size=20,
+                setup=register_vector,
             )
+
+            # Ensure the pgvector extension is installed
+            async with self.pool.acquire() as conn:
+                try:
+                    await conn.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+                except Exception as e:
+                    self.logger.error(f"Failed to ensure vector extension: {e}")
+                    raise
 
             required_tables = [
                 self.settings.KNOWLEDGE_TABLE_NAME,
@@ -128,7 +132,7 @@ class PostgresDBPlugin(DBPluginInterface):
 
     async def healthy(self) -> bool:
         """
-        检查数据库健康状态
+        Check the health status of the database
         """
         try:
             if not self.pool:
@@ -152,11 +156,9 @@ class PostgresDBPlugin(DBPluginInterface):
             params: List[any] = []
             param_index = 1
 
-            # 构建基础查询
             query = f"SELECT * FROM {table_name}"
             count_query = f"SELECT COUNT(*) FROM {table_name}"
 
-            # 构建 WHERE 子句
             where_conditions = []
 
             if page_params.eq_conditions:
@@ -226,7 +228,7 @@ class PostgresDBPlugin(DBPluginInterface):
                 detail=f"Database error: {str(e)}",
             )
 
-    # =============== Knowledge 相关方法 ===============
+    # =============== Knowledge ===============
     async def save_knowledge_list(
         self, knowledge_list: List[Knowledge]
     ) -> List[Knowledge]:
@@ -236,7 +238,6 @@ class PostgresDBPlugin(DBPluginInterface):
                 knowledge_dict = knowledge.model_dump(exclude_unset=True)
                 keys = list(knowledge_dict.keys())
                 placeholders = [f"${i+1}" for i in range(len(keys))]
-
                 query = f"""
                 INSERT INTO {self.settings.KNOWLEDGE_TABLE_NAME} 
                 ({', '.join(keys)}) 
@@ -275,7 +276,7 @@ class PostgresDBPlugin(DBPluginInterface):
             WHERE knowledge_id = $1 AND tenant_id = $2
             """
             row = await conn.fetchrow(query, knowledge_id, tenant_id)
-            return Knowledge(**dict(row)) if row else None
+            return self.knowledge_converter.from_db_dict(dict(row)) if row else None
 
     async def update_knowledge(self, knowledge: Knowledge) -> List[Knowledge]:
         async with self.pool.acquire() as conn:
@@ -297,10 +298,6 @@ class PostgresDBPlugin(DBPluginInterface):
     async def delete_knowledge(
         self, tenant_id: str, knowledge_id_list: List[str]
     ) -> List[Knowledge]:
-        """
-        删除知识及其相关的任务和块
-        使用事务确保操作的原子性
-        """
         if not knowledge_id_list:
             return []
 
@@ -331,7 +328,7 @@ class PostgresDBPlugin(DBPluginInterface):
             self.logger.error(f"Error in delete_knowledge: {e}")
             raise HTTPException(status_code=500, detail="Failed to delete knowledge")
 
-    # =============== Chunk 相关方法 ===============
+    # =============== Chunk ===============
     async def save_chunk_list(self, chunk_list: List[Chunk]) -> List[Chunk]:
         if not chunk_list:
             return []
@@ -342,17 +339,15 @@ class PostgresDBPlugin(DBPluginInterface):
                 chunk_dict = chunk.model_dump(exclude_unset=True, exclude_none=True)
                 keys = list(chunk_dict.keys())
                 placeholders = [f"${i+1}" for i in range(len(keys))]
-
                 query = f"""
                 INSERT INTO {self.settings.CHUNK_TABLE_NAME} 
                 ({', '.join(keys)}) 
                 VALUES ({', '.join(placeholders)})
                 RETURNING *
                 """
-
-                values = [chunk_dict[k] for k in keys]
+                values = [self._prepare_value(chunk_dict[k]) for k in keys]
                 row = await conn.fetchrow(query, *values)
-                saved_chunks.append(Chunk(**dict(row)))
+                saved_chunks.append(self.chunk_converter.from_db_dict(dict(row)))
 
             return saved_chunks
 
@@ -367,9 +362,6 @@ class PostgresDBPlugin(DBPluginInterface):
         )
 
     async def get_chunk_by_id(self, tenant_id: str, chunk_id: str) -> Optional[Chunk]:
-        """
-        根据ID获取特定的块
-        """
         try:
             async with self.pool.acquire() as conn:
                 query = f"""
@@ -378,7 +370,7 @@ class PostgresDBPlugin(DBPluginInterface):
                     """
                 row = await conn.fetchrow(query, chunk_id, tenant_id)
 
-                return Chunk(**dict(row)) if row else None
+                return self.chunk_converter.from_db_dict(dict(row)) if row else None
 
         except Exception as e:
             self.logger.error(f"Error in get_chunk_by_id: {e}")
@@ -387,9 +379,6 @@ class PostgresDBPlugin(DBPluginInterface):
     async def delete_knowledge_chunk(
         self, tenant_id: str, knowledge_ids: List[str]
     ) -> List[Chunk]:
-        """
-        删除知识相关的所有块
-        """
         try:
             async with self.pool.acquire() as conn:
                 query = f"""
@@ -400,13 +389,13 @@ class PostgresDBPlugin(DBPluginInterface):
                 """
                 rows = await conn.fetch(query, knowledge_ids, tenant_id)
 
-                return [Chunk(**dict(row)) for row in rows]
+                return [self.chunk_converter.from_db_dict(dict(row)) for row in rows]
 
         except Exception as e:
             self.logger.error(f"Error in delete_knowledge_chunk: {e}")
             raise HTTPException(status_code=500, detail="Failed to delete chunks")
 
-    # =============== Task 相关方法 ===============
+    # =============== Task ===============
     async def save_task_list(self, task_list: List[Task]) -> List[Task]:
         async with self.pool.acquire() as conn:
             saved_tasks = []
@@ -452,9 +441,6 @@ class PostgresDBPlugin(DBPluginInterface):
     async def get_task_list(
         self, tenant_id: str, page_params: PageParams[Task]
     ) -> PageResponse[Task]:
-        """
-        获取任务列表，支持分页
-        """
         return await self._get_paginated_data(
             tenant_id,
             self.settings.TASK_TABLE_NAME,
@@ -464,7 +450,7 @@ class PostgresDBPlugin(DBPluginInterface):
 
     async def get_task_by_id(self, tenant_id: str, task_id: str) -> Task | None:
         """
-        根据任务ID获取特定任务
+        Retrieve a specific task by its task ID
         """
         try:
             async with self.pool.acquire() as conn:
@@ -486,11 +472,10 @@ class PostgresDBPlugin(DBPluginInterface):
         self, tenant_id: str, knowledge_ids: List[str]
     ) -> List[Task] | None:
         """
-        删除指定知识ID关联的任务
+        Delete tasks associated with the specified knowledge IDs
         """
         try:
             async with self.pool.acquire() as conn:
-                # 使用事务确保操作的原子性
                 async with conn.transaction():
                     query = f"""
                         DELETE FROM {self.settings.TASK_TABLE_NAME}
@@ -510,7 +495,7 @@ class PostgresDBPlugin(DBPluginInterface):
             self.logger.error(f"Error in delete_knowledge_task: {str(e)}")
             raise
 
-    # =============== Tenant 相关方法 ===============
+    # =============== Tenant ===============
     async def save_tenant(self, tenant: Tenant) -> Optional[Tenant]:
         self.logger.info(f"save tenant: {tenant.tenant_name}")
         async with self.pool.acquire() as conn:
@@ -585,23 +570,21 @@ class PostgresDBPlugin(DBPluginInterface):
             self.logger.error(f"Error in update_tenant: {e}")
             raise HTTPException(status_code=500, detail="Failed to update tenant")
 
-    # =============== Retrieval 相关方法 ===============
+    # =============== Retrieval ===============
     async def search_space_chunk_list(
         self,
         tenant_id: str,
         params: RetrievalBySpaceRequest,
     ) -> List[RetrievalChunk]:
         """
-        基于空间ID搜索相似的文本块
+        search similar chunks based on space_id
         """
         try:
-            # 获取embedding模型并生成查询向量
             embedding_model = get_register(
                 RegisterTypeEnum.EMBEDDING, params.embedding_model_name
             )
             query_embedding = await embedding_model().embed_text(params.question, 10)
 
-            # 构建查询
             query = """
             WITH filtered_chunks AS (
                 SELECT c.*,
@@ -627,7 +610,6 @@ class PostgresDBPlugin(DBPluginInterface):
             LIMIT $7;
             """
 
-            # 准备查询参数
             params_dict = {
                 "query_embedding": query_embedding,
                 "space_id_list": params.space_id_list,
@@ -668,17 +650,15 @@ class PostgresDBPlugin(DBPluginInterface):
         params: RetrievalByKnowledgeRequest,
     ) -> List[RetrievalChunk]:
         """
-        基于知识ID搜索相似的文本块
+        Search for similar text chunks based on knowledge IDs
         """
         try:
-            # 获取embedding模型并生成查询向量
             EmbeddingCls = get_register(
                 RegisterTypeEnum.EMBEDDING, params.embedding_model_name
             )
             embedding_instance = EmbeddingCls()
             query_embedding = await embedding_instance.embed_text(params.question, 10)
 
-            # 构建查询
             query = """
             WITH filtered_chunks AS (
                 SELECT c.*,
@@ -703,7 +683,6 @@ class PostgresDBPlugin(DBPluginInterface):
             LIMIT $7;
             """
 
-            # 准备查询参数
             params_dict = {
                 "query_embedding": query_embedding,
                 "knowledge_id_list": params.knowledge_id_list,

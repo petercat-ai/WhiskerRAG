@@ -16,7 +16,7 @@ from .model_manager import HuggingFaceModelManager
 @register(
     RegisterTypeEnum.EMBEDDING, EmbeddingModelEnum.PARAPHRASE_MULTILINGUAL_MINILM_L12_V2
 )
-class HuggingFace(BaseEmbedding):
+class PARAPHRASE_MULTILINGUAL_MINILM_L12_V2(BaseEmbedding):
     def __init__(self):
         self.model_name = EmbeddingModelEnum.PARAPHRASE_MULTILINGUAL_MINILM_L12_V2
         self.cache_dir = os.getenv("HF_HOME", Path.home() / ".cache/huggingface")
@@ -71,7 +71,7 @@ class HuggingFace(BaseEmbedding):
         loop = asyncio.get_event_loop()
         try:
             embedding = await asyncio.wait_for(
-                loop.run_in_executor(self.executor, self.embeddings.embed_query, text),
+                loop.run_in_executor(None, self.embeddings.embed_query, text),
                 timeout=timeout,
             )
             return embedding

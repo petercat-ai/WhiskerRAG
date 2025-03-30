@@ -10,7 +10,6 @@ from whiskerrag_types.model import (
     KnowledgeTypeEnum,
 )
 from whiskerrag_utils import get_chunks_by_knowledge, init_register
-from . import registry
 
 
 class LocalEnginePlugin(TaskEnginPluginInterface):
@@ -20,7 +19,7 @@ class LocalEnginePlugin(TaskEnginPluginInterface):
     is_running: bool = False
 
     async def init(self):
-        init_register("plugins.task_engine.local.registry")
+        init_register("local_plugin.task_engine.registry")
 
     async def init_task_from_knowledge(
         self, knowledge_list: List[Knowledge], tenant: Tenant

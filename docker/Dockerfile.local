@@ -13,8 +13,8 @@ RUN pip install --no-cache-dir --upgrade pip && \
     if [ -f /app/server/requirements-dev.txt ]; then \
         pip install --no-cache-dir -r /app/server/requirements-dev.txt; \
     fi && \
-    if [ -f /app/server/plugins/requirements.txt ]; then \
-        pip install --no-cache-dir -r /app/server/plugins/requirements.txt; \
+    if [ -f /app/server/local_plugin/requirements.txt ]; then \
+        pip install --no-cache-dir -r /app/server/local_plugin/requirements.txt; \
     fi
 
 # Start the server

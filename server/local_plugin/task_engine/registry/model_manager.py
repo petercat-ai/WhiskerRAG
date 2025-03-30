@@ -9,8 +9,6 @@ from huggingface_hub.utils import LocalEntryNotFoundError, RepositoryNotFoundErr
 
 
 class HuggingFaceModelManager:
-    """Hugging Face 模型管理器"""
-
     def __init__(
         self, model_name: str, cache_dir: Optional[Path] = None, revision: str = "main"
     ):
@@ -31,11 +29,10 @@ class HuggingFaceModelManager:
     def is_model_cached(self) -> bool:
         try:
             model_path = self.model_path
-            # 检查模型文件是否存在且完整
             if not model_path.exists():
                 return False
 
-            # 检查关键文件是否存在（根据具体模型类型可能需要调整）
+            # Check if the critical files exist (may need adjustment based on the specific model type)
             required_files = ["config.json", "pytorch_model.bin"]
             return all((model_path / file).exists() for file in required_files)
         except Exception as e:
@@ -46,22 +43,20 @@ class HuggingFaceModelManager:
         self, force_download: bool = False, local_files_only: bool = False
     ) -> Path:
         """
-        确保模型已下载到本地
+        Ensure the model is downloaded locally.
 
         Args:
-            force_download: 是否强制重新下载
-            local_files_only: 是否只使用本地文件
+            force_download: Whether to force re-download the model.
+            local_files_only: Whether to use only local files.
 
         Returns:
-            Path: 模型本地路径
+            Path: Local path to the model.
         """
         try:
-            # 如果不强制下载且模型已缓存，直接返回
             if not force_download and self.is_model_cached():
                 self.logger.info(f"Model {self.model_name} found in cache")
                 return self.model_path
 
-            # 准备下载参数
             download_kwargs = {
                 "repo_id": self.model_name,
                 "cache_dir": str(self.cache_dir),
@@ -70,7 +65,6 @@ class HuggingFaceModelManager:
                 "revision": self.revision,
             }
 
-            # 异步下载
             loop = asyncio.get_event_loop()
             download_func = partial(snapshot_download, **download_kwargs)
             model_path = await loop.run_in_executor(None, download_func)
@@ -88,15 +82,11 @@ class HuggingFaceModelManager:
             raise RuntimeError(f"Failed to download model: {str(e)}")
 
     async def get_model_files(self) -> Path:
-        """
-        获取模型文件路径，如果需要则下载
-        """
         try:
-            # 首先尝试使用本地文件
+            # try using local files firstly
             try:
                 return await self.ensure_model_downloaded(local_files_only=True)
             except ValueError:
-                # 本地没有找到，尝试下载
                 return await self.ensure_model_downloaded(local_files_only=False)
         except Exception as e:
             self.logger.error(f"Failed to get model files: {e}")

@@ -53,6 +53,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-your_openai_key}
       - DB_ENGINE_CLASSNAME=${DB_ENGINE_CLASSNAME:-LocalEnginePlugin}
       - TASK_ENGINE_CLASSNAME=${TASK_ENGINE_CLASSNAME:-PostgresDBPlugin}
+      - HF_CACHE=${HF_CACHE:-/app/huggingface}
 
     ports:
       - "8000:8000"
