@@ -13,12 +13,10 @@ from whiskerrag_utils import RegisterTypeEnum, register
 from .model_manager import HuggingFaceModelManager
 
 
-@register(
-    RegisterTypeEnum.EMBEDDING, EmbeddingModelEnum.PARAPHRASE_MULTILINGUAL_MINILM_L12_V2
-)
-class PARAPHRASE_MULTILINGUAL_MINILM_L12_V2(BaseEmbedding):
+@register(RegisterTypeEnum.EMBEDDING, EmbeddingModelEnum.ALL_MPNET_BASE_V2)
+class ALL_MPNET_BASE_V2(BaseEmbedding):
     def __init__(self):
-        self.model_name = EmbeddingModelEnum.PARAPHRASE_MULTILINGUAL_MINILM_L12_V2
+        self.model_name = EmbeddingModelEnum.ALL_MPNET_BASE_V2
         self.cache_dir = os.getenv("HF_HOME", Path.home() / ".cache/huggingface")
         self.embeddings = None
         self._initialize_embeddings()
@@ -40,7 +38,7 @@ class PARAPHRASE_MULTILINGUAL_MINILM_L12_V2(BaseEmbedding):
     async def _ensure_model_downloaded(cls) -> bool:
         try:
             cache_dir = os.getenv("HF_HOME", Path.home() / ".cache/huggingface")
-            model_name = EmbeddingModelEnum.PARAPHRASE_MULTILINGUAL_MINILM_L12_V2
+            model_name = EmbeddingModelEnum.ALL_MPNET_BASE_V2
             model_manager = HuggingFaceModelManager(model_name, cache_dir)
             await model_manager.get_model_files()
             return True
@@ -49,11 +47,6 @@ class PARAPHRASE_MULTILINGUAL_MINILM_L12_V2(BaseEmbedding):
 
     @classmethod
     async def health_check(cls) -> bool:
-        """
-        检查模型健康状态
-        1. 验证模型是否已下载
-        2. 验证embedding服务是否正常工作
-        """
         try:
             await cls._ensure_model_downloaded()
 

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 from core.auth import get_tenant
 from core.plugin_manager import PluginManager
@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from whiskerrag_types.model import (
     Knowledge,
     KnowledgeCreate,
+    KnowledgeCreateUnion,
     PageParams,
     PageResponse,
     Tenant,
@@ -24,7 +25,8 @@ router = APIRouter(
 
 @router.post("/add", operation_id="add_knowledge")
 async def add_knowledge(
-    body: List[KnowledgeCreate], tenant: Tenant = Depends(get_tenant)
+    body: List[Union[KnowledgeCreate, KnowledgeCreateUnion]],
+    tenant: Tenant = Depends(get_tenant),
 ) -> ResponseModel[List[Knowledge]]:
     """
     Duplicate file_sha entries are prohibited.

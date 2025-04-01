@@ -66,3 +66,7 @@ logs
 
 # ignore
 */ignore
+
+# huggingface cache
+hf_cache/
+**/hf_cache/
