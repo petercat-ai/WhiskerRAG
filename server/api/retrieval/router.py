@@ -19,7 +19,11 @@ router = APIRouter(
 )
 
 
-@router.post("/knowledge", operation_id="retrieve_knowledge_content")
+@router.post(
+    "/knowledge",
+    operation_id="retrieve_knowledge_content",
+    response_model_by_alias=False,
+)
 async def retrieve_knowledge_content(
     body: RetrievalByKnowledgeRequest,
     tenant: Tenant = Depends(get_tenant),
@@ -32,7 +36,9 @@ async def retrieve_knowledge_content(
     return ResponseModel(success=True, data=res)
 
 
-@router.post("/space", operation_id="retrieve_space_content")
+@router.post(
+    "/space", operation_id="retrieve_space_content", response_model_by_alias=False
+)
 async def retrieve_space_content(
     body: RetrievalBySpaceRequest,
     tenant: Tenant = Depends(get_tenant),

@@ -20,7 +20,7 @@ router = APIRouter(
 )
 
 
-@router.post("/restart", operation_id="restart_task")
+@router.post("/restart", operation_id="restart_task", response_model_by_alias=False)
 async def restart_task(
     request: TaskRestartRequest,
     tenant: Tenant = Depends(get_tenant),
@@ -47,7 +47,7 @@ async def restart_task(
     return ResponseModel(data=restart_task, success=True)
 
 
-@router.post("/list", operation_id="get_task_list")
+@router.post("/list", operation_id="get_task_list", response_model_by_alias=False)
 async def get_task_list(
     body: PageParams[Task], tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel[PageResponse[Task]]:
@@ -58,7 +58,7 @@ async def get_task_list(
     return ResponseModel(data=task_list, success=True)
 
 
-@router.get("/detail", operation_id="get_task_detail")
+@router.get("/detail", operation_id="get_task_detail", response_model_by_alias=False)
 async def get_task_detail(
     task_id: str, tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel[Task]:

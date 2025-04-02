@@ -12,10 +12,7 @@ router = APIRouter(
 )
 
 
-@router.post(
-    "/list",
-    operation_id="get_chunk_list",
-)
+@router.post("/list", operation_id="get_chunk_list", response_model_by_alias=False)
 async def get_chunk_list(
     body: PageParams[Chunk], tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel[PageResponse[Chunk]]:
