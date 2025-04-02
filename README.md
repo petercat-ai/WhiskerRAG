@@ -60,7 +60,7 @@ docker-compose stop
 # 重启所有服务
 docker-compose restart
 
-# 启动后端数据服务
+# 启动特定服务
 docker-compose start postgres
 
 # 停止特定服务
