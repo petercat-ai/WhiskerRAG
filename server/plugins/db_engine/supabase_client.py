@@ -1,6 +1,6 @@
 from enum import Enum
 import json
-from typing import List, TypeVar
+from typing import List, TypeVar, Union
 
 from fastapi import HTTPException, status
 from pydantic import BaseModel
@@ -16,6 +16,7 @@ from whiskerrag_types.model import (
     RetrievalChunk,
     Task,
     Tenant,
+    Space,
     KnowledgeSourceEnum,
 )
 from whiskerrag_utils import RegisterTypeEnum, get_register
@@ -324,6 +325,30 @@ class SupaBasePlugin(DBPluginInterface):
             .execute()
         )
         return not bool(res.data)
+
+    # ============== space =================
+    # TODO: add space vo for whiskerrag
+    async def delete_space(self, tenant_id) -> None:
+        pass
+
+    async def save_space(self, space: Space) -> Space:
+        pass
+
+    async def update_space(self, space: Space) -> Space:
+        pass
+
+    async def get_space_list(
+        self, tenant_id: str, page_params: PageParams[Space]
+    ) -> PageResponse[Space]:
+        pass
+
+    async def get_space(self, tenant_id: str, space_id: str) -> Space:
+        pass
+
+    async def delete_space(
+        self, tenant_id: str, space_id: str
+    ) -> Union[List[Space], None]:
+        pass
 
     # =============== retrieval ===============
     async def search_space_chunk_list(

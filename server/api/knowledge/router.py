@@ -7,10 +7,16 @@ from fastapi import APIRouter, Depends, HTTPException
 from whiskerrag_types.model import (
     Knowledge,
     KnowledgeCreate,
-    KnowledgeCreateUnion,
     PageParams,
     PageResponse,
     Tenant,
+    TextCreate,
+    ImageCreate,
+    JSONCreate,
+    MarkdownCreate,
+    PDFCreate,
+    GithubRepoCreate,
+    QACreate,
 )
 
 from .utils import gen_knowledge_list
@@ -25,7 +31,18 @@ router = APIRouter(
 
 @router.post("/add", operation_id="add_knowledge")
 async def add_knowledge(
-    body: List[Union[KnowledgeCreate, KnowledgeCreateUnion]],
+    body: List[
+        Union[
+            KnowledgeCreate,
+            TextCreate,
+            ImageCreate,
+            JSONCreate,
+            MarkdownCreate,
+            PDFCreate,
+            GithubRepoCreate,
+            QACreate,
+        ]
+    ],
     tenant: Tenant = Depends(get_tenant),
 ) -> ResponseModel[List[Knowledge]]:
     """
