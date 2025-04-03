@@ -1,7 +1,7 @@
 import logging
 from typing import Any, Dict, List
 from whiskerrag_types.model import Task, Knowledge, TaskStatus
-from whiskerrag_utils import get_chunks_by_knowledge
+from whiskerrag_utils import get_chunks_by_knowledge, init_register
 import asyncio
 import json
 
@@ -118,6 +118,7 @@ async def handle_records(
 def lambda_handler(
     event: Dict[str, Any], context: Any
 ) -> Dict[str, List[Dict[str, str]]]:
+    init_register("whiskerrag_utils")
     try:
         loop = asyncio.get_event_loop()
         if loop.is_closed():

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 from core.auth import get_tenant
 from core.plugin_manager import PluginManager
@@ -10,6 +10,13 @@ from whiskerrag_types.model import (
     PageParams,
     PageResponse,
     Tenant,
+    TextCreate,
+    ImageCreate,
+    JSONCreate,
+    MarkdownCreate,
+    PDFCreate,
+    GithubRepoCreate,
+    QACreate,
 )
 
 from .utils import gen_knowledge_list
@@ -22,9 +29,21 @@ router = APIRouter(
 )
 
 
-@router.post("/add", operation_id="add_knowledge")
+@router.post("/add", operation_id="add_knowledge", response_model_by_alias=False)
 async def add_knowledge(
-    body: List[KnowledgeCreate], tenant: Tenant = Depends(get_tenant)
+    body: List[
+        Union[
+            KnowledgeCreate,
+            TextCreate,
+            ImageCreate,
+            JSONCreate,
+            MarkdownCreate,
+            PDFCreate,
+            GithubRepoCreate,
+            QACreate,
+        ]
+    ],
+    tenant: Tenant = Depends(get_tenant),
 ) -> ResponseModel[List[Knowledge]]:
     """
     Duplicate file_sha entries are prohibited.
@@ -42,7 +61,7 @@ async def add_knowledge(
     return ResponseModel(success=True, data=saved_knowledge)
 
 
-@router.post("/list", operation_id="get_knowledge_list")
+@router.post("/list", operation_id="get_knowledge_list", response_model_by_alias=False)
 async def get_knowledge_list(
     body: PageParams[Knowledge], tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel[PageResponse[Knowledge]]:
@@ -53,7 +72,9 @@ async def get_knowledge_list(
     return ResponseModel(data=knowledge_list, success=True)
 
 
-@router.get("/detail", operation_id="get_knowledge_by_id")
+@router.get(
+    "/detail", operation_id="get_knowledge_by_id", response_model_by_alias=False
+)
 async def get_knowledge_by_id(
     knowledge_id: str, tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel[Knowledge]:
@@ -68,7 +89,9 @@ async def get_knowledge_by_id(
     return ResponseModel(data=knowledge, success=True)
 
 
-@router.delete("/delete", operation_id="delete_knowledge")
+@router.delete(
+    "/delete", operation_id="delete_knowledge", response_model_by_alias=False
+)
 async def delete_knowledge(
     knowledge_id: str, tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel[None]:

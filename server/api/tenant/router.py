@@ -22,7 +22,7 @@ class TenantCreate(BaseModel):
     email: Optional[str] = None
 
 
-@router.post("/create", operation_id="create_tenant")
+@router.post("/create", operation_id="create_tenant", response_model_by_alias=False)
 async def create_tenant(params: TenantCreate) -> ResponseModel[Tenant]:
     api_secret_key = f"sk-{secrets.token_urlsafe(32)}"
     # api_key_hash = hashlib.sha256(api_key.encode()).hexdigest()
@@ -43,6 +43,6 @@ async def create_tenant(params: TenantCreate) -> ResponseModel[Tenant]:
     return ResponseModel(data=tenant, success=True)
 
 
-@router.get("/me", operation_id="get_tenant")
+@router.get("/me", operation_id="get_tenant", response_model_by_alias=False)
 async def get_tenant(tenant: Tenant = Depends(get_tenant)):
     return tenant
