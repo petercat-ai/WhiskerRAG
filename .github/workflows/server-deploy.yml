@@ -98,27 +98,21 @@ jobs:
               ParameterKey=taskEngineClassName,ParameterValue=${{ vars.TASK_ENGINE_CLASSNAME }} \
               ParameterKey=whiskerEnv,ParameterValue=${{ vars.WHISKER_ENV }} \
               ParameterKey=sqsQueueUrl,ParameterValue=${{ vars.SQS_QUEUE_URL }} \
+            --outputs-file ./sam-outputs.json
+
+      - name: Install jq
+        run: sudo apt-get install -y jq
 
       - name: Get API URL
         id: get_api_url
         run: |
-          if [ "${{ needs.determine-env.outputs.environment }}" = "Production" ]; then
-            CONFIG_ENV="prod"
-          else
-            CONFIG_ENV="preview"
+          API_URL=$(jq -r '.[] | select(.OutputKey == "ApiUrl") | .OutputValue' ./sam-outputs.json)
+          
+          if [ -z "$API_URL" ]; then
+            echo "::error::Failed to retrieve API URL"
+            exit 1
           fi
-          
-          STACK_NAME=$(grep "stack_name" .aws/server_samconfig.toml | grep "${CONFIG_ENV}" -A 1 | tail -n 1 | cut -d'"' -f2)
-          
-          echo "Environment: ${{ needs.determine-env.outputs.environment }}"
-          echo "Config Environment: ${CONFIG_ENV}"
-          echo "Stack name: ${STACK_NAME}"
-          
-          API_URL=$(aws cloudformation describe-stacks \
-            --stack-name "${STACK_NAME}" \
-            --query 'Stacks[0].Outputs[?OutputKey==`ApiUrl`].OutputValue' \
-            --output text)
-          
+
           echo "API URL: ${API_URL}"
           echo "api_url=${API_URL}" >> $GITHUB_OUTPUT
 
