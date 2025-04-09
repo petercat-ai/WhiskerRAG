@@ -4,11 +4,16 @@
 PACKAGE_NAME="@petercat/whiskerrag-client"
 OUTPUT_DIR="./generate-client"
 VERSION_PREFIX="0.1"
+NPM_TOKEN="${NPM_AUTH_TOKEN}"
+
+if [ -z "$NPM_TOKEN" ]; then
+  echo "::error::NPM token is missing"
+  exit 1
+fi
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --publish) PUBLISH=true ;;
-        --NPM_TOKEN=*) NPM_TOKEN="${1#*=}" ;;
         --ENVIRONMENT=*) ENVIRONMENT="${1#*=}" ;;
         --API_URL=*) API_URL="${1#*=}" ;;
         *) echo "Unknown parameter: $1"; exit 1 ;;
@@ -16,13 +21,6 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-# validate required parameters
-if [ "$PUBLISH" = true ]; then
-    if [ -z "$NPM_TOKEN" ]; then
-        echo "Error: --NPM_TOKEN is required when publishing"
-        exit 1
-    fi
-fi
 
 if [ -z "$API_URL" ]; then
     echo "Error: --API_URL is required"

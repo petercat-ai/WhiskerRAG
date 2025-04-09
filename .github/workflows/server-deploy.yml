@@ -166,7 +166,9 @@ jobs:
         run: |
           ${GITHUB_WORKSPACE}/generate-client.sh \
             --publish \
-            --NPM_TOKEN="${{ secrets.WHISKER_NPM_TOKEN }}" \
             --ENVIRONMENT="${{ needs.determine-env.outputs.environment }}" \
             --API_URL="${{ needs.server-deploy.outputs.api_url }}"
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.WHISKER_NPM_TOKEN }}  # 确保仓库已配置同名 secret
+          NPM_REGISTRY: "registry.npmjs.org"
         working-directory: ${{ github.workspace }}
