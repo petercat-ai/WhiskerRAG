@@ -98,7 +98,6 @@ jobs:
               ParameterKey=taskEngineClassName,ParameterValue=${{ vars.TASK_ENGINE_CLASSNAME }} \
               ParameterKey=whiskerEnv,ParameterValue=${{ vars.WHISKER_ENV }} \
               ParameterKey=sqsQueueUrl,ParameterValue=${{ vars.SQS_QUEUE_URL }} \
-            --outputs-file ./sam-outputs.json
 
       - name: Get Stack Name
         id: get_stack_name
