@@ -102,23 +102,20 @@ jobs:
       - name: Get Stack Name
         id: get_stack_name
         run: |
-          # 将环境名称映射到 TOML 配置段
           if [ "${{ env.ENVIRONMENT }}" = "Production" ]; then
             CONFIG_SECTION="prod"
           else
             CONFIG_SECTION="preview"
           fi
 
-          # 精确解析 TOML 文件
           STACK_NAME=$(sed -n "/\[$CONFIG_SECTION\.deploy\.parameters\]/,/^\[/p" .aws/server_samconfig.toml | grep 'stack_name' | cut -d'"' -f2)
           
-          # 验证结果
           if [ -z "$STACK_NAME" ]; then
-            echo "::error::无法解析堆栈名称，检查 TOML 配置"
+            echo "::error::can not get stack name from .aws/server_samconfig.toml, check it first"
             exit 1
           fi
 
-          echo "解析到的堆栈名称: ${STACK_NAME}"
+          echo "Get Stack: ${STACK_NAME}"
           echo "STACK_NAME=${STACK_NAME}" >> $GITHUB_ENV
 
       - name: Get API URL
@@ -126,7 +123,7 @@ jobs:
         run: |
           API_URL=$(aws cloudformation describe-stacks \
             --stack-name "${{ env.STACK_NAME }}" \
-            --query 'Stacks[0].Outputs[?OutputKey==`ApiUrl`].OutputValue' \
+            --query 'Stacks[0].Outputs[?OutputKey==`WhiskerFunctionUrl`].OutputValue' \
             --output text)
 
           echo "=== CloudFormation ouput ==="
