@@ -164,11 +164,13 @@ jobs:
 
       - name: Generate and Publish Client
         run: |
+          echo "NPM_AUTH_TOKEN length: ${#NPM_AUTH_TOKEN}"
+          echo "print env list:"
+          printenv | grep -E 'NPM|TOKEN'
           ${GITHUB_WORKSPACE}/generate-client.sh \
             --publish \
             --ENVIRONMENT="${{ needs.determine-env.outputs.environment }}" \
             --API_URL="${{ needs.server-deploy.outputs.api_url }}"
         env:
-          NPM_AUTH_TOKEN: ${{ secrets.WHISKER_NPM_TOKEN }}  # 确保仓库已配置同名 secret
-          NPM_REGISTRY: "registry.npmjs.org"
+          NPM_AUTH_TOKEN: ${{ secrets.WHISKER_NPM_TOKEN }}
         working-directory: ${{ github.workspace }}
