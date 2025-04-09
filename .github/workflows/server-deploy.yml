@@ -155,10 +155,18 @@ jobs:
       - name: Install swagger-typescript-api
         run: npm install -g swagger-typescript-api
 
+      - name: Debug File Structure
+        run: |
+          echo "=== current file path ==="
+          pwd
+          echo "=== project structure ==="
+          ls -al
+
       - name: Generate and Publish Client
         run: |
-          generate-client.sh \
+          ${GITHUB_WORKSPACE}/generate-client.sh \
             --publish \
             --NPM_TOKEN="${{ secrets.NPM_TOKEN }}" \
             --ENVIRONMENT="${{ needs.determine-env.outputs.environment }}" \
             --API_URL="${{ needs.server-deploy.outputs.api_url }}"
+        working-directory: ${{ github.workspace }}
