@@ -102,8 +102,24 @@ jobs:
       - name: Get API URL
         id: get_api_url
         run: |
-          # 从 SAM 输出或环境变量中获取 API URL
-          API_URL=$(aws cloudformation describe-stacks --stack-name your-stack-name --query 'Stacks[0].Outputs[?OutputKey==`ApiUrl`].OutputValue' --output text)
+          if [ "${{ needs.determine-env.outputs.environment }}" = "Production" ]; then
+            CONFIG_ENV="prod"
+          else
+            CONFIG_ENV="preview"
+          fi
+          
+          STACK_NAME=$(grep "stack_name" .aws/server_samconfig.toml | grep "${CONFIG_ENV}" -A 1 | tail -n 1 | cut -d'"' -f2)
+          
+          echo "Environment: ${{ needs.determine-env.outputs.environment }}"
+          echo "Config Environment: ${CONFIG_ENV}"
+          echo "Stack name: ${STACK_NAME}"
+          
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name "${STACK_NAME}" \
+            --query 'Stacks[0].Outputs[?OutputKey==`ApiUrl`].OutputValue' \
+            --output text)
+          
+          echo "API URL: ${API_URL}"
           echo "api_url=${API_URL}" >> $GITHUB_OUTPUT
 
   generate-client:
