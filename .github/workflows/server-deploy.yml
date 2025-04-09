@@ -38,7 +38,11 @@ jobs:
       environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
       npm_tag: ${{ github.ref == 'refs/heads/main' && 'latest' || 'dev' }}
     steps:
-      - run: echo "Determined environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}"
+      - name: Determine environment
+        id: env
+        run: |
+          echo "Environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}"
+          echo "NPM tag: ${{ github.ref == 'refs/heads/main' && 'latest' || 'dev' }}"
 
   server-deploy:
     needs: determine-env
