@@ -36,6 +36,9 @@ jobs:
       ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
     strategy:
       fail-fast: true
+    outputs:
+      api_url: ${{ steps.get_api_url.outputs.api_url }}
+
 
     steps:
       - name: Print specific variables
@@ -81,3 +84,42 @@ jobs:
               ParameterKey=taskEngineClassName,ParameterValue=${{ vars.TASK_ENGINE_CLASSNAME }} \
               ParameterKey=whiskerEnv,ParameterValue=${{ vars.WHISKER_ENV }} \
               ParameterKey=sqsQueueUrl,ParameterValue=${{ vars.SQS_QUEUE_URL }} \
+
+      - name: Get API URL
+        id: get_api_url
+        run: |
+          # 从 SAM 输出或环境变量中获取 API URL
+          API_URL=$(aws cloudformation describe-stacks --stack-name your-stack-name --query 'Stacks[0].Outputs[?OutputKey==`ApiUrl`].OutputValue' --output text)
+          echo "api_url=${API_URL}" >> $GITHUB_OUTPUT
+
+  generate-client:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v2
+        
+        - name: Setup Node.js
+          uses: actions/setup-node@v2
+          with:
+            node-version: '16'
+            registry-url: 'https://registry.npmjs.org'
+
+        - name: Install swagger-typescript-api
+          run: npm install -g swagger-typescript-api
+
+        - name: Generate Client
+          run: |
+            swagger-typescript-api -p http://your-api-url/openapi.json -o ./client \
+              --name api.ts \
+              --type-prefix I \
+              --module-name-index 1
+
+        - name: Prepare Package
+          run: |
+            cd client
+            npm init -y
+            npm version ${{ github.ref_name }}
+            
+        - name: Publish to NPM
+          run: npm publish
+          env:
+            NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
