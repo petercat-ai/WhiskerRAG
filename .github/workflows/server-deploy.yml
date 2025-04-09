@@ -157,7 +157,7 @@ jobs:
 
       - name: Generate and Publish Client
         run: |
-          ./scripts/generate-client.sh \
+          generate-client.sh \
             --publish \
             --NPM_TOKEN="${{ secrets.NPM_TOKEN }}" \
             --ENVIRONMENT="${{ needs.determine-env.outputs.environment }}" \
