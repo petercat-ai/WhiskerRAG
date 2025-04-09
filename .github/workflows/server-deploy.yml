@@ -143,6 +143,10 @@ jobs:
   generate-client:
     needs: [determine-env, server-deploy]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      packages: write
     steps:
       - uses: actions/checkout@v3
       
@@ -163,6 +167,9 @@ jobs:
           ls -al
 
       - name: Generate and Publish Client
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.WHISKER_NPM_TOKEN }}
+        working-directory: ${{ github.workspace }}
         run: |
           echo "NPM_AUTH_TOKEN length: ${#NPM_AUTH_TOKEN}"
           echo "print env list:"
@@ -171,6 +178,4 @@ jobs:
             --publish \
             --ENVIRONMENT="${{ needs.determine-env.outputs.environment }}" \
             --API_URL="${{ needs.server-deploy.outputs.api_url }}"
-        env:
-          NPM_AUTH_TOKEN: ${{ secrets.WHISKER_NPM_TOKEN }}
-        working-directory: ${{ github.workspace }}
+        
