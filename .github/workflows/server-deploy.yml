@@ -93,33 +93,100 @@ jobs:
           echo "api_url=${API_URL}" >> $GITHUB_OUTPUT
 
   generate-client:
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v2
-        
-        - name: Setup Node.js
-          uses: actions/setup-node@v2
-          with:
-            node-version: '16'
-            registry-url: 'https://registry.npmjs.org'
+    needs: server-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+          registry-url: 'https://registry.npmjs.org'
 
-        - name: Install swagger-typescript-api
-          run: npm install -g swagger-typescript-api
+      - name: Wait for API to be ready
+        run: |
+          echo "Waiting for API to be ready..."
+          sleep 30
 
-        - name: Generate Client
-          run: |
-            swagger-typescript-api -p http://your-api-url/openapi.json -o ./client \
-              --name api.ts \
-              --type-prefix I \
-              --module-name-index 1
+      - name: Install dependencies
+        run: |
+          npm install -g swagger-typescript-api
+          npm install -g wait-on
 
-        - name: Prepare Package
-          run: |
-            cd client
-            npm init -y
-            npm version ${{ github.ref_name }}
-            
-        - name: Publish to NPM
-          run: npm publish
-          env:
-            NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Generate Client
+        env:
+          API_URL: ${{ needs.server-deploy.outputs.api_url }}
+        run: |
+          # 尝试获取 OpenAPI 文档，如果失败则重试
+          MAX_RETRIES=5
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            if curl -f "${API_URL}/openapi.json" -o openapi.json; then
+              break
+            fi
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "Attempt $RETRY_COUNT failed, retrying in 10 seconds..."
+            sleep 10
+          done
+
+          if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+            echo "Failed to fetch OpenAPI spec after $MAX_RETRIES attempts"
+            exit 1
+          fi
+
+          swagger-typescript-api generate -p openapi.json -o ./client \
+            --name api.ts \
+            --type-prefix I \
+            --module-name-index 1
+
+      - name: Prepare Package
+        run: |
+          cd client
+          # 创建 package.json
+          cat > package.json << EOF
+          {
+            "name": "@your-org/api-client",
+            "version": "${{ github.ref_name }}",
+            "main": "api.js",
+            "types": "api.d.ts",
+            "files": [
+              "api.js",
+              "api.d.ts",
+              "http-client.js",
+              "http-client.d.ts"
+            ],
+            "scripts": {
+              "build": "tsc"
+            }
+          }
+          EOF
+
+          # 创建 tsconfig.json
+          cat > tsconfig.json << EOF
+          {
+            "compilerOptions": {
+              "target": "es2017",
+              "module": "commonjs",
+              "declaration": true,
+              "outDir": "./dist",
+              "strict": true
+            },
+            "include": ["."],
+            "exclude": ["node_modules"]
+          }
+          EOF
+
+      - name: Build Package
+        run: |
+          cd client
+          npm install typescript --save-dev
+          npm run build
+
+      - name: Publish to NPM
+        run: |
+          cd client
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
