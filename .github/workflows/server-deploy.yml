@@ -166,7 +166,7 @@ jobs:
         run: |
           ${GITHUB_WORKSPACE}/generate-client.sh \
             --publish \
-            --NPM_TOKEN="${{ secrets.NPM_TOKEN }}" \
+            --NPM_TOKEN="${{ secrets.WHISKER_NPM_TOKEN }}" \
             --ENVIRONMENT="${{ needs.determine-env.outputs.environment }}" \
             --API_URL="${{ needs.server-deploy.outputs.api_url }}"
         working-directory: ${{ github.workspace }}
