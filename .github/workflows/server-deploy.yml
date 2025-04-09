@@ -143,10 +143,6 @@ jobs:
   generate-client:
     needs: [determine-env, server-deploy]
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      actions: read
-      packages: write
     steps:
       - uses: actions/checkout@v3
       
@@ -159,23 +155,14 @@ jobs:
       - name: Install swagger-typescript-api
         run: npm install -g swagger-typescript-api
 
-      - name: Debug File Structure
-        run: |
-          echo "=== current file path ==="
-          pwd
-          echo "=== project structure ==="
-          ls -al
-
       - name: Generate and Publish Client
         env:
           NPM_AUTH_TOKEN: ${{ secrets.WHISKER_NPM_TOKEN }}
         working-directory: ${{ github.workspace }}
         run: |
+          echo "secrets.WHISKER_NPM_TOKEN is set: ${{ secrets.WHISKER_NPM_TOKEN != '' }}"
           echo "NPM_AUTH_TOKEN length: ${#NPM_AUTH_TOKEN}"
-          echo "print env list:"
-          printenv | grep -E 'NPM|TOKEN'
-          ${GITHUB_WORKSPACE}/generate-client.sh \
-            --publish \
-            --ENVIRONMENT="${{ needs.determine-env.outputs.environment }}" \
-            --API_URL="${{ needs.server-deploy.outputs.api_url }}"
-        
+          # ${GITHUB_WORKSPACE}/generate-client.sh \
+          #   --publish \
+          #   --ENVIRONMENT="${{ needs.determine-env.outputs.environment }}" \
+          #   --API_URL="${{ needs.server-deploy.outputs.api_url }}"
