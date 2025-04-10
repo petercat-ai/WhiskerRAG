@@ -326,6 +326,17 @@ class SupaBasePlugin(DBPluginInterface):
         )
         return not bool(res.data)
 
+    async def get_tenant_by_id(self, tenant_id: str) -> Union[Tenant, None]:
+        pass
+
+    async def get_tenant_list(
+        self, page_params: PageParams[Tenant]
+    ) -> PageResponse[Tenant]:
+        pass
+
+    async def delete_tenant_by_id(self, tenant_id: str) -> Union[Tenant, None]:
+        pass
+
     # ============== space =================
     # TODO: add space vo for whiskerrag
     async def delete_space(self, tenant_id) -> None:

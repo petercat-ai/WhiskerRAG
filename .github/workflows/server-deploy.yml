@@ -27,16 +27,33 @@ permissions:
   contents: read    # This is required for actions/checkout
   actions: write
 
-jobs:
-  server-deploy:
-    runs-on: ubuntu-latest
+env:
+  NODE_VERSION: '18'
+  PACKAGE_NAME: '@petercat/whiskerrag-client'
 
-    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
+jobs:
+  determine-env:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'preview' }}
+      npm_tag: ${{ github.ref == 'refs/heads/main' && 'latest' || 'dev' }}
+    steps:
+      - name: Determine environment
+        id: env
+        run: |
+          echo "Environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'preview' }}"
+          echo "NPM tag: ${{ github.ref == 'refs/heads/main' && 'latest' || 'dev' }}"
+
+  server-deploy:
+    needs: determine-env
+    runs-on: ubuntu-latest
+    environment: ${{ needs.determine-env.outputs.environment }}
     env:
-      ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
+      ENVIRONMENT: ${{ needs.determine-env.outputs.environment }}
     strategy:
       fail-fast: true
-
+    outputs:
+      api_url: ${{ steps.get_api_url.outputs.api_url }}
     steps:
       - name: Print specific variables
         run: |
@@ -81,3 +98,69 @@ jobs:
               ParameterKey=taskEngineClassName,ParameterValue=${{ vars.TASK_ENGINE_CLASSNAME }} \
               ParameterKey=whiskerEnv,ParameterValue=${{ vars.WHISKER_ENV }} \
               ParameterKey=sqsQueueUrl,ParameterValue=${{ vars.SQS_QUEUE_URL }} \
+
+      - name: Get Stack Name
+        id: get_stack_name
+        run: |
+          if [ "${{ env.ENVIRONMENT }}" = "Production" ]; then
+            CONFIG_SECTION="prod"
+          else
+            CONFIG_SECTION="preview"
+          fi
+
+          STACK_NAME=$(sed -n "/\[$CONFIG_SECTION\.deploy\.parameters\]/,/^\[/p" .aws/server_samconfig.toml | grep 'stack_name' | cut -d'"' -f2)
+          
+          if [ -z "$STACK_NAME" ]; then
+            echo "::error::can not get stack name from .aws/server_samconfig.toml, check it first"
+            exit 1
+          fi
+
+          echo "Get Stack: ${STACK_NAME}"
+          echo "STACK_NAME=${STACK_NAME}" >> $GITHUB_ENV
+
+      - name: Get API URL
+        id: get_api_url
+        run: |
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name "${{ env.STACK_NAME }}" \
+            --query 'Stacks[0].Outputs[?OutputKey==`WhiskerFunctionUrl`].OutputValue' \
+            --output text)
+
+          echo "=== CloudFormation ouput ==="
+          aws cloudformation describe-stacks \
+            --stack-name "${{ env.STACK_NAME }}" \
+            --query 'Stacks[0].Outputs' \
+            --output table
+
+          if [[ -z "$API_URL" || "$API_URL" == "None" ]]; then
+            echo "::error::GET API URL ERROR (stack: ${{ env.STACK_NAME }})"
+            exit 1
+          fi
+
+          echo "api_url=${API_URL}" >> $GITHUB_OUTPUT
+          echo "success get API URL: ${API_URL}"
+
+  generate-client:
+    needs: [determine-env, server-deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install swagger-typescript-api
+        run: npm install -g swagger-typescript-api
+
+      - name: Generate and Publish Client
+        env:
+          NPM_AUTH_TOKEN: ${{ secrets.WHISKER_NPM_TOKEN }}
+        working-directory: ${{ github.workspace }}
+        run: |
+          ${GITHUB_WORKSPACE}/generate-client.sh \
+            --publish \
+            --ENVIRONMENT="${{ needs.determine-env.outputs.environment }}" \
+            --API_URL="${{ needs.server-deploy.outputs.api_url }}" \

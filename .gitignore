@@ -70,3 +70,8 @@ logs
 # huggingface cache
 hf_cache/
 **/hf_cache/
+
+# generated files
+generate-client
+.client
+openapi.json
