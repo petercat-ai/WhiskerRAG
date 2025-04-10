@@ -163,5 +163,4 @@ jobs:
           ${GITHUB_WORKSPACE}/generate-client.sh \
             --publish \
             --ENVIRONMENT="${{ needs.determine-env.outputs.environment }}" \
-            
-            --API_URL="${{ needs.server-deploy.outputs.api_url }}"
+            --API_URL="${{ needs.server-deploy.outputs.api_url }}" \
