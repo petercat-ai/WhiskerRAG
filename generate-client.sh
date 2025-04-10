@@ -6,11 +6,13 @@ OUTPUT_DIR="./generate-client"
 VERSION_PREFIX="0.1"
 NPM_TOKEN="${NPM_AUTH_TOKEN}"
 
+# Validate NPM token
 if [ -z "$NPM_TOKEN" ]; then
-  echo "::error::NPM token is missing"
-  exit 1
+    echo "::error::NPM token is missing"
+    exit 1
 fi
 
+# Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --publish) PUBLISH=true ;;
@@ -21,7 +23,7 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-
+# Validate required parameters
 if [ -z "$API_URL" ]; then
     echo "Error: --API_URL is required"
     exit 1
@@ -32,16 +34,15 @@ if [ -z "$ENVIRONMENT" ]; then
     exit 1
 fi
 
-# set npm tag based on environment
+# Remove trailing slash from API URL if present
+API_URL=${API_URL%/}
+
+# Set npm tag based on environment
 NPM_TAG=$([ "$ENVIRONMENT" = "Production" ] && echo "latest" || echo "dev")
 
-# set version based on environment
+# Set version based on environment
 TIMESTAMP=$(date +%Y%m%d%H%M)
-if [ "$ENVIRONMENT" = "Production" ]; then
-    VERSION="${VERSION_PREFIX}.${TIMESTAMP}"
-else
-    VERSION="${VERSION_PREFIX}.${TIMESTAMP}-dev"
-fi
+VERSION="${VERSION_PREFIX}.${TIMESTAMP}$([ "$ENVIRONMENT" != "Production" ] && echo "-dev" || echo "")"
 
 echo "Configuration:"
 echo "  Environment: ${ENVIRONMENT}"
@@ -49,33 +50,24 @@ echo "  API URL: ${API_URL}"
 echo "  Version: ${VERSION}"
 echo "  NPM tag: ${NPM_TAG}"
 
+# Make sure the output directory exists
+mkdir -p "$OUTPUT_DIR"
 
-# make sure the output directory exists
-mkdir -p $OUTPUT_DIR
-
-# check if npm is installed
+# Check if npm is installed
 if ! command -v npm &> /dev/null; then
     echo "npm is not installed"
     exit 1
 fi
 
-# install swagger-typescript-api globally
+# Install swagger-typescript-api globally
 echo "Installing swagger-typescript-api..."
 npm install -g swagger-typescript-api
 
-# set the package name based on environment
-TIMESTAMP=$(date +%Y%m%d%H%M)
-if [ "$ENVIRONMENT" = "Production" ]; then
-    VERSION="${VERSION_PREFIX}.${TIMESTAMP}"
-else
-    VERSION="${VERSION_PREFIX}.${TIMESTAMP}-dev"
-fi
-
 echo "Generating client with version: $VERSION"
 
-# get the OpenAPI spec
-echo "Fetching OpenAPI spec from $API_URL/openapi.json"
-curl -f "$API_URL/openapi.json" -o openapi.json || {
+# Get the OpenAPI spec
+echo "Fetching OpenAPI spec from ${API_URL}/openapi.json"
+curl -f "${API_URL}/openapi.json" -o openapi.json || {
     echo "Failed to fetch OpenAPI spec"
     exit 1
 }

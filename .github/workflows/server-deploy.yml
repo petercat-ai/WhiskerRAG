@@ -35,13 +35,13 @@ jobs:
   determine-env:
     runs-on: ubuntu-latest
     outputs:
-      environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}
+      environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'preview' }}
       npm_tag: ${{ github.ref == 'refs/heads/main' && 'latest' || 'dev' }}
     steps:
       - name: Determine environment
         id: env
         run: |
-          echo "Environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'Preview' }}"
+          echo "Environment: ${{ github.ref == 'refs/heads/main' && 'Production' || 'preview' }}"
           echo "NPM tag: ${{ github.ref == 'refs/heads/main' && 'latest' || 'dev' }}"
 
   server-deploy:
@@ -160,9 +160,8 @@ jobs:
           NPM_AUTH_TOKEN: ${{ secrets.WHISKER_NPM_TOKEN }}
         working-directory: ${{ github.workspace }}
         run: |
-          echo "secrets.WHISKER_NPM_TOKEN is set: ${{ secrets.WHISKER_NPM_TOKEN != '' }}"
-          echo "NPM_AUTH_TOKEN length: ${#NPM_AUTH_TOKEN}"
-          # ${GITHUB_WORKSPACE}/generate-client.sh \
-          #   --publish \
-          #   --ENVIRONMENT="${{ needs.determine-env.outputs.environment }}" \
-          #   --API_URL="${{ needs.server-deploy.outputs.api_url }}"
+          ${GITHUB_WORKSPACE}/generate-client.sh \
+            --publish \
+            --ENVIRONMENT="${{ needs.determine-env.outputs.environment }}" \
+            
+            --API_URL="${{ needs.server-deploy.outputs.api_url }}"
