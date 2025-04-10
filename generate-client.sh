@@ -79,9 +79,7 @@ swagger-typescript-api generate \
     -o $OUTPUT_DIR \
     --name api.ts \
     --type-prefix I \
-    --module-name-index 1 \
-    --axios \
-    --unwrap-response-data
+    --module-name-index 1
 
 # create package.json
 echo "Creating package.json..."
@@ -120,7 +118,7 @@ cat > $OUTPUT_DIR/tsconfig.json << EOF
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true
     },
-    "include": ["."],
+    "include": ["*.ts"],
     "exclude": ["node_modules", "dist"]
 }
 EOF
