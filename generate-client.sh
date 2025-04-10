@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # default values
-PACKAGE_NAME="@petercatai/whiskerrag-client"
-OUTPUT_DIR="./generate-client"
+PACKAGE_NAME="@petercatai/whisker-client"
+OUTPUT_DIR="./.client"
 VERSION_PREFIX="0.1"
 NPM_TOKEN="${NPM_AUTH_TOKEN}"
 
