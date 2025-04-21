@@ -55,7 +55,7 @@ async def lifespan(app: FastAPI):  # type: ignore
         await shutdown_event()
 
 
-app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.2")
+app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.3")
 
 
 @app.exception_handler(Exception)
