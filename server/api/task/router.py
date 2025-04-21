@@ -1,5 +1,4 @@
 from typing import List
-from uuid import uuid4
 
 from core.auth import get_tenant
 from core.plugin_manager import PluginManager
@@ -50,7 +49,7 @@ async def restart_task(
     return ResponseModel(data=restart_task, success=True)
 
 
-@router.post("/cancel", operation_id="restart_task")
+@router.post("/cancel", operation_id="cancel_task")
 async def cancel_task(
     request: TaskRestartRequest,
     tenant: Tenant = Depends(get_tenant),
@@ -98,8 +97,8 @@ async def get_task_detail(
     return ResponseModel(data=res, success=True)
 
 
-@router.delete("/delete", operation_id="get_task_detail")
-async def delete_task_(
+@router.delete("/delete", operation_id="delete_task_by_id")
+async def delete_task_by_id(
     task_id: str, tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel[Task]:
     db_engine = PluginManager().dbPlugin
