@@ -292,9 +292,6 @@ class SupaBasePlugin(DBPluginInterface):
     ) -> Union[Task, None]:
         pass
 
-    async def delete_task_sat(self, tenant_id: str, task_id: str) -> Union[Task, None]:
-        pass
-
     async def task_statistics(
         self, space_id: str, status: TaskStatus
     ) -> Union[dict[TaskStatus, int], int]:
