@@ -10,6 +10,7 @@ from api.knowledge import router as knowledge_router
 from api.retrieval import router as retrieval_router
 from api.task import router as task_router
 from api.tenant import router as tenant_router
+from api.space import router as space_router
 from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
@@ -55,7 +56,7 @@ async def lifespan(app: FastAPI):  # type: ignore
         await shutdown_event()
 
 
-app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.2")
+app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.3")
 
 
 @app.exception_handler(Exception)
@@ -91,6 +92,7 @@ app.include_router(retrieval_router.router)
 app.include_router(task_router.router)
 app.include_router(chunk_router.router)
 app.include_router(tenant_router.router)
+app.include_router(space_router.router)
 
 
 @app.get("/")
