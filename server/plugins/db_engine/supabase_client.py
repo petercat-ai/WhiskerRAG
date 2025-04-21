@@ -18,6 +18,7 @@ from whiskerrag_types.model import (
     Tenant,
     Space,
     KnowledgeSourceEnum,
+    TaskStatus,
 )
 from whiskerrag_utils import RegisterTypeEnum, get_register
 
@@ -285,6 +286,19 @@ class SupaBasePlugin(DBPluginInterface):
             .execute()
         )
         return Task(**res.data[0]) if res.data else None
+
+    async def delete_task_by_id(
+        self, tenant_id: str, task_id: str
+    ) -> Union[Task, None]:
+        pass
+
+    async def delete_task_sat(self, tenant_id: str, task_id: str) -> Union[Task, None]:
+        pass
+
+    async def task_statistics(
+        self, space_id: str, status: TaskStatus
+    ) -> Union[dict[TaskStatus, int], int]:
+        pass
 
     # =============== tenant ===============
     async def save_tenant(self, tenant: Tenant) -> Tenant | None:
