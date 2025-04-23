@@ -8,10 +8,10 @@ from whiskerrag_types.model import (
     PageParams,
     PageResponse,
     StatusStatisticsPageResponse,
-    Tenant,
     Task,
     TaskRestartRequest,
     TaskStatus,
+    Tenant,
 )
 
 router = APIRouter(

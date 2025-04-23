@@ -1,23 +1,23 @@
 from typing import List, Union
 
 from core.auth import get_tenant
+from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
-from core.log import logger
 from fastapi import APIRouter, Depends, HTTPException
 from whiskerrag_types.model import (
-    Knowledge,
-    KnowledgeCreate,
-    PageParams,
-    PageResponse,
-    Tenant,
-    TextCreate,
+    GithubRepoCreate,
     ImageCreate,
     JSONCreate,
+    Knowledge,
+    KnowledgeCreate,
     MarkdownCreate,
+    PageParams,
+    PageResponse,
     PDFCreate,
-    GithubRepoCreate,
     QACreate,
+    Tenant,
+    TextCreate,
 )
 
 from .utils import gen_knowledge_list
@@ -69,26 +69,29 @@ async def add_knowledge(
 
 @router.post("/update", operation_id="update_knowledge")
 async def update_knowledge(
-    body: List[Knowledge], tenant: Tenant = Depends(get_tenant)
-) -> ResponseModel[List[Knowledge]]:
-    """
-    Only makes modifications to the enabled field.
-    """
-    logger.info("[update_knowledge][start],req={}".format(body))
+    knowledge: Knowledge,
+    tenant: Tenant = Depends(get_tenant),
+) -> ResponseModel[Knowledge]:
+    logger.info("[update_knowledge][start], req=%s", knowledge)
     try:
         db_engine = PluginManager().dbPlugin
-        knowledages = []
-        for item in body:
-            knowledge = await db_engine.get_knowledge(
-                tenant.tenant_id, item.knowledge_id
+        knowledge_db = await db_engine.get_knowledge(
+            tenant.tenant_id, knowledge.knowledge_id
+        )
+        if not knowledge_db:
+            logger.warning(
+                "[update_knowledge][知识不存在], knowledge_id=%s",
+                knowledge.knowledge_id,
             )
-            knowledge.update(**{"enabled": item.enabled})
-            knowledages.append(knowledge)
-        await db_engine.update_knowledge(knowledages, tenant)
-        return ResponseModel(success=True, data=knowledages)
+            raise HTTPException(
+                status_code=404,
+                detail=f"知识不存在,knowledge_id={knowledge.knowledge_id}",
+            )
+        updated_knowledge = await db_engine.update_knowledge(knowledge)
+        return ResponseModel(data=updated_knowledge, success=True)
     except Exception as e:
-        logger.error(f"[update_knowledge][error], req={body}, error={str(e)}")
-        raise HTTPException(status_code=500, detail="修改知识失败")
+        logger.error("[update_knowledge][error], req=%s, error=%s", knowledge, str(e))
+        raise HTTPException(status_code=500, detail="更新知识失败")
 
 
 @router.post("/list", operation_id="get_knowledge_list")
@@ -116,9 +119,7 @@ async def get_knowledge_by_id(
     logger.info("[get_knowledge_by_id][start],req={}".format(knowledge_id))
     try:
         db_engine = PluginManager().dbPlugin
-        knowledge: PageResponse[Knowledge] = await db_engine.get_knowledge(
-            tenant.tenant_id, knowledge_id
-        )
+        knowledge = await db_engine.get_knowledge(tenant.tenant_id, knowledge_id)
         if not knowledge:
             logger.warning(
                 "[get_knowledge_by_id][知识不存在],knowledge_id={}".format(knowledge_id)
