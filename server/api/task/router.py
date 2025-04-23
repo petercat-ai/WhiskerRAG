@@ -97,8 +97,8 @@ async def get_task_detail(
     return ResponseModel(data=res, success=True)
 
 
-@router.delete("/delete", operation_id="get_task_detail")
-async def delete_task_(
+@router.delete("/delete", operation_id="delete_task_by_id")
+async def delete_task_by_id(
     task_id: str, tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel[Task]:
     db_engine = PluginManager().dbPlugin
