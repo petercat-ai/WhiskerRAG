@@ -95,7 +95,7 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
         status_code=500,
         content=ResponseModel(
             success=False,
-            message="服务器内部错误",
+            message="Internal Server Error",
             data=None
         ).model_dump()
     )
