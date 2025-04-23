@@ -5,11 +5,13 @@ from pathlib import Path
 from whiskerrag_utils import init_register
 from core.settings import settings
 import uvicorn
+import traceback
 from api.chunk import router as chunk_router
 from api.knowledge import router as knowledge_router
 from api.retrieval import router as retrieval_router
 from api.task import router as task_router
 from api.tenant import router as tenant_router
+from api.space import router as space_router
 from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
@@ -55,22 +57,47 @@ async def lifespan(app: FastAPI):  # type: ignore
         await shutdown_event()
 
 
-app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.2")
+app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.3")
 
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    error_message = str(exc.detail) if isinstance(exc.detail, str) else str(exc)
+
+    logger.error(
+        f"HTTPException occurred: "
+        f"Path={request.url.path}, Method={request.method}, "
+        f"Status Code={exc.status_code}, Message={error_message}, "
+        f"Traceback={traceback.format_exc()}"
+    )
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=ResponseModel(
+            success=False,
+            message=error_message,
+            data=None
+        ).model_dump()
+    )
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    logger.error(f"Global exception handler Request path: {request.url.path}")
+    error_message = str(exc)
 
-    if isinstance(exc, HTTPException):
-        return JSONResponse(
-            status_code=exc.status_code,
-            content=ResponseModel(success=False, message=str(exc.detail)).model_dump(),
-        )
+    logger.error(
+        f"Global exception occurred: "
+        f"Path={request.url.path}, Method={request.method}, "
+        f"Exception Type={type(exc).__name__}, Message={error_message}, "
+        f"Traceback={traceback.format_exc()}"
+    )
 
     return JSONResponse(
         status_code=500,
-        content=ResponseModel(success=False, message=str(exc)).model_dump(),
+        content=ResponseModel(
+            success=False,
+            message="Internal Server Error",
+            data=None
+        ).model_dump()
     )
 
 
@@ -91,6 +118,7 @@ app.include_router(retrieval_router.router)
 app.include_router(task_router.router)
 app.include_router(chunk_router.router)
 app.include_router(tenant_router.router)
+app.include_router(space_router.router)
 
 
 @app.get("/")

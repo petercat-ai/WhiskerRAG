@@ -1,5 +1,4 @@
 from typing import List
-from uuid import uuid4
 
 from core.auth import get_tenant
 from core.plugin_manager import PluginManager
@@ -9,10 +8,10 @@ from whiskerrag_types.model import (
     PageParams,
     PageResponse,
     StatusStatisticsPageResponse,
-    Tenant,
     Task,
     TaskRestartRequest,
     TaskStatus,
+    Tenant,
 )
 
 router = APIRouter(
@@ -50,7 +49,7 @@ async def restart_task(
     return ResponseModel(data=restart_task, success=True)
 
 
-@router.post("/cancel", operation_id="restart_task")
+@router.post("/cancel", operation_id="cancel_task")
 async def cancel_task(
     request: TaskRestartRequest,
     tenant: Tenant = Depends(get_tenant),

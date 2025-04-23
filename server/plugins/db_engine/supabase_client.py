@@ -1,6 +1,6 @@
 from enum import Enum
 import json
-from typing import List, TypeVar, Union
+from typing import List, Optional, TypeVar, Union
 
 from fastapi import HTTPException, status
 from pydantic import BaseModel
@@ -18,6 +18,7 @@ from whiskerrag_types.model import (
     Tenant,
     Space,
     KnowledgeSourceEnum,
+    TaskStatus,
 )
 from whiskerrag_utils import RegisterTypeEnum, get_register
 
@@ -285,6 +286,40 @@ class SupaBasePlugin(DBPluginInterface):
             .execute()
         )
         return Task(**res.data[0]) if res.data else None
+
+    async def delete_task_by_id(self, tenant_id: str, task_id: str) -> Optional[Task]:
+        try:
+            query = (
+                self.supabase_client.table(self.settings.TASK_TABLE_NAME)
+                .select("*")
+                .eq("tenant_id", tenant_id)
+                .eq("task_id", task_id)
+            )
+
+            response = await query.execute()
+            task_to_delete = response.data[0] if response.data else None
+
+            if task_to_delete:
+                delete_query = (
+                    self.supabase.table(self.settings.TASK_TABLE_NAME)
+                    .delete()
+                    .eq("tenant_id", tenant_id)
+                    .eq("task_id", task_id)
+                )
+
+                await delete_query.execute()
+                return Task(**task_to_delete)
+
+            return None
+
+        except Exception as e:
+            raise e
+
+    async def task_statistics(
+        self, space_id: str, status: TaskStatus
+    ) -> Union[dict[TaskStatus, int], int]:
+        # TODO: group by status status
+        return 0
 
     # =============== tenant ===============
     async def save_tenant(self, tenant: Tenant) -> Tenant | None:

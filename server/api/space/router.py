@@ -1,14 +1,14 @@
 from core.auth import get_tenant
+from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
-from core.log import logger
-from fastapi import APIRouter, Depends, HTTPException, Path, Body
+from fastapi import APIRouter, Body, Depends, HTTPException, Path
 from whiskerrag_types.model import (
+    PageParams,
+    PageResponse,
     Space,
     SpaceCreate,
     SpaceResponse,
-    PageParams,
-    PageResponse,
     Tenant,
 )
 
