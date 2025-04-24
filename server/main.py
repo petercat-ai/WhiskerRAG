@@ -59,6 +59,17 @@ async def lifespan(app: FastAPI):  # type: ignore
 
 app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.3")
 
+# Override default 404 handler
+@app.exception_handler(404)
+async def http404_error_handler(request: Request, __):
+    return JSONResponse(
+        status_code=404,
+        content=ResponseModel(
+            success=False,
+            message="Path Not Found",
+            data=None
+        ).model_dump()
+    )
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
