@@ -6,7 +6,7 @@ on:
     types: ["completed"]
     branches: ["test","main","preview","test/*","preview/*"]
   push:
-    branches: ["test","main","preview","test/*","preview/*"]
+    branches: ["test","preview","test/*","preview/*"]
     paths:
       - 'server/**'
       - '.github/workflows/server-deploy.yml'
@@ -14,7 +14,7 @@ on:
       - 'template_server.yml'
       - 'docker/Dockerfile.aws.server'
   pull_request:
-    branches: ["test","main","preview","test/*","preview/*"]
+    branches: ["main",]
     paths:
       - 'server/**'
       - '.github/workflows/server-deploy.yml'
@@ -153,7 +153,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install swagger-typescript-api
-        run: npm install -g swagger-typescript-api
+        run: npm install -g swagger-typescript-api@13.0.28
 
       - name: Generate and Publish Client
         env:
