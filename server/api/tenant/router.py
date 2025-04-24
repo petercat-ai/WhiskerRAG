@@ -35,7 +35,6 @@ async def create_tenant(params: TenantCreate) -> ResponseModel[Tenant]:
     logger.info("[create_tenant][start],req={}".format(params))
     try:
         api_secret_key = f"sk-{secrets.token_urlsafe(32)}"
-        # api_key_hash = hashlib.sha256(api_key.encode()).hexdigest()
         db_engine = PluginManager().dbPlugin
         if not await db_engine.validate_tenant_name(params.tenant_name):
             raise HTTPException(
