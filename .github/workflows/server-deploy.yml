@@ -157,7 +157,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install swagger-typescript-api
-        run: npm install -g swagger-typescript-api@13.0.28
+        run: npm install -g swagger-typescript-api@latest
 
       - name: Generate and Publish Client
         env:
