@@ -6,7 +6,7 @@ on:
     types: ["completed"]
     branches: ["test","main","preview","test/*","preview/*"]
   push:
-    branches: ["test","preview","test/*","preview/*"]
+    branches: ["test","main","preview","test/*","preview/*"]
     paths:
       - 'server/**'
       - '.github/workflows/server-deploy.yml'
@@ -21,9 +21,7 @@ on:
       - '.aws/server_samconfig.toml'
       - 'template_server.yml'
       - 'docker/Dockerfile.aws.server'
-  pull_request_review:
-    types: ["submitted"]
-    branches: ["main"]
+
 
 permissions:
   id-token: write   # This is required for requesting the JWT
