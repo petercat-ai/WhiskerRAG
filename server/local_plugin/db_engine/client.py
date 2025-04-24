@@ -395,6 +395,26 @@ class PostgresDBPlugin(DBPluginInterface):
             self.logger.error(f"Error in delete_knowledge_chunk: {e}")
             raise HTTPException(status_code=500, detail="Failed to delete chunks")
 
+    async def delete_chunk_by_id(
+        self, tenant_id: str, chunk_id: str, model_name: str
+    ) -> Chunk:
+        try:
+            async with self.pool.acquire() as conn:
+                query = f"""
+                    DELETE FROM {self.settings.CHUNK_TABLE_NAME}
+                    WHERE tenant_id = ANY($1)
+                    AND chunk_id = $2
+                    AND embedding_model_name = $3
+                    RETURNING *
+                """
+                rows = await conn.fetch(query, tenant_id, chunk_id, model_name)
+
+                return [self.chunk_converter.from_db_dict(dict(row)) for row in rows]
+
+        except Exception as e:
+            self.logger.error(f"Error in delete_chunk: {e}")
+            raise HTTPException(status_code=500, detail="Failed to delete chunks")
+
     # =============== Task ===============
     async def save_task_list(self, task_list: List[Task]) -> List[Task]:
         async with self.pool.acquire() as conn:

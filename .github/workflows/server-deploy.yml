@@ -14,17 +14,13 @@ on:
       - 'template_server.yml'
       - 'docker/Dockerfile.aws.server'
   pull_request:
-    branches: ["main"]
+    branches: ["test","main","preview","test/*","preview/*"]
     paths:
       - 'server/**'
       - '.github/workflows/server-deploy.yml'
       - '.aws/server_samconfig.toml'
       - 'template_server.yml'
       - 'docker/Dockerfile.aws.server'
-  pull_request_review:
-    types: ["submitted"]
-    branches: ["main"]
-
 
 permissions:
   id-token: write   # This is required for requesting the JWT
@@ -157,7 +153,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install swagger-typescript-api
-        run: npm install -g swagger-typescript-api@13.0.28
+        run: npm install -g swagger-typescript-api@latest
 
       - name: Generate and Publish Client
         env:

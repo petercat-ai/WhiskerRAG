@@ -230,6 +230,19 @@ class SupaBasePlugin(DBPluginInterface):
         )
         return Chunk(**res.data[0]) if res.data else None
 
+    async def delete_chunk_by_id(
+        self, tenant_id: str, chunk_id: str, model_name: str
+    ) -> Chunk:
+        res = (
+            self.supabase_client.table(self.settings.CHUNK_TABLE_NAME)
+            .delete()
+            .eq("chunk_id", chunk_id)
+            .eq("tenant_id", tenant_id)
+            .eq("embedding_model_name", model_name)
+            .execute()
+        )
+        return Chunk(**res.data[0]) if res.data else None
+
     # =============== task ===============
     async def save_task_list(self, task_list: List[Task]):
         res = (
