@@ -30,6 +30,10 @@ class Settings(SettingsInterface):
         return os.getenv("CHUNK_TABLE_NAME", "")
 
     @property
+    def SPACE_TABLE_NAME(self) -> str:
+        return os.getenv("SPACE_TABLE_NAME", "")
+
+    @property
     def TASK_TABLE_NAME(self) -> str:
         return os.getenv("TASK_TABLE_NAME", "")
 
