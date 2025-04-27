@@ -182,6 +182,32 @@ class SupaBasePlugin(DBPluginInterface):
         )
         return [Knowledge(**knowledge) for knowledge in res.data] if res.data else []
 
+    async def batch_update_knowledge_retrieval_count(
+        self, knowledge_id_list: dict[str, int]
+    ) -> None:
+        updates = [
+            {"knowledge_id": knowledge_id, "retrieval_count": retrieval_count}
+            for knowledge_id, retrieval_count in knowledge_id_list.items()
+        ]
+        try:
+            res = (
+                self.supabase_client.table(self.settings.KNOWLEDGE_TABLE_NAME)
+                .upsert(updates)
+                .execute()
+            )
+            if not res.data or len(res.data) != len(knowledge_id_list):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Some knowledge entries were not found or could not be updated.",
+                )
+            return None
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to update knowledge retrieval counts: {str(e)}",
+            )
+
     # =============== chunk ===============
     async def save_chunk_list(self, chunk_list: List[Chunk]):
         if not chunk_list:
