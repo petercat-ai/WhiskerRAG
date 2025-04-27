@@ -7,7 +7,7 @@ from core.plugin_manager import PluginManager
 from core.log import logger
 
 
-class RetrivalCounter:
+class RetrievalCounter:
     def __init__(self, flush_interval=60, shards=16):
         self.flush_interval = flush_interval
         self.shards = shards
@@ -19,7 +19,6 @@ class RetrivalCounter:
         self.flush_thread.start()
 
     def _get_shard(self, key):
-        """根据 Key 的哈希值选择分片"""
         return hash(key) % self.shards
 
     def record(self, key, count=1):
@@ -39,8 +38,8 @@ class RetrivalCounter:
             self._flush()
 
     def _flush(self):
-        """切换缓冲区并写入数据库"""
-        # 1. 切换所有分片的缓冲区
+        """Switch buffers and write to the database"""
+        # 1. Switch the buffers for all shards
         for i in range(self.shards):
             with self.locks[i]:
                 self.active_buffers[i], self.backup_buffers[i] = (
@@ -48,32 +47,37 @@ class RetrivalCounter:
                     self.active_buffers[i],
                 )
 
-        # 2. 合并所有分片的数据并写入数据库
+        # 2. Merge data from all shards and write to the database
         merged_data = defaultdict(int)
         for buf in self.backup_buffers:
             for key, count in buf.items():
                 merged_data[key] += count
         is_success = self._write_to_database(merged_data)
         if is_success:
-            # 3. 清空备份缓冲区
+            # 3. Clear the backup buffers
             for buf in self.backup_buffers:
                 buf.clear()
 
-    def _write_to_database(self, data) -> bool:
+    async def _write_to_database(self, data) -> bool:
         db = PluginManager().dbPlugin
         try:
-            db.batch_update_knowledge_retrieval_count(data)
+            await db.batch_update_knowledge_retrieval_count(data)
         except Exception as e:
-            logger.error(f"flushing konwledge retrival count error: {e}")
+            logger.error(f"flushing knowledge retrieval count error: {e}")
             return False
-        logger.info(f"flushing konwledge retrival count success: {dict(data)}")
+        logger.info(f"flushing knowledge retrieval count success: {dict(data)}")
         return True
 
 
-_counter = RetrivalCounter()
+_counter = RetrievalCounter()
 
 
-def retrival_counter(chunks: list[RetrievalChunk]):
+def retrieval_counter(chunks: list[RetrievalChunk]):
     _counter.batch_record(
         {k: 1 for k in list(set([chunk.knowledge_id for chunk in chunks]))}
     )
+
+
+def force_flush(self):
+    """Force flush all buffers immediately"""
+    self._flush()
