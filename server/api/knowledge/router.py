@@ -5,6 +5,7 @@ from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
 from fastapi import APIRouter, Depends, HTTPException
+from whiskerrag_utils.registry import get_registry_list, RegisterTypeEnum
 from whiskerrag_types.model import (
     GithubRepoCreate,
     ImageCreate,
@@ -163,3 +164,20 @@ async def delete_knowledge(
     except Exception as e:
         logger.error(f"[delete_knowledge][error], req={knowledge_id}, error={str(e)}")
         raise HTTPException(status_code=500, detail="删除知识失败")
+
+@router.get("/embedding/models", operation_id="get_embedding_models_list")
+async def get_embedding_models_list(tenant: Tenant = Depends(get_tenant)):
+    logger.info("[get_embedding_models_list][start]")
+    try:
+        registries = get_registry_list()
+        embedding_registry = registries.get(RegisterTypeEnum.EMBEDDING)
+        if not embedding_registry:
+            raise KeyError("Embedding registry not found")
+        keys = [str(key) for key in embedding_registry._dict.keys()]
+        return ResponseModel(success=True, data=keys, message="Success")
+    except KeyError as e:
+        logger.error(f"[get_embedding_models_list][error], error={str(e)}")
+        raise HTTPException(status_code=404, detail=f"Registry not found: {str(e)}")
+    except Exception as e:
+        logger.error(f"[get_embedding_models_list][error], error={str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch embedding models: {str(e)}")
