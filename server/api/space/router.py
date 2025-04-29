@@ -20,7 +20,11 @@ router = APIRouter(
 )
 
 
-@router.post("/list", operation_id="get_space_list")
+@router.post(
+    "/list",
+    operation_id="get_space_list",
+    response_model_by_alias=False,
+)
 async def get_space_list(
     body: PageParams[Space],
     tenant: Tenant = Depends(get_tenant),
@@ -38,7 +42,7 @@ async def get_space_list(
         raise HTTPException(status_code=500, detail="获取知识库列表失败")
 
 
-@router.post("/add", operation_id="add_space")
+@router.post("/add", operation_id="add_space", response_model_by_alias=False)
 async def add_space(
     body: SpaceCreate,
     tenant: Tenant = Depends(get_tenant),
@@ -57,7 +61,11 @@ async def add_space(
         raise HTTPException(status_code=500, detail="创建知识库失败")
 
 
-@router.delete("/{space_id}", operation_id="delete_space")
+@router.delete(
+    "/{space_id}",
+    operation_id="delete_space",
+    response_model_by_alias=False,
+)
 async def delete_space(
     space_id: str = Path(..., description="知识库ID"),
     tenant: Tenant = Depends(get_tenant),
@@ -84,7 +92,7 @@ async def delete_space(
         raise HTTPException(status_code=500, detail="删除知识库失败")
 
 
-@router.put("/{space_id}", operation_id="update_space")
+@router.put("/{space_id}", operation_id="update_space", response_model_by_alias=False)
 async def update_space(
     space_id: str = Path(..., description="知识库唯一标识符"),
     body: SpaceCreate = Body(..., description="更新后的知识库信息"),
@@ -113,7 +121,9 @@ async def update_space(
         raise HTTPException(status_code=500, detail="更新知识库失败")
 
 
-@router.get("/{space_id}", operation_id="get_space_by_id")
+@router.get(
+    "/{space_id}", operation_id="get_space_by_id", response_model_by_alias=False
+)
 async def get_space_by_id(
     space_id: str = Path(..., description="知识库唯一标识符"),
     tenant: Tenant = Depends(get_tenant),

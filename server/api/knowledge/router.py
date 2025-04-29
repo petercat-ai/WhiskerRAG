@@ -68,7 +68,7 @@ async def add_knowledge(
         raise HTTPException(status_code=500, detail="新增知识失败")
 
 
-@router.post("/update", operation_id="update_knowledge")
+@router.post("/update", operation_id="update_knowledge", response_model_by_alias=False)
 async def update_knowledge(
     knowledge: Knowledge,
     tenant: Tenant = Depends(get_tenant),
@@ -95,7 +95,7 @@ async def update_knowledge(
         raise HTTPException(status_code=500, detail="更新知识失败")
 
 
-@router.post("/list", operation_id="get_knowledge_list")
+@router.post("/list", operation_id="get_knowledge_list", response_model_by_alias=False)
 async def get_knowledge_list(
     body: PageParams[Knowledge], tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel[PageResponse[Knowledge]]:
@@ -165,7 +165,12 @@ async def delete_knowledge(
         logger.error(f"[delete_knowledge][error], req={knowledge_id}, error={str(e)}")
         raise HTTPException(status_code=500, detail="删除知识失败")
 
-@router.get("/embedding/models", operation_id="get_embedding_models_list")
+
+@router.get(
+    "/embedding/models",
+    operation_id="get_embedding_models_list",
+    response_model_by_alias=False,
+)
 async def get_embedding_models_list(tenant: Tenant = Depends(get_tenant)):
     logger.info("[get_embedding_models_list][start]")
     try:
@@ -180,4 +185,6 @@ async def get_embedding_models_list(tenant: Tenant = Depends(get_tenant)):
         raise HTTPException(status_code=404, detail=f"Registry not found: {str(e)}")
     except Exception as e:
         logger.error(f"[get_embedding_models_list][error], error={str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch embedding models: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch embedding models: {str(e)}"
+        )
