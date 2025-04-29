@@ -1,21 +1,26 @@
+import asyncio
 import threading
 import time
+import traceback
 from collections import defaultdict
 from whiskerrag_types.model import RetrievalChunk
-
-from core.plugin_manager import PluginManager
+from whiskerrag_types.interface import DBPluginInterface
 from core.log import logger
 
 
 class RetrievalCounter:
-    def __init__(self, flush_interval=60, shards=16):
+    def __init__(
+        self, flush_interval=60, shards=16, db_plugin: DBPluginInterface = None
+    ):
         self.flush_interval = flush_interval
         self.shards = shards
+        self.db_plugin = db_plugin
         self.active_buffers = [defaultdict(int) for _ in range(shards)]
         self.backup_buffers = [defaultdict(int) for _ in range(shards)]
         self.locks = [threading.Lock() for _ in range(shards)]
         self.running = True
         self.flush_thread = threading.Thread(target=self._flush_loop)
+        self.flush_thread.daemon = True
         self.flush_thread.start()
 
     def _get_shard(self, key):
@@ -58,15 +63,24 @@ class RetrievalCounter:
             for buf in self.backup_buffers:
                 buf.clear()
 
-    async def _write_to_database(self, data) -> bool:
-        db = PluginManager().dbPlugin
-        try:
-            await db.batch_update_knowledge_retrieval_count(data)
-        except Exception as e:
-            logger.error(f"flushing knowledge retrieval count error: {e}")
+    def _write_to_database(self, data) -> bool:
+        if not data:
+            logger.info(f"flushing knowledge retrieval count skip: {dict(data)}")
             return False
-        logger.info(f"flushing knowledge retrieval count success: {dict(data)}")
+        try:
+            asyncio.run(self.db_plugin.batch_update_knowledge_retrieval_count(data))
+            logger.info(f"flushing knowledge retrieval count success: {dict(data)}")
+        except Exception:
+            logger.error(
+                f"flushing knowledge retrieval count error: {traceback.format_exc()}"
+            )
+            return False
+
         return True
+
+    def force_flush(self):
+        """Force flush all buffers immediately"""
+        self._flush()
 
 
 _counter = RetrievalCounter()
@@ -76,8 +90,3 @@ def retrieval_counter(chunks: list[RetrievalChunk]):
     _counter.batch_record(
         {k: 1 for k in list(set([chunk.knowledge_id for chunk in chunks]))}
     )
-
-
-def force_flush(self):
-    """Force flush all buffers immediately"""
-    self._flush()
