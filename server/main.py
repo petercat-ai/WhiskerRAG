@@ -59,17 +59,17 @@ async def lifespan(app: FastAPI):  # type: ignore
 
 app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.3")
 
+
 # Override default 404 handler
 @app.exception_handler(404)
 async def http404_error_handler(request: Request, __):
     return JSONResponse(
         status_code=404,
         content=ResponseModel(
-            success=False,
-            message="Path Not Found",
-            data=None
-        ).model_dump()
+            success=False, message="Path Not Found", data=None
+        ).model_dump(),
     )
+
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
@@ -85,11 +85,10 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
     return JSONResponse(
         status_code=exc.status_code,
         content=ResponseModel(
-            success=False,
-            message=error_message,
-            data=None
-        ).model_dump()
+            success=False, message=error_message, data=None
+        ).model_dump(),
     )
+
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
@@ -105,11 +104,10 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
     return JSONResponse(
         status_code=exc.status_code,
         content=ResponseModel(
-            success=False,
-            message=error_message,
-            data=None
-        ).model_dump()
+            success=False, message=error_message, data=None
+        ).model_dump(),
     )
+
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
@@ -125,10 +123,8 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     return JSONResponse(
         status_code=500,
         content=ResponseModel(
-            success=False,
-            message="Internal Server Error",
-            data=None
-        ).model_dump()
+            success=False, message="Internal Server Error", data=None
+        ).model_dump(),
     )
 
 

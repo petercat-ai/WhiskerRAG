@@ -3,7 +3,7 @@ from typing import List
 from core.auth import get_tenant
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
-from core.retrieval_counter import retrieval_counter
+from core.retrieval_counter import RetrievalCounter, retrieval_counter
 from fastapi import APIRouter, Depends
 from whiskerrag_types.model import (
     RetrievalByKnowledgeRequest,
@@ -17,6 +17,11 @@ router = APIRouter(
     tags=["retrieval"],
     responses={404: {"description": "Not found"}},
     dependencies=[Depends(get_tenant)],
+)
+
+
+_counter = RetrievalCounter(
+    flush_interval=60, shards=16, db_plugin=PluginManager().dbPlugin
 )
 
 
@@ -34,7 +39,7 @@ async def retrieve_knowledge_content(
     """
     db_engine = PluginManager().dbPlugin
     res = await db_engine.search_knowledge_chunk_list(tenant.tenant_id, body)
-    retrieval_counter(res)
+    retrieval_counter(_counter, res)
     return ResponseModel(success=True, data=res)
 
 
@@ -50,5 +55,5 @@ async def retrieve_space_content(
     """
     db_engine = PluginManager().dbPlugin
     res = await db_engine.search_space_chunk_list(tenant.tenant_id, body)
-    retrieval_counter(res)
+    retrieval_counter(_counter, res)
     return ResponseModel(success=True, data=res)
