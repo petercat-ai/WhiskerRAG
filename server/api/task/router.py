@@ -76,12 +76,14 @@ async def get_task_list(
     db_engine = PluginManager().dbPlugin
     res: PageResponse[Task] = await db_engine.get_task_list(tenant.tenant_id, body)
     statistics = await db_engine.task_statistics(
-        body.eq_conditions.get("space_id", None), TaskStatus.SUCCESS
+        body.eq_conditions.get("space_id", None), None
     )
     res: StatusStatisticsPageResponse[Task] = StatusStatisticsPageResponse(
         **res.model_dump()
     )
-    res.success = statistics
+    res.success = statistics.get(TaskStatus.SUCCESS, 0)
+    res.failed = statistics.get(TaskStatus.FAILED, 0)
+    res.cancelled = statistics.get(TaskStatus.CANCELED, 0)
     return ResponseModel(data=res, success=True)
 
 
