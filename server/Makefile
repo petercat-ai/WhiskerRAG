@@ -45,10 +45,10 @@ clean:
 	find . -type d -name ".mypy_cache" -exec rm -rf {} +
 
 test:
-	$(BIN)/pytest $(PYTEST_ARGS) tests
+	$(VENV_BIN)/pytest $(PYTEST_ARGS) tests
 
 test-cov:
-	$(BIN)/pytest $(PYTEST_ARGS) --cov=. tests
+	$(VENV_BIN)/pytest $(PYTEST_ARGS) --cov=. tests
 
 run:
 	@python main.py
