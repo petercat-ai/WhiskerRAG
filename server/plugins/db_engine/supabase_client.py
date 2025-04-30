@@ -13,6 +13,7 @@ from whiskerrag_types.model import (
     PageResponse,
     RetrievalByKnowledgeRequest,
     RetrievalBySpaceRequest,
+    RetrievalRequest,
     RetrievalChunk,
     Task,
     Tenant,
@@ -482,3 +483,10 @@ class SupaBasePlugin(DBPluginInterface):
             },
         ).execute()
         return [RetrievalChunk(**item) for item in res.data] if res.data else []
+
+    async def retrieve(
+        self,
+        tenant_id: str,
+        params: RetrievalRequest,
+    ) -> List[RetrievalChunk]:
+        pass

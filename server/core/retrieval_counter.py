@@ -6,6 +6,7 @@ from collections import defaultdict
 from whiskerrag_types.model import RetrievalChunk
 from whiskerrag_types.interface import DBPluginInterface
 from core.log import logger
+from core.plugin_manager import PluginManager
 
 
 class RetrievalCounter:
@@ -83,7 +84,14 @@ class RetrievalCounter:
         self._flush()
 
 
-def retrieval_counter(counter: RetrievalCounter, chunks: list[RetrievalChunk]):
+def retrieval_count(counter: RetrievalCounter, chunks: list[RetrievalChunk]):
     counter.batch_record(
         {k: 1 for k in list(set([chunk.knowledge_id for chunk in chunks]))}
     )
+
+
+def get_retrieval_counter() -> RetrievalCounter:
+    _counter = RetrievalCounter(
+        flush_interval=60, shards=16, db_plugin=PluginManager().dbPlugin
+    )
+    return _counter

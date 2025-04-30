@@ -13,6 +13,7 @@ from whiskerrag_types.model import (
     RetrievalByKnowledgeRequest,
     RetrievalBySpaceRequest,
     RetrievalChunk,
+    RetrievalRequest,
     Task,
     Tenant,
     KnowledgeSourceEnum,
@@ -737,3 +738,10 @@ class PostgresDBPlugin(DBPluginInterface):
         except Exception as e:
             self.logger.error(f"Error in search_knowledge_chunk_list: {str(e)}")
             raise
+
+    async def retrieve(
+        self,
+        tenant_id: str,
+        params: RetrievalRequest,
+    ) -> List[RetrievalChunk]:
+        pass

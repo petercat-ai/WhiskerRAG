@@ -7,7 +7,7 @@ import asyncio
 from whiskerrag_utils import init_register
 from whiskerrag_types.model import RetrievalChunk
 from server.core.plugin_manager import PluginManager
-from server.core.retrieval_counter import RetrievalCounter, retrieval_counter
+from server.core.retrieval_counter import RetrievalCounter, retrieval_count
 
 
 class TestRetrievalCounter(unittest.TestCase):
@@ -93,7 +93,7 @@ class TestRetrievalCounter(unittest.TestCase):
 
         # 转换为模型实例列表
         chunks = [RetrievalChunk(**data) for data in test_chunks]
-        retrieval_counter(self.counter, chunks)
+        retrieval_count(self.counter, chunks)
         self.counter.force_flush()
         db_result = self.counter.db_plugin.retrieval_count
         expected = {"one": 1, "two": 1}
