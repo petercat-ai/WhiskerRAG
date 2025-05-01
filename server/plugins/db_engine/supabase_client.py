@@ -359,7 +359,13 @@ class SupaBasePlugin(DBPluginInterface):
         self, space_id: str, status: TaskStatus
     ) -> Union[dict[TaskStatus, int], int]:
         # TODO: group by status status
-        return 0
+        return {
+            TaskStatus.SUCCESS: 0,
+            TaskStatus.FAILED: 0,
+            TaskStatus.CANCELED: 0,
+            TaskStatus.RUNNING: 0,
+            TaskStatus.PENDING: 0,
+        }
 
     # =============== tenant ===============
     async def save_tenant(self, tenant: Tenant) -> Tenant | None:
