@@ -451,7 +451,13 @@ class SupaBasePlugin(DBPluginInterface):
         embedding_model = get_register(
             RegisterTypeEnum.EMBEDDING, params.embedding_model_name
         )
-        query_embedding = await embedding_model().embed_text(params.question, 10)
+        try:
+            query_embedding = await embedding_model().embed_text(params.question, 10)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to generate query embedding: {str(e)}",
+            )
         res = self.supabase_client.rpc(
             "search_space_list_chunk",
             {

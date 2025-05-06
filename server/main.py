@@ -2,6 +2,7 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+from core.retrieval_counter import RetrievalCounter
 from whiskerrag_utils import init_register
 from core.settings import settings
 import uvicorn
@@ -45,6 +46,8 @@ async def shutdown_event() -> None:
     dbPlugin = PluginManager().dbPlugin
     if dbPlugin:
         await dbPlugin.cleanup()
+    counter = RetrievalCounter.get_instance()
+    counter.shutdown()
     logger.info("Application shutdown")
 
 
@@ -57,7 +60,7 @@ async def lifespan(app: FastAPI):  # type: ignore
         await shutdown_event()
 
 
-app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.3")
+app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.4")
 
 
 # Override default 404 handler
