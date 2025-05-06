@@ -10,6 +10,8 @@ from core.plugin_manager import PluginManager
 
 
 class RetrievalCounter:
+    max_buffer_size = 100000
+
     def __init__(
         self, flush_interval=60, shards=16, db_plugin: DBPluginInterface = None
     ):
@@ -30,6 +32,8 @@ class RetrievalCounter:
     def record(self, key, count=1):
         shard_id = self._get_shard(key)
         with self.locks[shard_id]:
+            if len(self.active_buffers[shard_id]) >= self.max_buffer_size:
+                self._flush()
             self.active_buffers[shard_id][key] += count
 
     def batch_record(self, records: dict[str, int]):
@@ -83,6 +87,12 @@ class RetrievalCounter:
         """Force flush all buffers immediately"""
         self._flush()
 
+    def shutdown(self):
+        self.running = False
+        self.force_flush()
+        if self.flush_thread.is_alive():
+            self.flush_thread.join()
+
 
 def retrieval_count(counter: RetrievalCounter, chunks: list[RetrievalChunk]):
     counter.batch_record(
@@ -90,8 +100,13 @@ def retrieval_count(counter: RetrievalCounter, chunks: list[RetrievalChunk]):
     )
 
 
+_retrieval_counter: RetrievalCounter | None = None
+
+
 def get_retrieval_counter() -> RetrievalCounter:
-    _counter = RetrievalCounter(
-        flush_interval=60, shards=16, db_plugin=PluginManager().dbPlugin
-    )
-    return _counter
+    global _retrieval_counter
+    if _retrieval_counter is None:
+        _retrieval_counter = RetrievalCounter(
+            flush_interval=60, shards=16, db_plugin=PluginManager().dbPlugin
+        )
+    return _retrieval_counter
