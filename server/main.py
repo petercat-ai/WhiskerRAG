@@ -60,7 +60,7 @@ async def lifespan(app: FastAPI):  # type: ignore
         await shutdown_event()
 
 
-app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.4")
+app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.5")
 
 
 # Override default 404 handler
