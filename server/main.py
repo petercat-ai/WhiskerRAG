@@ -2,7 +2,7 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from core.retrieval_counter import RetrievalCounter
+from core.retrieval_counter import get_retrieval_counter
 from whiskerrag_utils import init_register
 from core.settings import settings
 import uvicorn
@@ -46,7 +46,7 @@ async def shutdown_event() -> None:
     dbPlugin = PluginManager().dbPlugin
     if dbPlugin:
         await dbPlugin.cleanup()
-    counter = RetrievalCounter.get_instance()
+    counter = get_retrieval_counter()
     counter.shutdown()
     logger.info("Application shutdown")
 
