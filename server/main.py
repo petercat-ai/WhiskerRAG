@@ -2,7 +2,7 @@ import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from core.retrieval_counter import RetrievalCounter
+from core.retrieval_counter import get_retrieval_counter
 from whiskerrag_utils import init_register
 from core.settings import settings
 import uvicorn
@@ -46,7 +46,7 @@ async def shutdown_event() -> None:
     dbPlugin = PluginManager().dbPlugin
     if dbPlugin:
         await dbPlugin.cleanup()
-    counter = RetrievalCounter.get_instance()
+    counter = get_retrieval_counter()
     counter.shutdown()
     logger.info("Application shutdown")
 
@@ -65,30 +65,11 @@ app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.4")
 
 # Override default 404 handler
 @app.exception_handler(404)
-async def http404_error_handler(request: Request, __):
+async def http404_error_handler(request: Request, exc: HTTPException):
     return JSONResponse(
         status_code=404,
         content=ResponseModel(
-            success=False, message="Path Not Found", data=None
-        ).model_dump(),
-    )
-
-
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
-    error_message = str(exc.detail) if isinstance(exc.detail, str) else str(exc)
-
-    logger.error(
-        f"HTTPException occurred: "
-        f"Path={request.url.path}, Method={request.method}, "
-        f"Status Code={exc.status_code}, Message={error_message}, "
-        f"Traceback={traceback.format_exc()}"
-    )
-
-    return JSONResponse(
-        status_code=exc.status_code,
-        content=ResponseModel(
-            success=False, message=error_message, data=None
+            success=False, message=exc.detail, data=None
         ).model_dump(),
     )
 
