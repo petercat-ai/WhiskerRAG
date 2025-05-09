@@ -55,9 +55,12 @@ async def add_knowledge(
     try:
         db_engine = PluginManager().dbPlugin
         task_engine = PluginManager().taskPlugin
+        # TODO: 从 knowledgeCreate 中拆解更多的知识，提供 decomposer
         knowledge_list = await gen_knowledge_list(body, tenant)
         if not knowledge_list:
-            return ResponseModel(success=True, data=[], message="No knowledge to add")
+            return ResponseModel(
+                success=True, data=[], message="No knowledge identified"
+            )
         saved_knowledge = await db_engine.save_knowledge_list(knowledge_list)
         task_list = await task_engine.init_task_from_knowledge(saved_knowledge, tenant)
         saved_task = await db_engine.save_task_list(task_list)
@@ -65,7 +68,7 @@ async def add_knowledge(
         return ResponseModel(success=True, data=saved_knowledge)
     except Exception as e:
         logger.error(f"[add_knowledge][error], req={body}, error={str(e)}")
-        raise HTTPException(status_code=500, detail="新增知识失败")
+        raise HTTPException(status_code=500, detail="add knowledge failed")
 
 
 @router.post("/update", operation_id="update_knowledge", response_model_by_alias=False)
@@ -92,7 +95,7 @@ async def update_knowledge(
         return ResponseModel(data=updated_knowledge, success=True)
     except Exception as e:
         logger.error("[update_knowledge][error], req=%s, error=%s", knowledge, str(e))
-        raise HTTPException(status_code=500, detail="更新知识失败")
+        raise HTTPException(status_code=500, detail="update knowledge failed")
 
 
 @router.post("/list", operation_id="get_knowledge_list", response_model_by_alias=False)
@@ -123,10 +126,13 @@ async def get_knowledge_by_id(
         knowledge = await db_engine.get_knowledge(tenant.tenant_id, knowledge_id)
         if not knowledge:
             logger.warning(
-                "[get_knowledge_by_id][知识不存在],knowledge_id={}".format(knowledge_id)
+                "[get_knowledge_by_id][knowledge not exist],knowledge_id={}".format(
+                    knowledge_id
+                )
             )
             raise HTTPException(
-                status_code=404, detail=f"知识不存在, knowledge_id = {knowledge_id}"
+                status_code=404,
+                detail=f"knowledge not exist, knowledge_id = {knowledge_id}",
             )
         return ResponseModel(data=knowledge, success=True)
     except HTTPException as e:
@@ -135,7 +141,7 @@ async def get_knowledge_by_id(
         logger.error(
             f"[get_knowledge_by_id][error], req={knowledge_id}, error={str(e)}"
         )
-        raise HTTPException(status_code=500, detail="获取知识详情失败")
+        raise HTTPException(status_code=500, detail="Failed to get knowledge detail")
 
 
 @router.delete(
@@ -163,7 +169,7 @@ async def delete_knowledge(
         raise e
     except Exception as e:
         logger.error(f"[delete_knowledge][error], req={knowledge_id}, error={str(e)}")
-        raise HTTPException(status_code=500, detail="删除知识失败")
+        raise HTTPException(status_code=500, detail="Failed to delete knowledge")
 
 
 @router.get(
