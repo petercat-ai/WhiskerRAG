@@ -104,18 +104,16 @@ async def get_chunk_by_id(
         raise HTTPException(status_code=500, detail="获取分块详情失败")
 
 
-@router.post("/save", operation_id="save_chunk", response_model_by_alias=False)
-async def save_chunk(
+@router.post("/add", operation_id="add_chunk", response_model_by_alias=False)
+async def add_chunk(
     params: ChunkSave, tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel[Chunk]:
-    logger.info("[chunk][save][start], req={}".format(params))
+    logger.info("[chunk][add][start], req={}".format(params))
     try:
         db_engine = PluginManager().dbPlugin
         embedding_model = get_register(
             RegisterTypeEnum.EMBEDDING, params.embedding_model_name
         )
-
-        # 构建分块对象
         chunk = Chunk(
             chunk_id=str(uuid.uuid4()),
             space_id=params.space_id,
@@ -126,10 +124,8 @@ async def save_chunk(
             tenant_id=tenant.tenant_id,
             embedding=await embedding_model().embed_text(params.context, 10),
         )
-
-        # 保存操作
         saved_chunks: List[Chunk] = await db_engine.save_chunk_list([chunk])
-        logger.info("[chunk][save][end]")
+        logger.info("[chunk][add][end]")
         return ResponseModel(data=saved_chunks[0], success=True)
 
     except HTTPException as e:
@@ -138,7 +134,7 @@ async def save_chunk(
         logger.error(
             f"[chunk][save][error], req={params}, error={str(e)}", exc_info=True
         )
-        raise HTTPException(status_code=500, detail="保存分块失败")
+        raise HTTPException(status_code=500, detail="Failed to save chunks")
 
 
 @router.post("/update", operation_id="update_chunk", response_model_by_alias=False)
@@ -148,14 +144,11 @@ async def update_chunk(
     logger.info("[chunk][update][start], req={}".format(params))
     try:
         db_engine = PluginManager().dbPlugin
-
-        # 更新逻辑
         exist_chunk = await db_engine.get_chunk_by_id(
             tenant.tenant_id, params.chunk_id, params.embedding_model_name
         )
         if not exist_chunk:
             raise HTTPException(status_code=404, detail="分块不存在")
-        # 字段合并逻辑
         if params.context:
             db_engine = PluginManager().dbPlugin
             embedding_model = get_register(
@@ -170,7 +163,6 @@ async def update_chunk(
 
         exist_chunk.updated_at = datetime.now(timezone.utc)
 
-        # 保存操作
         saved_chunks: List[Chunk] = await db_engine.update_chunk_list([exist_chunk])
         logger.info("[chunk][update][end]")
         return ResponseModel(data=saved_chunks[0], success=True)

@@ -225,6 +225,20 @@ class SupaBasePlugin(DBPluginInterface):
         )
         return [Chunk(**chunk) for chunk in res.data] if res.data else []
 
+    async def update_chunk_list(self, chunks: List[Chunk]) -> List[Chunk]:
+        if not chunks:
+            return []
+        updates = [
+            chunk.model_dump(exclude_unset=True, exclude_none=True) for chunk in chunks
+        ]
+        res = (
+            self.supabase_client.table(self.settings.CHUNK_TABLE_NAME)
+            .upsert(updates)
+            .execute()
+        )
+
+        return [Chunk(**chunk) for chunk in res.data] if res.data else []
+
     async def get_chunk_list(
         self, tenant_id: str, page_params: PageParams[Chunk]
     ) -> PageResponse[Chunk]:
