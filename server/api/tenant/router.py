@@ -113,6 +113,11 @@ async def update_tenant(
     try:
         api_secret_key = f"sk-{secrets.token_urlsafe(32)}"
         db_engine = PluginManager().dbPlugin
+        if params.tenant_id != tenant.tenant_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Update Tenant error: please ensure that the tenant ID you are operating matches the tenant ID you belong to.",
+            )
         tenant = await db_engine.update_tenant(
             Tenant(
                 tenant_id=params.tenant_id,
