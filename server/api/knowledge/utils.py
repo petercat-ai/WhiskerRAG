@@ -1,13 +1,13 @@
 from typing import List, Optional, Tuple, TypedDict
 from whiskerrag_types.model import (
     Knowledge,
-    KnowledgeCreate,
     KnowledgeSourceEnum,
     KnowledgeTypeEnum,
     Tenant,
     PageParams,
     PageResponse,
 )
+from whiskerrag_types.model.knowledge_create import KnowledgeCreateUnion
 from whiskerrag_utils.loader.github.repo_loader import (
     GitFileElementType,
     GithubRepoLoader,
@@ -22,7 +22,9 @@ class DiffResult(TypedDict):
     unchanged: List[Knowledge]
 
 
-async def is_knowledge_saved(knowledge_create: KnowledgeCreate, tenant: Tenant) -> bool:
+async def is_knowledge_saved(
+    knowledge_create: KnowledgeCreateUnion, tenant: Tenant
+) -> bool:
     db_engine = PluginManager().dbPlugin
     eq_conditions = {
         "space_id": knowledge_create.space_id,
@@ -59,7 +61,7 @@ async def get_repo_knowledge(repo_name: str, tenant: Tenant) -> Knowledge:
 
 
 async def get_repo_all_knowledge(
-    tenant: Tenant, request: KnowledgeCreate
+    tenant: Tenant, request: KnowledgeCreateUnion
 ) -> List[Knowledge]:
     db_engine = PluginManager().dbPlugin
     page_size = 100
@@ -139,7 +141,7 @@ def get_diff_knowledge_by_sha(
 
 
 async def get_knowledge_list_from_github_repo(
-    knowledge_create: KnowledgeCreate,
+    knowledge_create: KnowledgeCreateUnion,
     tenant: Tenant,
     parent: Optional[Knowledge] = None,
 ) -> List[Knowledge]:
@@ -186,8 +188,16 @@ async def get_knowledge_list_from_github_repo(
     return github_repo_list
 
 
+# TODO: add decompose
+# async def decompose_knowledge():
+#     decomposer = get_register(
+#         RegisterTypeEnum.DECOMPOSER,
+#     )
+#     decomposer.
+
+
 async def gen_knowledge_list(
-    user_input: List[KnowledgeCreate], tenant: Tenant
+    user_input: List[KnowledgeCreateUnion], tenant: Tenant
 ) -> List[Knowledge]:
     pre_add_knowledge_list: List[Knowledge] = []
     db_engine = PluginManager().dbPlugin
