@@ -1,5 +1,7 @@
 from typing import List, Union
 
+from whiskerrag_utils import get_register
+
 from core.auth import get_tenant
 from core.log import logger
 from core.plugin_manager import PluginManager
@@ -7,19 +9,12 @@ from core.response import ResponseModel
 from fastapi import APIRouter, Depends, HTTPException
 from whiskerrag_utils.registry import get_registry_list, RegisterTypeEnum
 from whiskerrag_types.model import (
-    GithubRepoCreate,
-    ImageCreate,
-    JSONCreate,
     Knowledge,
-    KnowledgeCreate,
-    MarkdownCreate,
     PageParams,
     PageResponse,
-    PDFCreate,
-    QACreate,
     Tenant,
-    TextCreate,
 )
+from whiskerrag_types.model.knowledge_create import KnowledgeCreateUnion
 
 from .utils import gen_knowledge_list
 
@@ -33,18 +28,7 @@ router = APIRouter(
 
 @router.post("/add", operation_id="add_knowledge", response_model_by_alias=False)
 async def add_knowledge(
-    body: List[
-        Union[
-            KnowledgeCreate,
-            TextCreate,
-            ImageCreate,
-            JSONCreate,
-            MarkdownCreate,
-            PDFCreate,
-            GithubRepoCreate,
-            QACreate,
-        ]
-    ],
+    body: List[KnowledgeCreateUnion],
     tenant: Tenant = Depends(get_tenant),
 ) -> ResponseModel[List[Knowledge]]:
     """
@@ -55,7 +39,6 @@ async def add_knowledge(
     try:
         db_engine = PluginManager().dbPlugin
         task_engine = PluginManager().taskPlugin
-        # TODO: 从 knowledgeCreate 中拆解更多的知识，提供 decomposer
         knowledge_list = await gen_knowledge_list(body, tenant)
         if not knowledge_list:
             return ResponseModel(
