@@ -186,21 +186,19 @@ class SupaBasePlugin(DBPluginInterface):
     async def batch_update_knowledge_retrieval_count(
         self, knowledge_id_list: dict[str, int]
     ) -> None:
-        updates = [
-            {"knowledge_id": knowledge_id, "retrieval_count": retrieval_count}
-            for knowledge_id, retrieval_count in knowledge_id_list.items()
-        ]
         try:
-            res = (
-                self.supabase_client.table(self.settings.KNOWLEDGE_TABLE_NAME)
-                .upsert(updates)
-                .execute()
-            )
-            if not res.data or len(res.data) != len(knowledge_id_list):
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Some knowledge entries were not found or could not be updated.",
+            for knowledge_id, retrieval_count in knowledge_id_list.items():
+                res = (
+                    self.supabase_client.table(self.settings.KNOWLEDGE_TABLE_NAME)
+                    .update({"retrieval_count": retrieval_count})
+                    .eq("knowledge_id", knowledge_id)
+                    .execute()
                 )
+                if not res.data:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail=f"Knowledge entry {knowledge_id} was not found.",
+                    )
             return None
 
         except Exception as e:
