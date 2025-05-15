@@ -84,6 +84,7 @@ async def get_task_list(
     res.success = statistics.get(TaskStatus.SUCCESS, 0)
     res.failed = statistics.get(TaskStatus.FAILED, 0)
     res.cancelled = statistics.get(TaskStatus.CANCELED, 0)
+    res.pending = statistics.get(TaskStatus.PENDING, 0)
     return ResponseModel(data=res, success=True)
 
 
