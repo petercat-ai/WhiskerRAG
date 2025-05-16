@@ -28,7 +28,7 @@ permissions:
   actions: write
 
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'
   PACKAGE_NAME: '@petercat/whiskerrag-client'
 
 jobs:

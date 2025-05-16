@@ -21,6 +21,7 @@ from whiskerrag_types.model import (
     KnowledgeSourceEnum,
     TaskStatus,
 )
+from whiskerrag_types.model.page import QueryParams
 from whiskerrag_utils import RegisterTypeEnum, get_register
 
 T = TypeVar("T", bound=BaseModel)
@@ -161,7 +162,7 @@ class SupaBasePlugin(DBPluginInterface):
     async def update_knowledge(self, knowledge: Knowledge):
         res = (
             self.supabase_client.table(self.settings.KNOWLEDGE_TABLE_NAME)
-            .upsert(knowledge)
+            .upsert(knowledge.model_dump())
             .execute()
         )
         return [Knowledge(**knowledge) for knowledge in res.data] if res.data else []
@@ -207,6 +208,21 @@ class SupaBasePlugin(DBPluginInterface):
                 detail=f"Failed to update knowledge retrieval counts: {str(e)}",
             )
 
+    async def update_knowledge_enabled_status(
+        self, tenant_id: str, knowledge_id: str, enabled: bool
+    ) -> None:
+        knowledge = await self.get_knowledge(tenant_id, knowledge_id)
+        if not knowledge:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Knowledge entry {knowledge_id} not found.",
+            )
+        if knowledge.enabled == enabled:
+            return
+        knowledge.update(enabled=enabled)
+        await self.update_knowledge(knowledge)
+        await self.update_chunks_enabled_by_knowledge(knowledge_id, enabled)
+
     # =============== chunk ===============
     async def save_chunk_list(self, chunk_list: List[Chunk]):
         if not chunk_list:
@@ -235,6 +251,33 @@ class SupaBasePlugin(DBPluginInterface):
             .execute()
         )
 
+        return [Chunk(**chunk) for chunk in res.data] if res.data else []
+
+    async def update_chunks_enabled_by_knowledge(
+        self, knowledge_id: str, enabled: bool
+    ) -> List[Chunk]:
+        """
+        Update the enabled status of all chunks associated with a specific knowledge_id.
+
+        Args:
+            knowledge_id: The ID of the knowledge
+            enabled: The new enabled status to set
+
+        Returns:
+            List[Chunk]: List of updated chunk objects
+        """
+        # Prepare the update data
+        update_data = {"enabled": enabled}
+
+        # Execute the update query
+        res = (
+            self.supabase_client.table(self.settings.CHUNK_TABLE_NAME)
+            .update(update_data)
+            .eq("knowledge_id", knowledge_id)
+            .execute()
+        )
+
+        # Convert the response data to Chunk objects
         return [Chunk(**chunk) for chunk in res.data] if res.data else []
 
     async def get_chunk_list(
@@ -281,6 +324,11 @@ class SupaBasePlugin(DBPluginInterface):
             .execute()
         )
         return Chunk(**res.data[0]) if res.data else None
+
+    async def get_all_chunk(
+        self, tenant_id: str, query_params: QueryParams[Chunk]
+    ) -> List[Chunk]:
+        pass
 
     # =============== task ===============
     async def save_task_list(self, task_list: List[Task]):

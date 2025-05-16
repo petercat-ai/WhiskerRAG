@@ -1,6 +1,6 @@
-from typing import List, Union
+from typing import List
 
-from whiskerrag_utils import get_register
+from pydantic import BaseModel
 
 from core.auth import get_tenant
 from core.log import logger
@@ -18,12 +18,18 @@ from whiskerrag_types.model.knowledge_create import KnowledgeCreateUnion
 
 from .utils import gen_knowledge_list
 
+
 router = APIRouter(
     prefix="/api/knowledge",
     tags=["knowledge"],
     responses={404: {"description": "Not found"}},
     dependencies=[Depends(get_tenant)],
 )
+
+
+class EnableStatusUpdate(BaseModel):
+    knowledge_id: str
+    status: bool
 
 
 @router.post("/add", operation_id="add_knowledge", response_model_by_alias=False)
@@ -81,6 +87,33 @@ async def update_knowledge(
         raise HTTPException(status_code=500, detail="update knowledge failed")
 
 
+@router.post(
+    "/update/enabled",
+    operation_id="update_knowledge_enable_status",
+    response_model_by_alias=False,
+)
+async def update_knowledge_enable_status(
+    body: EnableStatusUpdate,
+    tenant: Tenant = Depends(get_tenant),
+) -> ResponseModel[None]:
+    try:
+        db_engine = PluginManager().dbPlugin
+        await db_engine.update_knowledge_enabled_status(
+            tenant.tenant_id, body.knowledge_id, body.status
+        )
+        return ResponseModel(data=None, success=True)
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        logger.error(
+            "[update_knowledge][error], knowledge_id=%s, status=%s, error=%s",
+            body.knowledge_id,
+            str(bool),
+            str(e),
+        )
+        raise HTTPException(status_code=500, detail="update knowledge failed")
+
+
 @router.post("/list", operation_id="get_knowledge_list", response_model_by_alias=False)
 async def get_knowledge_list(
     body: PageParams[Knowledge], tenant: Tenant = Depends(get_tenant)
@@ -92,9 +125,11 @@ async def get_knowledge_list(
             tenant.tenant_id, body
         )
         return ResponseModel(data=knowledge_list, success=True)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         logger.error(f"[get_knowledge_list][error], req={body}, error={str(e)}")
-        raise HTTPException(status_code=500, detail="获取知识列表失败")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
@@ -124,7 +159,7 @@ async def get_knowledge_by_id(
         logger.error(
             f"[get_knowledge_by_id][error], req={knowledge_id}, error={str(e)}"
         )
-        raise HTTPException(status_code=500, detail="Failed to get knowledge detail")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete(
@@ -152,7 +187,7 @@ async def delete_knowledge(
         raise e
     except Exception as e:
         logger.error(f"[delete_knowledge][error], req={knowledge_id}, error={str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to delete knowledge")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get(
@@ -172,6 +207,8 @@ async def get_embedding_models_list(tenant: Tenant = Depends(get_tenant)):
     except KeyError as e:
         logger.error(f"[get_embedding_models_list][error], error={str(e)}")
         raise HTTPException(status_code=404, detail=f"Registry not found: {str(e)}")
+    except HTTPException as e:
+        raise e
     except Exception as e:
         logger.error(f"[get_embedding_models_list][error], error={str(e)}")
         raise HTTPException(
