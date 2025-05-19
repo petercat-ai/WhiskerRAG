@@ -5,7 +5,7 @@ from core.plugin_manager import PluginManager
 from core.response import ResponseModel
 from fastapi import APIRouter, Depends
 from whiskerrag_types.model import (
-    PageParams,
+    PageQueryParams,
     PageResponse,
     StatusStatisticsPageResponse,
     Task,
@@ -71,7 +71,7 @@ async def cancel_task(
 
 @router.post("/list", operation_id="get_task_list")
 async def get_task_list(
-    body: PageParams[Task], tenant: Tenant = Depends(get_tenant)
+    body: PageQueryParams[Task], tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel[StatusStatisticsPageResponse[Task]]:
     db_engine = PluginManager().dbPlugin
     res: PageResponse[Task] = await db_engine.get_task_list(tenant.tenant_id, body)

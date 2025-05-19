@@ -8,7 +8,7 @@ from whiskerrag_types.interface import DBPluginInterface
 from whiskerrag_types.model import (
     Chunk,
     Knowledge,
-    PageParams,
+    PageQueryParams,
     PageResponse,
     RetrievalByKnowledgeRequest,
     RetrievalBySpaceRequest,
@@ -151,7 +151,7 @@ class PostgresDBPlugin(DBPluginInterface):
         tenant_id: str,
         table_name: str,
         model_class: T,
-        page_params: PageParams,
+        page_params: PageQueryParams,
     ) -> PageResponse[T]:
         try:
             params: List[any] = []
@@ -251,7 +251,7 @@ class PostgresDBPlugin(DBPluginInterface):
             return saved_knowledge
 
     async def get_knowledge_list(
-        self, tenant_id: str, page_params: PageParams[Knowledge]
+        self, tenant_id: str, page_params: PageQueryParams[Knowledge]
     ) -> PageResponse[Knowledge]:
         res = await self._get_paginated_data(
             tenant_id, self.settings.KNOWLEDGE_TABLE_NAME, Knowledge, page_params
@@ -353,7 +353,7 @@ class PostgresDBPlugin(DBPluginInterface):
             return saved_chunks
 
     async def get_chunk_list(
-        self, tenant_id: str, page_params: PageParams[Chunk]
+        self, tenant_id: str, page_params: PageQueryParams[Chunk]
     ) -> PageResponse[Chunk]:
         return await self._get_paginated_data(
             tenant_id,
@@ -460,7 +460,7 @@ class PostgresDBPlugin(DBPluginInterface):
             return updated_tasks
 
     async def get_task_list(
-        self, tenant_id: str, page_params: PageParams[Task]
+        self, tenant_id: str, page_params: PageQueryParams[Task]
     ) -> PageResponse[Task]:
         return await self._get_paginated_data(
             tenant_id,

@@ -8,7 +8,7 @@ from core.plugin_manager import PluginManager
 from core.response import ResponseModel
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from whiskerrag_types.model import PageParams, PageResponse, Tenant
+from whiskerrag_types.model import PageQueryParams, PageResponse, Tenant
 
 router = APIRouter(
     prefix="/api/tenant",
@@ -147,7 +147,7 @@ async def get_tenant_list(
     logger.info("[get_tenant_list][start]")
     try:
         db_engine = PluginManager().dbPlugin
-        page_params = PageParams(page=page, page_size=page_size)
+        page_params = PageQueryParams(page=page, page_size=page_size)
         tenant_list: PageResponse[Tenant] = await db_engine.get_tenant_list(page_params)
         return ResponseModel(data=tenant_list, success=True)
     except Exception as e:

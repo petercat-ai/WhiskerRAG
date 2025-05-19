@@ -4,7 +4,7 @@ from whiskerrag_types.model import (
     KnowledgeSourceEnum,
     KnowledgeTypeEnum,
     Tenant,
-    PageParams,
+    PageQueryParams,
     PageResponse,
 )
 from whiskerrag_types.model.knowledge_create import KnowledgeCreateUnion
@@ -36,7 +36,7 @@ async def is_knowledge_saved(
         eq_conditions["file_sha"] = knowledge_create.file_sha
     res: PageResponse[Knowledge] = await db_engine.get_knowledge_list(
         tenant_id=tenant.tenant_id,
-        page_params=PageParams[Knowledge](
+        page_params=PageQueryParams[Knowledge](
             page=1,
             page_size=10,
             eq_conditions=eq_conditions,
@@ -49,7 +49,7 @@ async def get_repo_knowledge(repo_name: str, tenant: Tenant) -> Knowledge:
     db_engine = PluginManager().dbPlugin
     res: PageResponse[Knowledge] = await db_engine.get_knowledge_list(
         tenant_id=tenant.tenant_id,
-        page_params=PageParams[Knowledge](
+        page_params=PageQueryParams[Knowledge](
             page=1,
             page_size=10,
             eq_conditions={
@@ -68,7 +68,7 @@ async def get_repo_all_knowledge(
     knowledge_list: List[Knowledge] = []
     res = await db_engine.get_knowledge_list(
         tenant_id=tenant.tenant_id,
-        page_params=PageParams[Knowledge](
+        page_params=PageQueryParams[Knowledge](
             page=1,
             page_size=page_size,
             eq_conditions={
@@ -85,7 +85,7 @@ async def get_repo_all_knowledge(
     for page in range(2, page_count + 1):
         res = await db_engine.get_knowledge_list(
             tenant_id=tenant.tenant_id,
-            page_params=PageParams[Knowledge](
+            page_params=PageQueryParams[Knowledge](
                 page=page,
                 page_size=page_size,
                 eq_conditions={

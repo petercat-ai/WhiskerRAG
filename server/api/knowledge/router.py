@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from whiskerrag_utils.registry import get_registry_list, RegisterTypeEnum
 from whiskerrag_types.model import (
     Knowledge,
-    PageParams,
+    PageQueryParams,
     PageResponse,
     Tenant,
 )
@@ -55,9 +55,11 @@ async def add_knowledge(
         saved_task = await db_engine.save_task_list(task_list)
         await task_engine.batch_execute_task(saved_task, saved_knowledge)
         return ResponseModel(success=True, data=saved_knowledge)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         logger.error(f"[add_knowledge][error], req={body}, error={str(e)}")
-        raise HTTPException(status_code=500, detail="add knowledge failed")
+        raise HTTPException(status_code=500, detail="Failed to add knowledge")
 
 
 @router.post("/update", operation_id="update_knowledge", response_model_by_alias=False)
@@ -84,7 +86,7 @@ async def update_knowledge(
         return ResponseModel(data=updated_knowledge, success=True)
     except Exception as e:
         logger.error("[update_knowledge][error], req=%s, error=%s", knowledge, str(e))
-        raise HTTPException(status_code=500, detail="update knowledge failed")
+        raise HTTPException(status_code=500, detail="Failed to update knowledge")
 
 
 @router.post(
@@ -111,12 +113,12 @@ async def update_knowledge_enable_status(
             str(bool),
             str(e),
         )
-        raise HTTPException(status_code=500, detail="update knowledge failed")
+        raise HTTPException(status_code=500, detail="Failed to update knowledge status")
 
 
 @router.post("/list", operation_id="get_knowledge_list", response_model_by_alias=False)
 async def get_knowledge_list(
-    body: PageParams[Knowledge], tenant: Tenant = Depends(get_tenant)
+    body: PageQueryParams[Knowledge], tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel[PageResponse[Knowledge]]:
     logger.info("[get_knowledge_list][start],req={}".format(body))
     try:

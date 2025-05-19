@@ -11,7 +11,7 @@ from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
 from fastapi import APIRouter, Depends
-from whiskerrag_types.model import Chunk, PageParams, PageResponse, Tenant
+from whiskerrag_types.model import Chunk, PageQueryParams, PageResponse, Tenant
 
 router = APIRouter(
     prefix="/api/chunk",
@@ -38,7 +38,7 @@ class ChunkUpdate(BaseModel):
 
 @router.post("/list", operation_id="get_chunk_list", response_model_by_alias=False)
 async def get_chunk_list(
-    params: PageParams[Chunk], tenant: Tenant = Depends(get_tenant)
+    params: PageQueryParams[Chunk], tenant: Tenant = Depends(get_tenant)
 ) -> ResponseModel[PageResponse[Chunk]]:
     logger.info("[chunk][list][start], req={}".format(params))
     try:
