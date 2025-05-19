@@ -9,7 +9,7 @@ from whiskerrag_types.interface import DBPluginInterface
 from whiskerrag_types.model import (
     Chunk,
     Knowledge,
-    PageParams,
+    PageQueryParams,
     PageResponse,
     RetrievalByKnowledgeRequest,
     RetrievalBySpaceRequest,
@@ -71,7 +71,7 @@ class SupaBasePlugin(DBPluginInterface):
         tenant_id: str,
         table_name: str,
         model_class: T,
-        page_params: PageParams,
+        page_params: PageQueryParams,
     ) -> PageResponse[T]:
         query = self.supabase_client.table(table_name).select("*", count="exact")
         if page_params.eq_conditions:
@@ -134,7 +134,7 @@ class SupaBasePlugin(DBPluginInterface):
         )
 
     async def get_knowledge_list(
-        self, tenant_id: str, page_params: PageParams[Knowledge]
+        self, tenant_id: str, page_params: PageQueryParams[Knowledge]
     ) -> PageResponse[Knowledge]:
         res = await self._get_paginated_data(
             tenant_id, self.settings.KNOWLEDGE_TABLE_NAME, Knowledge, page_params
@@ -281,7 +281,7 @@ class SupaBasePlugin(DBPluginInterface):
         return [Chunk(**chunk) for chunk in res.data] if res.data else []
 
     async def get_chunk_list(
-        self, tenant_id: str, page_params: PageParams[Chunk]
+        self, tenant_id: str, page_params: PageQueryParams[Chunk]
     ) -> PageResponse[Chunk]:
         return await self._get_paginated_data(
             tenant_id,
@@ -356,7 +356,7 @@ class SupaBasePlugin(DBPluginInterface):
         return [Task(**task) for task in res.data] if res.data else []
 
     async def get_task_list(
-        self, tenant_id: str, page_params: PageParams[Task]
+        self, tenant_id: str, page_params: PageQueryParams[Task]
     ) -> PageResponse[Task]:
         return await self._get_paginated_data(
             tenant_id,
@@ -471,7 +471,7 @@ class SupaBasePlugin(DBPluginInterface):
         pass
 
     async def get_tenant_list(
-        self, page_params: PageParams[Tenant]
+        self, page_params: PageQueryParams[Tenant]
     ) -> PageResponse[Tenant]:
         pass
 
@@ -490,7 +490,7 @@ class SupaBasePlugin(DBPluginInterface):
         pass
 
     async def get_space_list(
-        self, tenant_id: str, page_params: PageParams[Space]
+        self, tenant_id: str, page_params: PageQueryParams[Space]
     ) -> PageResponse[Space]:
         pass
 

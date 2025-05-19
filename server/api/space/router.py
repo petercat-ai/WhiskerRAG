@@ -4,7 +4,7 @@ from core.plugin_manager import PluginManager
 from core.response import ResponseModel
 from fastapi import APIRouter, Body, Depends, HTTPException, Path
 from whiskerrag_types.model import (
-    PageParams,
+    PageQueryParams,
     PageResponse,
     Space,
     SpaceCreate,
@@ -26,7 +26,7 @@ router = APIRouter(
     response_model_by_alias=False,
 )
 async def get_space_list(
-    body: PageParams[Space],
+    body: PageQueryParams[Space],
     tenant: Tenant = Depends(get_tenant),
 ) -> ResponseModel[PageResponse[SpaceResponse]]:
     logger.info(f"[get_space_list][start], req={body}")
