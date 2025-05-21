@@ -53,6 +53,8 @@ async def add_space(
             Space(**body.model_dump(), tenant_id=tenant.tenant_id)
         )
         return ResponseModel(data=created_space, success=True)
+    except HTTPException as e:
+        raise e
     except Exception as e:
         logger.error(f"[add_space][error], req={body}, error={str(e)}")
         raise HTTPException(status_code=500, detail="Failed to create knowledge base")
@@ -102,8 +104,9 @@ async def update_space(
             raise HTTPException(
                 status_code=404, detail=f"知识库不存在, space_id={space_id}"
             )
+        body.space_id = space_id
         updated_space = await db_engine.update_space(
-            Space(**body.model_dump(), space_id=space_id, tenant_id=tenant.tenant_id)
+            Space(**body.model_dump(), tenant_id=tenant.tenant_id)
         )
         return ResponseModel(
             data=updated_space, success=True, message="Update knowledge base succeed"
