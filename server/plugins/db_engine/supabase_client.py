@@ -20,6 +20,9 @@ from whiskerrag_types.model import (
     Space,
     KnowledgeSourceEnum,
     TaskStatus,
+    GlobalRule,
+    SpaceRule,
+    Wiki,
 )
 from whiskerrag_types.model.page import QueryParams
 from whiskerrag_utils import RegisterTypeEnum, get_register
@@ -561,4 +564,25 @@ class SupaBasePlugin(DBPluginInterface):
         tenant_id: str,
         params: RetrievalRequest,
     ) -> List[RetrievalChunk]:
+        pass
+
+    # =================== rule ===================
+    async def create_rule(
+        self, tenant_id: str, rule: Union[GlobalRule, SpaceRule]
+    ) -> None:
+        pass
+
+    async def update_rule(
+        self, tenant_id: str, rule_id: str, rule: Union[GlobalRule, SpaceRule]
+    ) -> Union[GlobalRule, SpaceRule]:
+        pass
+
+    async def get_tenant_rule(self, tenant_id: str) -> Optional[str]:
+        return
+
+    async def get_space_rule(self, space_id: str) -> Optional[str]:
+        pass
+
+    # =================== wiki ===================
+    async def create_wiki(self, wiki: Wiki) -> None:
         pass
