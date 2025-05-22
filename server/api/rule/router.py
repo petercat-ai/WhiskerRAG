@@ -36,7 +36,7 @@ async def get_global_rule(
 
 
 @router.get(
-    "/space/{space_id}/rule",
+    "/space/{space_id}",
     operation_id="get_space_rule",
     response_model_by_alias=False,
 )
