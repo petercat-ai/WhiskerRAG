@@ -2,11 +2,11 @@ import secrets
 import uuid
 from typing import Optional
 
-from core.auth import get_tenant
+from core.auth import get_tenant_with_permissions, Resource, Action
 from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from whiskerrag_types.model import PageQueryParams, PageResponse, Tenant
 
@@ -63,7 +63,10 @@ async def create_tenant(params: TenantCreate) -> ResponseModel[Tenant]:
     "/id/{id}", operation_id="get_tenant_by_id", response_model=ResponseModel[Tenant]
 )
 async def query_tenant(
-    id: str, tenant: Tenant = Depends(get_tenant)
+    id: str,
+    tenant: Tenant = get_tenant_with_permissions(
+        Resource.TENANT, [Action.READ, Action.UPDATE]
+    ),
 ) -> ResponseModel[Tenant]:
     logger.info("[get_tenant_by_id][start],req={}".format(id))
     try:
@@ -86,7 +89,8 @@ async def query_tenant(
     operation_id="delete_tenant_by_id",
 )
 async def delete_tenant(
-    id: str, tenant: Tenant = Depends(get_tenant)
+    id: str,
+    tenant: Tenant = get_tenant_with_permissions(Resource.TENANT, [Action.DELETE]),
 ) -> ResponseModel[object]:
     logger.info("[delete_tenant_by_id][start],req={}".format(id))
     try:
@@ -107,7 +111,8 @@ async def delete_tenant(
 
 @router.post("/update", operation_id="update_tenant")
 async def update_tenant(
-    params: TenantUpdate, tenant: Tenant = Depends(get_tenant)
+    params: TenantUpdate,
+    tenant: Tenant = get_tenant_with_permissions(Resource.TENANT, [Action.UPDATE]),
 ) -> ResponseModel[Tenant]:
     logger.info("[update_tenant][start],req={}".format(params))
     try:
@@ -142,7 +147,11 @@ async def update_tenant(
     operation_id="get_tenant_list",
 )
 async def get_tenant_list(
-    page: int = 1, page_size: int = 10, tenant: Tenant = Depends(get_tenant)
+    page: int = 1,
+    page_size: int = 10,
+    tenant: Tenant = get_tenant_with_permissions(
+        Resource.TENANT, [Action.UPDATE, Action.READ]
+    ),
 ) -> ResponseModel[PageResponse[Tenant]]:
     logger.info("[get_tenant_list][start]")
     try:
@@ -156,6 +165,10 @@ async def get_tenant_list(
 
 
 @router.get("/me", operation_id="get_tenant", response_model_by_alias=False)
-async def get_tenant(tenant: Tenant = Depends(get_tenant)):
+async def get_tenant(
+    tenant: Tenant = get_tenant_with_permissions(
+        Resource.TENANT, [Action.UPDATE, Action.READ]
+    ),
+):
     logger.info("[get_tenant][start],req={}".format(tenant))
     return tenant

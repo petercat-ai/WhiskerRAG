@@ -14,6 +14,7 @@ from api.task import router as task_router
 from api.tenant import router as tenant_router
 from api.rule import router as rule_router
 from api.space import router as space_router
+from api.api_key import router as api_key_router
 from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
@@ -132,6 +133,7 @@ app.include_router(chunk_router.router)
 app.include_router(tenant_router.router)
 app.include_router(space_router.router)
 app.include_router(rule_router.router)
+app.include_router(api_key_router.router)
 
 
 @app.get("/")

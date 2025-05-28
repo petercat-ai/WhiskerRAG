@@ -46,6 +46,7 @@ services:
       - WEB_URL=${WEB_URL:-http://localhost:3000}
       - POSTGRES_USER=${POSTGRES_USER:-whisker}
       - KNOWLEDGE_TABLE_NAME=${KNOWLEDGE_TABLE_NAME:-knowledge}
+      - API_KEY_TABLE_NAME=${API_KEY_TABLE_NAME:-api_key}
       - CHUNK_TABLE_NAME=${CHUNK_TABLE_NAME:-chunk}
       - TASK_TABLE_NAME=${TASK_TABLE_NAME:-task}
       - ACTION_TABLE_NAME=${ACTION_TABLE_NAME:-action}

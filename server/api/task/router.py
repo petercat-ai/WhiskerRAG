@@ -1,6 +1,6 @@
 from typing import List
 
-from core.auth import get_tenant
+from core.auth import get_tenant_with_permissions, Resource, Action
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
 from fastapi import APIRouter, Depends
@@ -15,17 +15,14 @@ from whiskerrag_types.model import (
 )
 
 router = APIRouter(
-    prefix="/api/task",
-    tags=["task"],
-    responses={404: {"description": "Not found"}},
-    dependencies=[Depends(get_tenant)],
+    prefix="/api/task", tags=["task"], responses={404: {"description": "Not found"}}
 )
 
 
 @router.post("/restart", operation_id="restart_task", response_model_by_alias=False)
 async def restart_task(
     request: TaskRestartRequest,
-    tenant: Tenant = Depends(get_tenant),
+    tenant: Tenant = get_tenant_with_permissions(Resource.TASK, [Action.UPDATE]),
 ) -> ResponseModel[List[Task]]:
     db_engine = PluginManager().dbPlugin
     task_engine = PluginManager().taskPlugin
@@ -52,7 +49,7 @@ async def restart_task(
 @router.post("/cancel", operation_id="cancel_task")
 async def cancel_task(
     request: TaskRestartRequest,
-    tenant: Tenant = Depends(get_tenant),
+    tenant: Tenant = get_tenant_with_permissions(Resource.TASK, [Action.UPDATE]),
 ) -> ResponseModel[List[Task]]:
     db_engine = PluginManager().dbPlugin
     cancel_task = []
@@ -71,7 +68,8 @@ async def cancel_task(
 
 @router.post("/list", operation_id="get_task_list")
 async def get_task_list(
-    body: PageQueryParams[Task], tenant: Tenant = Depends(get_tenant)
+    body: PageQueryParams[Task],
+    tenant: Tenant = get_tenant_with_permissions(Resource.TASK, [Action.READ]),
 ) -> ResponseModel[StatusStatisticsPageResponse[Task]]:
     db_engine = PluginManager().dbPlugin
     res: PageResponse[Task] = await db_engine.get_task_list(tenant.tenant_id, body)
@@ -90,7 +88,8 @@ async def get_task_list(
 
 @router.get("/detail", operation_id="get_task_detail", response_model_by_alias=False)
 async def get_task_detail(
-    task_id: str, tenant: Tenant = Depends(get_tenant)
+    task_id: str,
+    tenant: Tenant = get_tenant_with_permissions(Resource.TASK, [Action.READ]),
 ) -> ResponseModel[Task]:
     db_engine = PluginManager().dbPlugin
     res = await db_engine.get_task_by_id(
@@ -102,7 +101,8 @@ async def get_task_detail(
 
 @router.delete("/delete", operation_id="delete_task_by_id")
 async def delete_task_by_id(
-    task_id: str, tenant: Tenant = Depends(get_tenant)
+    task_id: str,
+    tenant: Tenant = get_tenant_with_permissions(Resource.TASK, [Action.DELETE]),
 ) -> ResponseModel[Task]:
     db_engine = PluginManager().dbPlugin
     res = await db_engine.delete_task_by_id(

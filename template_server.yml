@@ -32,6 +32,11 @@ Parameters:
     Description: Environment marker for KNOWLEDGE_TABLE_NAME
     Default: "knowledge"
 
+  ApiKeyTableName:
+    Type: String
+    Description: Environment marker for API_KEY_TABLE_NAME
+    Default: "api_key"
+  
   chunkTableName:
     Type: String
     Description: Environment marker for CHUNK_TABLE_NAME
@@ -94,6 +99,7 @@ Resources:
           SUPABASE_SERVICE_KEY: !Ref supabaseServiceKey
           SUPABASE_URL: !Ref supabaseUrl
           KNOWLEDGE_TABLE_NAME: !Ref knowledgeTableName
+          API_KEY_TABLE_NAME: !Ref ApiKeyTableName
           CHUNK_TABLE_NAME: !Ref chunkTableName
           TASK_TABLE_NAME: !Ref taskTableName
           ACTION_TABLE_NAME: !Ref actionTableName

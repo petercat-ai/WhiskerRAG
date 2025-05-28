@@ -80,6 +80,7 @@ SUPABASE_URL=your-supabase-url
 SUPABASE_SERVICE_KEY=your-supabase-service-key
 # table name
 KNOWLEDGE_TABLE_NAME=knowledge
+API_KEY_TABLE_NAME=api_key
 CHUNK_TABLE_NAME=chunk
 TASK_TABLE_NAME=task
 ACTION_TABLE_NAME=action
