@@ -83,6 +83,7 @@ def check_api_key_validity(api_key: APIKey) -> bool:
 def check_resource_permissions(
     api_key: APIKey, resource: Resource, actions: List[Action]
 ) -> bool:
+
     for permission in api_key.permissions:
         if permission.resource == resource:
             if Action.ALL in permission.actions:
@@ -110,7 +111,7 @@ async def authenticate_request(
     request: Request,
     header_auth: str,
     resource: Resource = Resource.PUBLIC,
-    actions: List[Action] = None,
+    actions: List[Action] = [],
 ) -> Tenant:
     if not header_auth:
         raise HTTPException(status_code=401, detail="Authorization header is missing")
@@ -122,11 +123,13 @@ async def authenticate_request(
     is_auth, tenant, api_key, error = await authenticate(header_auth)
     if not is_auth:
         raise HTTPException(status_code=401, detail=error)
-
-    if actions and is_api_key_format(header_auth):
+    # check api key permissions
+    if is_api_key_format(header_auth):
         if not await verify_permissions(api_key, resource, actions):
             raise HTTPException(status_code=403, detail="Permission denied")
-
+    else:
+        # not api key, so we assume it's a tenant secret key
+        print(f"Access granted for resource: {resource}")
     return tenant
 
 
