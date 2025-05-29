@@ -1,20 +1,19 @@
 from typing import List
-
 from pydantic import BaseModel
 
-from core.auth import get_tenant
+from core.auth import get_tenant_with_permissions, Resource, Action
 from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, HTTPException
 from whiskerrag_utils.registry import get_registry_list, RegisterTypeEnum
 from whiskerrag_types.model import (
     Knowledge,
     PageQueryParams,
     PageResponse,
     Tenant,
+    KnowledgeCreateUnion,
 )
-from whiskerrag_types.model.knowledge_create import KnowledgeCreateUnion
 
 from .utils import gen_knowledge_list
 
@@ -23,7 +22,6 @@ router = APIRouter(
     prefix="/api/knowledge",
     tags=["knowledge"],
     responses={404: {"description": "Not found"}},
-    dependencies=[Depends(get_tenant)],
 )
 
 
@@ -35,7 +33,7 @@ class EnableStatusUpdate(BaseModel):
 @router.post("/add", operation_id="add_knowledge", response_model_by_alias=False)
 async def add_knowledge(
     body: List[KnowledgeCreateUnion],
-    tenant: Tenant = Depends(get_tenant),
+    tenant: Tenant = get_tenant_with_permissions(Resource.KNOWLEDGE, [Action.CREATE]),
 ) -> ResponseModel[List[Knowledge]]:
     """
     Duplicate file_sha entries are prohibited.
@@ -65,7 +63,7 @@ async def add_knowledge(
 @router.post("/update", operation_id="update_knowledge", response_model_by_alias=False)
 async def update_knowledge(
     knowledge: Knowledge,
-    tenant: Tenant = Depends(get_tenant),
+    tenant: Tenant = get_tenant_with_permissions(Resource.KNOWLEDGE, [Action.UPDATE]),
 ) -> ResponseModel[Knowledge]:
     logger.info("[update_knowledge][start], req=%s", knowledge)
     try:
@@ -96,7 +94,7 @@ async def update_knowledge(
 )
 async def update_knowledge_enable_status(
     body: EnableStatusUpdate,
-    tenant: Tenant = Depends(get_tenant),
+    tenant: Tenant = get_tenant_with_permissions(Resource.KNOWLEDGE, [Action.UPDATE]),
 ) -> ResponseModel[None]:
     try:
         db_engine = PluginManager().dbPlugin
@@ -118,7 +116,8 @@ async def update_knowledge_enable_status(
 
 @router.post("/list", operation_id="get_knowledge_list", response_model_by_alias=False)
 async def get_knowledge_list(
-    body: PageQueryParams[Knowledge], tenant: Tenant = Depends(get_tenant)
+    body: PageQueryParams[Knowledge],
+    tenant: Tenant = get_tenant_with_permissions(Resource.KNOWLEDGE, [Action.READ]),
 ) -> ResponseModel[PageResponse[Knowledge]]:
     logger.info("[get_knowledge_list][start],req={}".format(body))
     try:
@@ -138,7 +137,8 @@ async def get_knowledge_list(
     "/detail", operation_id="get_knowledge_by_id", response_model_by_alias=False
 )
 async def get_knowledge_by_id(
-    knowledge_id: str, tenant: Tenant = Depends(get_tenant)
+    knowledge_id: str,
+    tenant: Tenant = get_tenant_with_permissions(Resource.KNOWLEDGE, [Action.READ]),
 ) -> ResponseModel[Knowledge]:
     logger.info("[get_knowledge_by_id][start],req={}".format(knowledge_id))
     try:
@@ -168,7 +168,8 @@ async def get_knowledge_by_id(
     "/delete", operation_id="delete_knowledge", response_model_by_alias=False
 )
 async def delete_knowledge(
-    knowledge_id: str, tenant: Tenant = Depends(get_tenant)
+    knowledge_id: str,
+    tenant: Tenant = get_tenant_with_permissions(Resource.KNOWLEDGE, [Action.DELETE]),
 ) -> ResponseModel[None]:
     """
     Deletes a knowledge entry by its ID.
@@ -197,7 +198,9 @@ async def delete_knowledge(
     operation_id="get_embedding_models_list",
     response_model_by_alias=False,
 )
-async def get_embedding_models_list(tenant: Tenant = Depends(get_tenant)):
+async def get_embedding_models_list(
+    tenant: Tenant = get_tenant_with_permissions(Resource.PUBLIC, []),
+):
     logger.info("[get_embedding_models_list][start]")
     try:
         registries = get_registry_list()

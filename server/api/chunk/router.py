@@ -6,7 +6,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 from whiskerrag_utils import get_register, RegisterTypeEnum
 
-from core.auth import get_tenant
+from core.auth import get_tenant_with_permissions, Resource, Action
 from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
@@ -14,10 +14,7 @@ from fastapi import APIRouter, Depends
 from whiskerrag_types.model import Chunk, PageQueryParams, PageResponse, Tenant
 
 router = APIRouter(
-    prefix="/api/chunk",
-    tags=["chunk"],
-    responses={404: {"description": "Not found"}},
-    dependencies=[Depends(get_tenant)],
+    prefix="/api/chunk", tags=["chunk"], responses={404: {"description": "Not found"}}
 )
 
 
@@ -38,7 +35,8 @@ class ChunkUpdate(BaseModel):
 
 @router.post("/list", operation_id="get_chunk_list", response_model_by_alias=False)
 async def get_chunk_list(
-    params: PageQueryParams[Chunk], tenant: Tenant = Depends(get_tenant)
+    params: PageQueryParams[Chunk],
+    tenant: Tenant = get_tenant_with_permissions(Resource.CHUNK, [Action.READ]),
 ) -> ResponseModel[PageResponse[Chunk]]:
     logger.info("[chunk][list][start], req={}".format(params))
     try:
@@ -64,7 +62,9 @@ async def get_chunk_list(
     response_model_by_alias=False,
 )
 async def delete_chunk_by_id(
-    id: str, model_name: str, tenant: Tenant = Depends(get_tenant)
+    id: str,
+    model_name: str,
+    tenant: Tenant = get_tenant_with_permissions(Resource.CHUNK, [Action.DELETE]),
 ) -> ResponseModel[object]:
     logger.info(f"[chunk][delete][start], id={id}, model={model_name}")
     try:
@@ -87,7 +87,9 @@ async def delete_chunk_by_id(
     response_model_by_alias=False,
 )
 async def get_chunk_by_id(
-    id: str, model_name: str, tenant: Tenant = Depends(get_tenant)
+    id: str,
+    model_name: str,
+    tenant: Tenant = get_tenant_with_permissions(Resource.CHUNK, [Action.READ]),
 ) -> ResponseModel[Chunk]:
     logger.info(f"[chunk][detail][start], id={id}, model={model_name}")
     try:
@@ -106,7 +108,8 @@ async def get_chunk_by_id(
 
 @router.post("/add", operation_id="add_chunk", response_model_by_alias=False)
 async def add_chunk(
-    params: ChunkSave, tenant: Tenant = Depends(get_tenant)
+    params: ChunkSave,
+    tenant: Tenant = get_tenant_with_permissions(Resource.CHUNK, [Action.CREATE]),
 ) -> ResponseModel[Chunk]:
     logger.info("[chunk][add][start], req={}".format(params))
     try:
@@ -139,7 +142,8 @@ async def add_chunk(
 
 @router.post("/update", operation_id="update_chunk", response_model_by_alias=False)
 async def update_chunk(
-    params: ChunkUpdate, tenant: Tenant = Depends(get_tenant)
+    params: ChunkUpdate,
+    tenant: Tenant = get_tenant_with_permissions(Resource.CHUNK, [Action.UPDATE]),
 ) -> ResponseModel[Chunk]:
     logger.info("[chunk][update][start], req={}".format(params))
     try:

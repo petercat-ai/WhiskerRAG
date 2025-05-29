@@ -1,6 +1,5 @@
 import asyncio
 import threading
-import time
 import traceback
 from collections import defaultdict
 from whiskerrag_types.model import RetrievalChunk
@@ -22,6 +21,7 @@ class RetrievalCounter:
         self.backup_buffers = [defaultdict(int) for _ in range(shards)]
         self.locks = [threading.Lock() for _ in range(shards)]
         self.running = True
+        self.stop_event = threading.Event()  # 添加终止事件
         self.flush_thread = threading.Thread(target=self._flush_loop)
         self.flush_thread.daemon = True
         self.flush_thread.start()
@@ -44,7 +44,9 @@ class RetrievalCounter:
 
     def _flush_loop(self):
         while self.running:
-            time.sleep(self.flush_interval)
+            # 使用 wait 替代 sleep，这样可以响应中断
+            if self.stop_event.wait(timeout=self.flush_interval):
+                break
             self._flush()
 
     def _flush(self):
@@ -89,6 +91,7 @@ class RetrievalCounter:
 
     def shutdown(self):
         self.running = False
+        self.stop_event.set()  # 触发终止事件
         self.force_flush()
         if self.flush_thread.is_alive():
             self.flush_thread.join()

@@ -2,7 +2,7 @@ from typing import List
 
 from deprecated import deprecated
 
-from core.auth import get_tenant
+from core.auth import get_tenant_with_permissions, Resource, Action
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
 from core.retrieval_counter import (
@@ -23,7 +23,6 @@ router = APIRouter(
     prefix="/api/retrieval",
     tags=["retrieval"],
     responses={404: {"description": "Not found"}},
-    dependencies=[Depends(get_tenant)],
 )
 
 
@@ -34,7 +33,7 @@ router = APIRouter(
 )
 async def retrieve_knowledge_content(
     body: RetrievalByKnowledgeRequest,
-    tenant: Tenant = Depends(get_tenant),
+    tenant: Tenant = get_tenant_with_permissions(Resource.RETRIEVAL, [Action.READ]),
     counter: RetrievalCounter = Depends(get_retrieval_counter),
 ) -> ResponseModel[List[RetrievalChunk]]:
     """
@@ -52,7 +51,7 @@ async def retrieve_knowledge_content(
 )
 async def retrieve_space_content(
     body: RetrievalBySpaceRequest,
-    tenant: Tenant = Depends(get_tenant),
+    tenant: Tenant = get_tenant_with_permissions(Resource.RETRIEVAL, [Action.READ]),
     counter: RetrievalCounter = Depends(get_retrieval_counter),
 ) -> ResponseModel[List[RetrievalChunk]]:
     """
@@ -67,7 +66,7 @@ async def retrieve_space_content(
 @router.post("/", operation_id="retrieve", response_model_by_alias=False)
 async def retrieve(
     body: RetrievalRequest,
-    tenant: Tenant = Depends(get_tenant),
+    tenant: Tenant = get_tenant_with_permissions(Resource.RETRIEVAL, [Action.READ]),
     counter: RetrievalCounter = Depends(get_retrieval_counter),
 ) -> ResponseModel[List[RetrievalChunk]]:
     """

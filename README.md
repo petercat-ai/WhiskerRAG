@@ -47,9 +47,9 @@ WhiskerRAG 支持多种部署选项，包括本地部署和 AWS 云部署。
 docker login
 
   # 先构建镜像
-docker-compose build --no-cache 
+docker-compose build --no-cache
  # 后台启动服务
-docker-compose up -d 
+docker-compose up -d
 
 # 启动所有服务
 docker-compose start
@@ -85,9 +85,9 @@ SUPABASE_URL=your-supabase-url
 SUPABASE_SERVICE_KEY=your-supabase-service-key
 # 表名
 KNOWLEDGE_TABLE_NAME=knowledge
+API_KEY_TABLE_NAME=api_key
 CHUNK_TABLE_NAME=chunk
 TASK_TABLE_NAME=task
-ACTION_TABLE_NAME=action
 TENANT_TABLE_NAME=tenant
 # LLM
 OPENAI_API_KEY=your-openai-api-key

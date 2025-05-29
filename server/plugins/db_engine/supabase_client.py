@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from enum import Enum
 import json
 from typing import List, Optional, TypeVar, Union
@@ -22,6 +23,7 @@ from whiskerrag_types.model import (
     TaskStatus,
     GlobalRule,
     SpaceRule,
+    APIKey,
     Wiki,
 )
 from whiskerrag_types.model.page import QueryParams
@@ -57,7 +59,7 @@ class SupaBasePlugin(DBPluginInterface):
         for table_name in [
             self.settings.KNOWLEDGE_TABLE_NAME,
             self.settings.TASK_TABLE_NAME,
-            self.settings.ACTION_TABLE_NAME,
+            self.settings.API_KEY_TABLE_NAME,
             self.settings.CHUNK_TABLE_NAME,
             self.settings.TENANT_TABLE_NAME,
         ]:
@@ -471,12 +473,23 @@ class SupaBasePlugin(DBPluginInterface):
         return not bool(res.data)
 
     async def get_tenant_by_id(self, tenant_id: str) -> Union[Tenant, None]:
-        pass
+        res = (
+            self.supabase_client.table(self.settings.TENANT_TABLE_NAME)
+            .select("*")
+            .eq("tenant_id", tenant_id)
+            .execute()
+        )
+        return Tenant(**res.data[0]) if res.data else None
 
     async def get_tenant_list(
         self, page_params: PageQueryParams[Tenant]
     ) -> PageResponse[Tenant]:
-        pass
+        return await self._get_paginated_data(
+            None,  # tenant_id is not needed for tenant list
+            self.settings.TENANT_TABLE_NAME,
+            Tenant,
+            page_params,
+        )
 
     async def delete_tenant_by_id(self, tenant_id: str) -> Union[Tenant, None]:
         pass
@@ -565,6 +578,76 @@ class SupaBasePlugin(DBPluginInterface):
         params: RetrievalRequest,
     ) -> List[RetrievalChunk]:
         pass
+
+    # =================== api-key ===================
+    async def get_api_key_by_value(self, key_value: str) -> Union[APIKey, None]:
+        res = (
+            self.supabase_client.table(self.settings.API_KEY_TABLE_NAME)
+            .select("*")
+            .eq("key_value", key_value)
+            .execute()
+        )
+        return APIKey(**res.data[0]) if res.data else None
+
+    async def get_api_key_by_id(self, tenant_id, key_id: str) -> Union[APIKey, None]:
+        res = (
+            self.supabase_client.table(self.settings.API_KEY_TABLE_NAME)
+            .select("*")
+            .eq("tenant_id", tenant_id)
+            .eq("key_id", key_id)
+            .execute()
+        )
+        return APIKey(**res.data[0]) if res.data else None
+
+    async def get_tenant_api_keys(
+        self, tenant_id: str, page_params: PageQueryParams[APIKey]
+    ) -> PageResponse[APIKey]:
+        return await self._get_paginated_data(
+            tenant_id,
+            self.settings.API_KEY_TABLE_NAME,
+            APIKey,
+            page_params,
+        )
+
+    async def save_api_key(self, api_key: APIKey) -> APIKey:
+        api_key_dict = api_key.model_dump()
+        res = (
+            self.supabase_client.table(self.settings.API_KEY_TABLE_NAME)
+            .insert(api_key_dict)
+            .execute()
+        )
+        return APIKey(**res.data[0]) if res.data else None
+
+    async def update_api_key(self, api_key: APIKey) -> Union[APIKey, None]:
+        api_key_dict = api_key.model_dump()
+        res = (
+            self.supabase_client.table(self.settings.API_KEY_TABLE_NAME)
+            .update(api_key_dict)
+            .eq("key_id", api_key.key_id)
+            .execute()
+        )
+        return APIKey(**res.data[0]) if res.data else None
+
+    async def delete_api_key(self, key_id: str) -> bool:
+        res = (
+            self.supabase_client.table(self.settings.API_KEY_TABLE_NAME)
+            .delete()
+            .eq("key_id", key_id)
+            .execute()
+        )
+        return bool(res.data)
+
+    async def get_all_expired_api_keys(self, tenant_id: str) -> List[APIKey]:
+        current_time = datetime.now(timezone.utc)
+        query = (
+            self.supabase_client.table(self.settings.API_KEY_TABLE_NAME)
+            .select("*", count="exact")
+            .eq("tenant_id", tenant_id)
+            .lt("expires_at", current_time.isoformat())
+        )
+        res = query.execute()
+        items = [APIKey(**item) for item in res.data] if res.data else []
+        return items
 
     # =================== rule ===================
     async def create_rule(

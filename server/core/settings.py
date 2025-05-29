@@ -38,8 +38,8 @@ class Settings(SettingsInterface):
         return os.getenv("TASK_TABLE_NAME", "")
 
     @property
-    def ACTION_TABLE_NAME(self) -> str:
-        return os.getenv("ACTION_TABLE_NAME", "")
+    def API_KEY_TABLE_NAME(self) -> str:
+        return os.getenv("API_KEY_TABLE_NAME", "")
 
     @property
     def TENANT_TABLE_NAME(self) -> str:

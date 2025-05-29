@@ -1,4 +1,4 @@
-from core.auth import get_tenant
+from core.auth import get_tenant_with_permissions, Resource, Action
 from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
@@ -13,10 +13,7 @@ from whiskerrag_types.model import (
 )
 
 router = APIRouter(
-    prefix="/api/space",
-    tags=["space"],
-    responses={404: {"description": "Not found"}},
-    dependencies=[Depends(get_tenant)],
+    prefix="/api/space", tags=["space"], responses={404: {"description": "Not found"}}
 )
 
 
@@ -27,7 +24,7 @@ router = APIRouter(
 )
 async def get_space_list(
     body: PageQueryParams[Space],
-    tenant: Tenant = Depends(get_tenant),
+    tenant: Tenant = get_tenant_with_permissions(Resource.SPACE, [Action.READ]),
 ) -> ResponseModel[PageResponse[SpaceResponse]]:
     logger.info(f"[get_space_list][start], req={body}")
     try:
@@ -44,7 +41,7 @@ async def get_space_list(
 @router.post("/add", operation_id="add_space", response_model_by_alias=False)
 async def add_space(
     body: SpaceCreate,
-    tenant: Tenant = Depends(get_tenant),
+    tenant: Tenant = get_tenant_with_permissions(Resource.SPACE, [Action.CREATE]),
 ) -> ResponseModel[SpaceResponse]:
     logger.info(f"[add_space][start], req={body}")
     try:
@@ -67,7 +64,7 @@ async def add_space(
 )
 async def delete_space(
     space_id: str = Path(..., description="knowledge base id"),
-    tenant: Tenant = Depends(get_tenant),
+    tenant: Tenant = get_tenant_with_permissions(Resource.SPACE, [Action.DELETE]),
 ) -> ResponseModel[None]:
     logger.info(f"[delete_space][start], req={space_id}")
     try:
@@ -93,7 +90,7 @@ async def delete_space(
 async def update_space(
     space_id: str = Path(..., description="知识库唯一标识符"),
     body: SpaceCreate = Body(..., description="更新后的知识库信息"),
-    tenant: Tenant = Depends(get_tenant),
+    tenant: Tenant = get_tenant_with_permissions(Resource.SPACE, [Action.UPDATE]),
 ) -> ResponseModel[SpaceResponse]:
     logger.info(f"[update_space][start], req={space_id}")
     try:
@@ -123,7 +120,7 @@ async def update_space(
 )
 async def get_space_by_id(
     space_id: str = Path(..., description="knowledge base id"),
-    tenant: Tenant = Depends(get_tenant),
+    tenant: Tenant = get_tenant_with_permissions(Resource.SPACE, [Action.READ]),
 ) -> ResponseModel[SpaceResponse]:
     logger.info(f"[get_space_by_id][start], req={space_id}")
     try:

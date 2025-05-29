@@ -46,9 +46,9 @@ services:
       - WEB_URL=${WEB_URL:-http://localhost:3000}
       - POSTGRES_USER=${POSTGRES_USER:-whisker}
       - KNOWLEDGE_TABLE_NAME=${KNOWLEDGE_TABLE_NAME:-knowledge}
+      - API_KEY_TABLE_NAME=${API_KEY_TABLE_NAME:-api_key}
       - CHUNK_TABLE_NAME=${CHUNK_TABLE_NAME:-chunk}
       - TASK_TABLE_NAME=${TASK_TABLE_NAME:-task}
-      - ACTION_TABLE_NAME=${ACTION_TABLE_NAME:-action}
       - TENANT_TABLE_NAME=${TENANT_TABLE_NAME:-tenant}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-your_openai_key}
       - DB_ENGINE_CLASSNAME=${DB_ENGINE_CLASSNAME:-LocalEnginePlugin}
