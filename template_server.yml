@@ -47,11 +47,6 @@ Parameters:
     Description: Environment marker for TASK_TABLE_NAME
     Default: "task"
 
-  actionTableName:
-    Type: String
-    Description: Environment marker for ACTION_TABLE_NAME
-    Default: "action"
-
   tenantTableName:
     Type: String
     Description: Environment marker for TENANT_TABLE_NAME
@@ -102,7 +97,6 @@ Resources:
           API_KEY_TABLE_NAME: !Ref ApiKeyTableName
           CHUNK_TABLE_NAME: !Ref chunkTableName
           TASK_TABLE_NAME: !Ref taskTableName
-          ACTION_TABLE_NAME: !Ref actionTableName
           TENANT_TABLE_NAME: !Ref tenantTableName
           OPENAI_API_KEY: !Ref openAIKey
           DB_ENGINE_CLASSNAME: !Ref dbEngineClassName

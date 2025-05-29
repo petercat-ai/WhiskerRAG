@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import secrets
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+import iso8601
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from core.auth import get_tenant_with_permissions, Resource, Action
 from core.log import logger
 from core.plugin_manager import PluginManager
@@ -24,21 +25,38 @@ class APIKeyCreate(BaseModel):
     description: Optional[str] = None
     permissions: List[Permission] = Field(default_factory=list)
     rate_limit: Optional[int] = Field(default=0, ge=0)
-    expires_at: Optional[datetime] = None
+    expires_at: Optional[str] = Field(
+        default=None,
+        description="Expiration time in ISO8601 format with timezone (e.g., 2024-12-31T23:59:59+00:00)",
+    )
     metadata: Optional[Dict[str, Any]] = None
 
+    @field_validator("expires_at")
+    def validate_expires_at(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return None
+        try:
+            dt = iso8601.parse_date(v)
+            if dt.tzinfo is None:
+                raise ValueError("Timezone information is required")
 
-class APIKeyUpdate(BaseModel):
+            now = datetime.now(timezone.utc)
+            if dt < now:
+                raise ValueError("expires_at must be future time")
+
+            return dt
+
+        except ValueError as e:
+            raise ValueError(
+                "Invalid expires_at format. Must be ISO8601 format with timezone "
+                "(e.g., 2025-12-31T23:59:59+00:00)"
+            )
+
+
+class APIKeyUpdate(APIKeyCreate):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     key_id: str
-    key_name: Optional[str] = None
-    description: Optional[str] = None
-    permissions: List[Permission] = None
-    rate_limit: Optional[int] = Field(default=None, ge=0)
-    expires_at: Optional[datetime] = None
-    is_active: Optional[bool] = None
-    metadata: Optional[Dict[str, Any]] = None
 
 
 class ActiveStatusUpdate(BaseModel):
@@ -126,7 +144,7 @@ async def delete_api_key(
     logger.info("[delete_api_key][start], key_id=%s", key_id)
     try:
         db_engine = PluginManager().dbPlugin
-        existing_key = await db_engine.get_api_key_by_value(key_id)
+        existing_key = await db_engine.get_api_key_by_id(tenant.tenant_id, key_id)
         if not existing_key or existing_key.tenant_id != tenant.tenant_id:
             raise HTTPException(status_code=404, detail="API Key not found")
 

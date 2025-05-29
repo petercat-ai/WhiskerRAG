@@ -83,7 +83,6 @@ KNOWLEDGE_TABLE_NAME=knowledge
 API_KEY_TABLE_NAME=api_key
 CHUNK_TABLE_NAME=chunk
 TASK_TABLE_NAME=task
-ACTION_TABLE_NAME=action
 TENANT_TABLE_NAME=tenant
 # llm
 OPENAI_API_KEY=your-openai-api-key

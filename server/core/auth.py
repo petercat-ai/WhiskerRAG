@@ -10,19 +10,6 @@ from .cache import TTLCache
 AuthResult = Tuple[bool, Optional[Tenant], Optional[APIKey], Optional[str]]
 
 
-async def get_from_cache(key: str) -> Optional[any]:
-    data = await cache.get(key)
-    if data and isinstance(data, dict):
-        return Tenant(**data)
-    return data
-
-
-async def set_to_cache(key: str, value: any) -> None:
-    if isinstance(value, BaseModel):
-        value = value.model_dump()
-    await cache.set(key, value)
-
-
 def extract_key(auth_header: str) -> str:
     return auth_header.split(" ")[1]
 
@@ -36,19 +23,16 @@ def is_api_key_format(auth_str: str) -> bool:
 
 
 @TTLCache(ttl=60, maxsize=1000)
-async def authenticate_api_key(auth_header: str) -> AuthResult:
+async def authenticate_ak(auth_header: str) -> AuthResult:
     api_key_str = extract_key(auth_header)
     db = PluginManager().dbPlugin
     api_key = await db.get_api_key_by_value(api_key_str)
     if not api_key:
-        return False, None, "Invalid API key"
+        return False, None, None, "Invalid API key"
     tenant_id = api_key.tenant_id
     tenant = await db.get_tenant_by_id(tenant_id)
     if not tenant:
-        return False, None, "Tenant not found for the API key"
-
-    if not tenant:
-        return False, None, "Invalid API key"
+        return False, None, api_key, "Invalid API key"
 
     return True, tenant, api_key, None
 
@@ -56,14 +40,8 @@ async def authenticate_api_key(auth_header: str) -> AuthResult:
 @TTLCache(ttl=300, maxsize=1000)
 async def authenticate_sk(auth_header: str) -> AuthResult:
     sk = extract_key(auth_header)
-
-    tenant = await get_from_cache(sk)
-    if not tenant:
-        db = PluginManager().dbPlugin
-        tenant = await db.get_tenant_by_sk(sk)
-        if tenant:
-            await set_to_cache(sk, tenant)
-
+    db = PluginManager().dbPlugin
+    tenant = await db.get_tenant_by_sk(sk)
     if not tenant:
         return False, None, None, "Invalid SK"
 
@@ -117,12 +95,12 @@ async def authenticate_request(
         raise HTTPException(status_code=401, detail="Authorization header is missing")
 
     authenticate = (
-        authenticate_api_key if is_api_key_format(header_auth) else authenticate_sk
+        authenticate_ak if is_api_key_format(header_auth) else authenticate_sk
     )
 
     is_auth, tenant, api_key, error = await authenticate(header_auth)
     if not is_auth:
-        raise HTTPException(status_code=401, detail=error)
+        raise HTTPException(status_code=403, detail=error)
     # check api key permissions
     if is_api_key_format(header_auth):
         if not await verify_permissions(api_key, resource, actions):
