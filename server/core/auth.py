@@ -21,7 +21,7 @@ def extract_key(auth_header: str) -> str:
 
 def is_api_key_format(auth_str: str) -> bool:
     try:
-        key = auth_header.split(" ")[1]
+        key = extract_key(auth_str)
         return key.startswith("ak-")
     except:
         return False
