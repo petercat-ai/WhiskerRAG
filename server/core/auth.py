@@ -1,5 +1,4 @@
 from fastapi import Header, HTTPException
-from pydantic import BaseModel
 from whiskerrag_types.model import Tenant, APIKey, Resource, Action
 from typing import Optional, List, Callable, Tuple
 from fastapi import Depends, HTTPException, Request
