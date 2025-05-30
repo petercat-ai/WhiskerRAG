@@ -1,5 +1,4 @@
 from fastapi import Header, HTTPException
-from pydantic import BaseModel
 from whiskerrag_types.model import Tenant, APIKey, Resource, Action
 from typing import Optional, List, Callable, Tuple
 from fastapi import Depends, HTTPException, Request
@@ -11,7 +10,12 @@ AuthResult = Tuple[bool, Optional[Tenant], Optional[APIKey], Optional[str]]
 
 
 def extract_key(auth_header: str) -> str:
-    return auth_header.split(" ")[1]
+    parts = auth_header.strip().split(" ")
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        raise HTTPException(
+            status_code=401, detail="Authorization header must start with 'Bearer'"
+        )
+    return parts[1]
 
 
 def is_api_key_format(auth_str: str) -> bool:
