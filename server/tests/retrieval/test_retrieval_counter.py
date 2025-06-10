@@ -1,11 +1,12 @@
+import asyncio
 import os
 import threading
 import time
 import unittest
-import asyncio
 
-from whiskerrag_utils import init_register
 from whiskerrag_types.model import RetrievalChunk
+from whiskerrag_utils import init_register
+
 from server.core.plugin_manager import PluginManager
 from server.core.retrieval_counter import RetrievalCounter, retrieval_count
 

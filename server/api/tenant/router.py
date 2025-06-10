@@ -2,7 +2,7 @@ import secrets
 import uuid
 from typing import Optional
 
-from core.auth import get_tenant_with_permissions, Resource, Action
+from core.auth import Action, Resource, get_tenant_with_permissions
 from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel

@@ -1,10 +1,11 @@
-from fastapi import Header, HTTPException
-from whiskerrag_types.model import Tenant, APIKey, Resource, Action
-from typing import Optional, List, Callable, Tuple
-from fastapi import Depends, HTTPException, Request
 from datetime import datetime, timezone
-from .plugin_manager import PluginManager
+from typing import Callable, List, Optional, Tuple
+
+from fastapi import Depends, Header, HTTPException, Request
+from whiskerrag_types.model import Action, APIKey, Resource, Tenant
+
 from .cache import TTLCache
+from .plugin_manager import PluginManager
 
 AuthResult = Tuple[bool, Optional[Tenant], Optional[APIKey], Optional[str]]
 

@@ -1,5 +1,5 @@
-from functools import lru_cache, wraps
 import time
+from functools import lru_cache, wraps
 from typing import Any, Callable, Dict
 
 

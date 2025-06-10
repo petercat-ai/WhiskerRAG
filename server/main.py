@@ -1,26 +1,26 @@
 import os
+import traceback
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from core.retrieval_counter import get_retrieval_counter
-from whiskerrag_utils import init_register
-from core.settings import settings
 import uvicorn
-import traceback
+from api.api_key import router as api_key_router
 from api.chunk import router as chunk_router
 from api.knowledge import router as knowledge_router
 from api.retrieval import router as retrieval_router
-from api.task import router as task_router
-from api.tenant import router as tenant_router
 from api.rule import router as rule_router
 from api.space import router as space_router
-from api.api_key import router as api_key_router
+from api.task import router as task_router
+from api.tenant import router as tenant_router
 from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
+from core.retrieval_counter import get_retrieval_counter
+from core.settings import settings
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
+from whiskerrag_utils import init_register
 
 
 def resolve_plugin_path() -> str:

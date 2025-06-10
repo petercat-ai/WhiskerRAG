@@ -2,9 +2,9 @@ import logging
 import os
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
-
-from core.settings import settings
 from whiskerrag_types.interface import LoggerManagerInterface
+
+from .settings import settings
 
 
 class ColorCodes:

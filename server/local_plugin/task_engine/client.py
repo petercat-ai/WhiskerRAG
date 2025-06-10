@@ -4,10 +4,10 @@ import boto3  # type: ignore
 from whiskerrag_types.interface import TaskEnginPluginInterface
 from whiskerrag_types.model import (
     Knowledge,
+    KnowledgeTypeEnum,
     Task,
     TaskStatus,
     Tenant,
-    KnowledgeTypeEnum,
 )
 from whiskerrag_utils import get_chunks_by_knowledge, init_register
 

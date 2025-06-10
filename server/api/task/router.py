@@ -1,6 +1,6 @@
 from typing import List
 
-from core.auth import get_tenant_with_permissions, Resource, Action
+from core.auth import Action, Resource, get_tenant_with_permissions
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
 from fastapi import APIRouter, Depends

@@ -1,6 +1,6 @@
+import json
 from datetime import datetime, timezone
 from enum import Enum
-import json
 from typing import List, Optional, TypeVar, Union
 
 from fastapi import HTTPException, status
@@ -8,22 +8,22 @@ from pydantic import BaseModel
 from supabase.client import Client, create_client
 from whiskerrag_types.interface import DBPluginInterface
 from whiskerrag_types.model import (
+    APIKey,
     Chunk,
+    GlobalRule,
     Knowledge,
+    KnowledgeSourceEnum,
     PageQueryParams,
     PageResponse,
     RetrievalByKnowledgeRequest,
     RetrievalBySpaceRequest,
-    RetrievalRequest,
     RetrievalChunk,
-    Task,
-    Tenant,
+    RetrievalRequest,
     Space,
-    KnowledgeSourceEnum,
-    TaskStatus,
-    GlobalRule,
     SpaceRule,
-    APIKey,
+    Task,
+    TaskStatus,
+    Tenant,
     Wiki,
 )
 from whiskerrag_types.model.page import QueryParams
@@ -125,7 +125,7 @@ class SupaBasePlugin(DBPluginInterface):
         self, knowledge_list: List[Knowledge]
     ) -> List[Knowledge]:
         knowledge_dicts = [
-            knowledge.model_dump(exclude_unset=True) for knowledge in knowledge_list
+            knowledge.model_dump() for knowledge in knowledge_list
         ]
         response = (
             self.supabase_client.table(self.settings.KNOWLEDGE_TABLE_NAME)

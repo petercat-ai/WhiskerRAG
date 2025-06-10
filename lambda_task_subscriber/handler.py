@@ -1,13 +1,25 @@
-import logging
-from typing import Any, Dict, List
-from whiskerrag_types.model import Task, Knowledge, TaskStatus
-from whiskerrag_utils import get_chunks_by_knowledge, init_register
 import asyncio
 import json
+import logging
+import uuid
+from typing import Any, Dict, List
 
 from dao.chunk_dao import ChunkDao
+from dao.knowledge_dao import KnowledgeDao
 from dao.task_dao import TaskDao
-import asyncio
+from whiskerrag_types.model import (
+    Knowledge,
+    PageQueryParams,
+    PageResponse,
+    Task,
+    TaskStatus,
+)
+from whiskerrag_utils import (
+    decompose_knowledge,
+    get_chunks_by_knowledge,
+    get_diff_knowledge_by_sha,
+    init_register,
+)
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -18,6 +30,7 @@ class TaskExecutor:
         self._is_running = False
         self.task_dao = TaskDao()
         self.chunk_dao = ChunkDao()
+        self.knowledge_dao = KnowledgeDao()
         self.semaphore = asyncio.Semaphore(50)
 
     async def handle_add_knowledge_task(self, task: Task, knowledge: Knowledge):
@@ -28,9 +41,42 @@ class TaskExecutor:
                 print("=== start task ===", task.task_id)
                 task.update(status=TaskStatus.RUNNING)
                 self.task_dao.update_task_list([task])
-                chunk_list = await asyncio.wait_for(
-                    get_chunks_by_knowledge(knowledge), timeout=60 * 3
+
+                # 1. Decompose knowledge
+                decomposed_knowledge_list = await decompose_knowledge(knowledge)
+
+                # 2. Get existing knowledge from the database
+                db_knowledge_list: List[Knowledge] = (
+                    await self.knowledge_dao.get_all_knowledge_list(
+                        tenant_id=knowledge.tenant_id,
+                        eq_conditions={
+                            "space_id": knowledge.space_id,
+                            "parent_id": knowledge.knowledge_id,
+                        },
+                    )
                 )
+
+                # 3. Compare knowledge
+                diff = get_diff_knowledge_by_sha(
+                    db_knowledge_list, decomposed_knowledge_list
+                )
+
+                # 4. Handle deletions
+                if diff["to_delete"]:
+                    delete_ids = [k.knowledge_id for k in diff["to_delete"]]
+                    await self.knowledge_dao.delete_knowledge(
+                        knowledge.tenant_id, delete_ids
+                    )
+
+                # 5. Handle additions and get chunks for new knowledge
+                if diff["to_add"]:
+                    added_knowledge_list = await self.knowledge_dao.add_knowledge_list(
+                        knowledge.tenant_id, diff["to_add"]
+                    )
+                    for new_knowledge_item in added_knowledge_list:
+                        chunks = await get_chunks_by_knowledge(new_knowledge_item)
+                        chunk_list.extend(chunks)
+
                 logger.info(f"Successfully processed task: {task.task_id}")
                 task.update(status=TaskStatus.SUCCESS)
             except asyncio.TimeoutError:
@@ -43,12 +89,10 @@ class TaskExecutor:
                 task.update(status=TaskStatus.FAILED, error_message=str(e))
             finally:
                 logger.info(f"=== End task ===: {task.task_id}")
-            if chunk_list and len(chunk_list) > 0:
-                # delete existing chunks and save new chunks
-                self.chunk_dao.delete_knowledge_chunks(knowledge)
-                self.chunk_dao.save_chunk_list(chunk_list)
-            # TODO: or delete successful task ?
-            self.task_dao.update_task_list([task])
+                if chunk_list and len(chunk_list) > 0:
+                    # Save new chunks
+                    self.chunk_dao.save_chunk_list(chunk_list)
+                self.task_dao.update_task_list([task])
 
 
 _task_executor = TaskExecutor()
@@ -144,3 +188,56 @@ def lambda_handler(
                 for record in event.get("Records", [])
             ]
         }
+
+
+if __name__ == "__main__":
+    knowledge_id = "6f7b68b3-61ef-422c-a994-a3c3960681ce"
+    task_id = "eca55ec7-c06e-4f4a-8a4b-64d302e7f4b0"
+    tenant_id = "38fbd88b-e869-489c-9142-e4ea2c226e42"
+    space_id = "ch-liuzhide/AgentFlow"
+    # Example dummy data for a record
+    # Please modify the content of task and knowledge according to your actual situation
+    dummy_record = {
+        "messageId": "test-message-123",
+        "body": json.dumps(
+            {
+                "task": {
+                    "task_id": task_id,
+                    "tenant_id": tenant_id,
+                    "status": "pending",
+                    "space_id": space_id,
+                    "created_at": "2023-01-01T00:00:00Z",
+                    "updated_at": "2023-01-01T00:00:00Z",
+                    "knowledge_id": knowledge_id,
+                },
+                "knowledge": {
+                    "knowledge_name": "ch-liuzhide/AgentFlow",
+                    "source_type": "github_repo",
+                    "knowledge_type": "github_repo",
+                    "space_id": "ch-liuzhide/AgentFlow",
+                    "split_config": {
+                        "type": "github_repo",
+                        "include_patterns": ["*.md"],
+                    },
+                    "source_config": {
+                        "url": "https://github.com",
+                        "repo_name": "ch-liuzhide/AgentFlow",
+                    },
+                    "embedding_model_name": "openai",
+                    "metadata": {"url": "xxxx"},
+                    "file_sha": "111",
+                    "knowledge_id": knowledge_id,
+                    "tenant_id": tenant_id,
+                    "enabled": True,
+                },
+            }
+        ),
+    }
+
+    # Simulate the event structure received by lambda_handler
+    dummy_event = {"Records": [dummy_record]}
+
+    print("Running lambda_handler locally with dummy data...")
+    # context can be None for local testing
+    result = lambda_handler(dummy_event, None)
+    print("Local execution result:", result)

@@ -2,10 +2,11 @@ import asyncio
 import threading
 import traceback
 from collections import defaultdict
-from whiskerrag_types.model import RetrievalChunk
+
+from .log import logger
+from .plugin_manager import PluginManager
 from whiskerrag_types.interface import DBPluginInterface
-from core.log import logger
-from core.plugin_manager import PluginManager
+from whiskerrag_types.model import RetrievalChunk
 
 
 class RetrievalCounter:

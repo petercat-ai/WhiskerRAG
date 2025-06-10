@@ -1,8 +1,6 @@
 from typing import List
 
-from deprecated import deprecated
-
-from core.auth import get_tenant_with_permissions, Resource, Action
+from core.auth import Action, Resource, get_tenant_with_permissions
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
 from core.retrieval_counter import (
@@ -10,6 +8,7 @@ from core.retrieval_counter import (
     get_retrieval_counter,
     retrieval_count,
 )
+from deprecated import deprecated
 from fastapi import APIRouter, Depends
 from whiskerrag_types.model import (
     RetrievalByKnowledgeRequest,

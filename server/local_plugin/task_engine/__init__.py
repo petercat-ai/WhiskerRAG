@@ -1,2 +1,2 @@
-from .registry import *
 from .client import *
+from .registry import *
