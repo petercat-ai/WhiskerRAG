@@ -2,6 +2,7 @@ import os
 import traceback
 from contextlib import asynccontextmanager
 from pathlib import Path
+import sys
 
 import uvicorn
 from api.api_key import router as api_key_router
@@ -99,6 +100,7 @@ def create_app() -> FastAPI:
     # init log and base settings
     log_dir = os.getenv("LOG_DIR", "./logs")
     setup_logging("whisker", log_dir)
+    # init register
     init_register("whiskerrag_utils")
 
     # create FastAPI application
@@ -146,19 +148,16 @@ def create_app() -> FastAPI:
     async def global_exception_handler(
         request: Request, exc: Exception
     ) -> JSONResponse:
-        error_message = str(exc)
-
+        exc_info = sys.exc_info()
         logger.error(
-            f"Global exception occurred: "
-            f"Path={request.url.path}, Method={request.method}, "
-            f"Exception Type={type(exc).__name__}, Message={error_message}, "
-            f"Traceback={traceback.format_exc()}"
+            f"Global exception occurred: Path={request.url.path}, Method={request.method}",
+            exc_info=exc_info,
         )
 
         return JSONResponse(
             status_code=500,
             content=ResponseModel(
-                success=False, message="Internal Server Error", data=None
+                success=False, message=f"Internal Server Error: {exc}", data=None
             ).model_dump(),
         )
 
@@ -192,7 +191,7 @@ def create_app() -> FastAPI:
 
     @app.get("/api/health_checker", response_model=ResponseModel)
     def health_checker() -> ResponseModel[dict]:
-        res = {"env": os.getenv("ENV"), "extra": "hello"}
+        res = {"env": os.getenv("WHISKER_ENV"), "extra": "hello"}
         logger.debug(f"health check: {res}")
         return ResponseModel(success=True, data=res)
 
