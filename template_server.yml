@@ -62,6 +62,11 @@ Parameters:
     Description: Environment marker for DB_ENGINE_CLASSNAME
     Default: "SupaBasePlugin"
 
+  fastapiEngineClassName:
+    Type: String
+    Description: Environment marker for FASTAPI_ENGINE_CLASSNAME
+    Default: "FastAPIEnginePlugin"
+
   taskEngineClassName:
     Type: String
     Description: Environment marker for TASK_ENGINE_CLASSNAME
@@ -100,6 +105,7 @@ Resources:
           TENANT_TABLE_NAME: !Ref tenantTableName
           OPENAI_API_KEY: !Ref openAIKey
           DB_ENGINE_CLASSNAME: !Ref dbEngineClassName
+          FASTAPI_ENGINE_CLASSNAME: !Ref fastapiEngineClassName
           TASK_ENGINE_CLASSNAME: !Ref taskEngineClassName
           SQS_QUEUE_URL: !Ref sqsQueueUrl
       FunctionUrlConfig:

@@ -52,6 +52,7 @@ services:
       - TENANT_TABLE_NAME=${TENANT_TABLE_NAME:-tenant}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-your_openai_key}
       - DB_ENGINE_CLASSNAME=${DB_ENGINE_CLASSNAME:-LocalEnginePlugin}
+      - FASTAPI_ENGINE_CLASSNAME=${FASTAPI_ENGINE_CLASSNAME:-FastAPIEnginePlugin}
       - TASK_ENGINE_CLASSNAME=${TASK_ENGINE_CLASSNAME:-PostgresDBPlugin}
       - HF_CACHE=${HF_CACHE:-/app/huggingface}
 

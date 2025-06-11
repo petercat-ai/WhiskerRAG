@@ -87,6 +87,7 @@ jobs:
               ParameterKey=tenantTableName,ParameterValue=${{ vars.TENANT_TABLE_NAME }} \
               ParameterKey=openAIKey,ParameterValue=${{ secrets.OPENAI_API_KEY }} \
               ParameterKey=dbEngineClassName,ParameterValue=${{ vars.DB_ENGINE_CLASSNAME }} \
+              ParameterKey=fastapiEngineClassName,ParameterValue=${{ vars.FASTAPI_ENGINE_CLASSNAME }} \
               ParameterKey=taskEngineClassName,ParameterValue=${{ vars.TASK_ENGINE_CLASSNAME }} \
               ParameterKey=whiskerEnv,ParameterValue=${{ vars.WHISKER_ENV }} \
               ParameterKey=sqsQueueUrl,ParameterValue=${{ vars.SQS_QUEUE_URL }} \
