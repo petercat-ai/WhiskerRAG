@@ -6,27 +6,45 @@
 
 为了在 AWS Lambda 中使用 GitPython 库处理 GitHub 仓库，我们需要：
 
-1. 添加 Git Lambda Layer 来提供 Git 二进制文件
+1. 在 Docker 镜像中安装 Git 二进制文件
 2. 配置环境变量
 3. 添加 GitPython 依赖
 4. 实现 Git 环境初始化
 
 ## 已实现的配置
 
-### 1. Lambda Layer 配置
+### 1. Docker 镜像配置
 
-在 `template_task.yml` 和 `template_server.yml` 中已添加：
+由于项目使用 `PackageType: Image`，我们在 Dockerfile 中安装 Git：
 
-```yaml
-Layers:
-  # Git Lambda Layer 支持
-  - !Sub 'arn:aws:lambda:${AWS::Region}:553035198032:layer:git-lambda2:8'
+**任务函数 (`docker/Dockerfile.aws.task`)**:
+```dockerfile
+# Install git and other necessary packages
+RUN yum update -y && \
+    yum install -y git && \
+    yum clean all
+
+# Set git environment variables
+ENV GIT_PYTHON_REFRESH=quiet
+ENV GIT_EXEC_PATH=/usr/bin
+```
+
+**服务器函数 (`docker/Dockerfile.aws.server`)**:
+```dockerfile
+# Install make and git
+RUN apt-get update && apt-get install -y make git && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set git environment variables
+ENV GIT_PYTHON_REFRESH=quiet
+ENV GIT_EXEC_PATH=/usr/bin/git
 ```
 
 **重要说明：**
-- 使用的是 `git-lambda2:8`，这是为 Amazon Linux 2 运行时优化的版本
-- 如果使用较老的运行时，应使用 `git:14` 代替
-- Layer ARN 会根据部署的 AWS 区域自动调整
+- 任务函数使用 Amazon Linux 2 基础镜像，使用 `yum` 包管理器
+- 服务器函数使用 Debian 基础镜像，使用 `apt-get` 包管理器
+- Git 安装在系统标准路径 `/usr/bin/git`
 
 ### 2. 环境变量配置
 
@@ -36,30 +54,31 @@ Layers:
 Environment:
   Variables:
     GIT_PYTHON_REFRESH: quiet
-    GIT_EXEC_PATH: /opt/bin
+    GIT_EXEC_PATH: /usr/bin  # 或 /usr/bin/git 取决于具体配置
 ```
 
 这些变量确保：
 - `GIT_PYTHON_REFRESH: quiet` - 禁止 GitPython 的初始化警告
-- `GIT_EXEC_PATH: /opt/bin` - 指向 Lambda Layer 中 Git 二进制文件的位置
+- `GIT_EXEC_PATH: /usr/bin` - 指向系统 Git 二进制文件的位置
 
 ### 3. 依赖管理
 
 在 `lambda_task_subscriber/requirements.txt` 中添加：
 
 ```
-GitPython==3.1.43
+gitpython>=3.1.44
 ```
 
 ## Git 配置模块
 
 ### `lambda_task_subscriber/git_config.py`
 
-这个模块提供了在 Lambda 环境中配置和使用 Git 的工具函数：
+这个模块提供了在 Lambda Docker 环境中配置和使用 Git 的工具函数：
 
 #### 主要功能
 
 1. **`configure_git_environment()`**
+   - 自动检测 Git 二进制文件位置
    - 配置 Git 环境变量
    - 设置 PATH 确保能找到 Git 二进制文件
    - 配置基本的 Git 全局设置
@@ -96,13 +115,17 @@ for root, dirs, files in os.walk(repo.working_dir):
 
 ## 部署步骤
 
-### 1. 更新 CloudFormation 模板
+### 1. 构建 Docker 镜像
 
-确保您的 CloudFormation 模板包含了上述配置。如果从较老版本升级，请：
+确保您的 Docker 镜像包含了 Git 安装：
 
-1. 检查 `template_task.yml` 和 `template_server.yml` 中的 Layers 配置
-2. 验证环境变量设置
-3. 确认运行时版本与 Layer 版本兼容
+```bash
+# 构建任务函数镜像
+docker build -f docker/Dockerfile.aws.task -t whisker-rag-task .
+
+# 构建服务器函数镜像  
+docker build -f docker/Dockerfile.aws.server -t whisker-rag-server .
+```
 
 ### 2. 部署更新
 
@@ -119,32 +142,35 @@ sam deploy --template-file template_server.yml --stack-name whisker-rag-server
 部署完成后，检查 Lambda 函数日志确认 Git 环境初始化成功：
 
 ```
-初始化 Git 环境...
-Git 环境配置成功
-Git 命令测试成功
+init git environment
+git environment configured successfully
+git command test passed
 Git 功能测试通过
 ```
 
-## 支持的 AWS 区域
+## Docker vs Lambda Layer 对比
 
-Git Lambda Layer 在以下区域可用：
-- us-east-1, us-east-2, us-west-1, us-west-2
-- eu-west-1, eu-west-2, eu-west-3, eu-central-1
-- ap-northeast-1, ap-northeast-2, ap-southeast-1, ap-southeast-2
-- 其他主要 AWS 区域
+| 方面 | Docker 方式 | Lambda Layer 方式 |
+|------|------------|------------------|
+| **包类型** | `PackageType: Image` | `PackageType: Zip` |
+| **Git 安装** | 在 Dockerfile 中安装 | 使用预构建的 Layer |
+| **灵活性** | 完全控制 Git 版本 | 受限于 Layer 版本 |
+| **部署大小** | 较大，包含完整系统 | 较小，只有代码 |
+| **冷启动** | 可能稍慢 | 通常更快 |
+| **维护** | 需要维护 Docker 镜像 | AWS 维护 Layer |
 
 ## 故障排除
 
 ### 常见问题
 
 1. **"git command not found" 错误**
-   - 检查 Lambda Layer 是否正确添加
+   - 检查 Dockerfile 中是否正确安装了 Git
    - 验证 `GIT_EXEC_PATH` 环境变量
-   - 确认使用了正确的 Layer 版本
+   - 确认 Docker 镜像构建成功
 
 2. **"Failed to initialize: Bad git executable" 错误**
    - 检查 `GIT_PYTHON_REFRESH` 环境变量
-   - 确认 Git Layer ARN 区域匹配
+   - 验证 Git 路径配置
 
 3. **权限错误**
    - 确保在 `/tmp` 目录下进行 Git 操作
@@ -152,10 +178,18 @@ Git Lambda Layer 在以下区域可用：
 
 ### 调试技巧
 
-1. **启用详细日志**
+1. **检查 Git 安装**
    ```python
-   import logging
-   logging.basicConfig(level=logging.DEBUG)
+   import os
+   import subprocess
+   
+   # 检查 Git 是否安装
+   result = subprocess.run(['which', 'git'], capture_output=True, text=True)
+   print("Git location:", result.stdout.strip())
+   
+   # 检查 Git 版本
+   result = subprocess.run(['git', '--version'], capture_output=True, text=True)
+   print("Git version:", result.stdout.strip())
    ```
 
 2. **测试 Git 环境**
@@ -169,19 +203,24 @@ Git Lambda Layer 在以下区域可用：
    import os
    print("PATH:", os.environ.get('PATH'))
    print("GIT_EXEC_PATH:", os.environ.get('GIT_EXEC_PATH'))
+   print("GIT_PYTHON_REFRESH:", os.environ.get('GIT_PYTHON_REFRESH'))
    ```
 
 ## 性能考虑
 
-1. **使用 Shallow Clone**
+1. **Docker 镜像优化**
+   - 使用多阶段构建减少镜像大小
+   - 清理不必要的包和缓存
+
+2. **使用 Shallow Clone**
    - 默认使用 `depth=1` 减少下载时间
    - 对于大型仓库尤其重要
 
-2. **缓存策略**
+3. **缓存策略**
    - 考虑使用 S3 缓存已克隆的仓库
    - 实现增量更新机制
 
-3. **超时设置**
+4. **超时设置**
    - 确保 Lambda 函数超时设置足够长
    - 当前设置为 300 秒（5分钟）
 
@@ -195,8 +234,12 @@ Git Lambda Layer 在以下区域可用：
    - 考虑在 VPC 中运行 Lambda 函数
    - 使用 NAT Gateway 进行出站连接
 
+3. **Docker 镜像安全**
+   - 定期更新基础镜像
+   - 扫描镜像安全漏洞
+
 ## 相关资源
 
-- [Git Lambda Layer GitHub 仓库](https://github.com/lambci/git-lambda-layer)
 - [GitPython 官方文档](https://gitpython.readthedocs.io/)
-- [AWS Lambda Layers 文档](https://docs.aws.amazon.com/lambda/latest/dg/configuration-layers.html) 
+- [AWS Lambda Container Images](https://docs.aws.amazon.com/lambda/latest/dg/images-create.html)
+- [Docker 最佳实践](https://docs.docker.com/develop/dev-best-practices/) 

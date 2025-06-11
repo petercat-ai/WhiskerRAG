@@ -3,6 +3,11 @@ FROM public.ecr.aws/lambda/python:3.12
 # Set the working directory inside the container to Lambda's task root
 WORKDIR ${LAMBDA_TASK_ROOT}
 
+# Install git and other necessary packages
+RUN yum update -y && \
+    yum install -y git && \
+    yum clean all
+
 # Copy requirements.txt first to leverage Docker's layer caching
 COPY requirements.txt .
 
@@ -11,6 +16,10 @@ RUN pip3 install --target "${LAMBDA_TASK_ROOT}" -r requirements.txt --no-cache-d
 
 # Copy the rest of the application code to the Lambda task root
 COPY . .
+
+# Set git environment variables
+ENV GIT_PYTHON_REFRESH=quiet
+ENV GIT_EXEC_PATH=/usr/bin
 
 # Set the CMD to the Lambda handler
 CMD [ "handler.lambda_handler" ]

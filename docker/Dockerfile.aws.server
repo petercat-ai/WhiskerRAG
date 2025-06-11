@@ -4,12 +4,18 @@ LABEL org.opencontainers.image.source=https://github.com/petercat-ai/WhiskerRAG
 LABEL org.opencontainers.image.description="Petercat Whisker RAG server Image"
 LABEL org.opencontainers.image.licenses=MIT
 
-# Install make
-RUN apt-get update && apt-get install -y make
+# Install make and git
+RUN apt-get update && apt-get install -y make git && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set Lambda environment
 ENV LAMBDA_TASK_ROOT=/var/task
 WORKDIR ${LAMBDA_TASK_ROOT}
+
+# Set git environment variables
+ENV GIT_PYTHON_REFRESH=quiet
+ENV GIT_EXEC_PATH=/usr/bin/git
 
 # Copy all code
 COPY . .
@@ -27,11 +33,9 @@ RUN set -ex && \
         pip install --no-cache-dir -U --target "${LAMBDA_TASK_ROOT}" -r plugins/requirements.txt; \
     fi
 
-# Clean up
+# Clean up (keep git)
 RUN rm -rf ~/.cache/pip && \
     apt-get remove -y make && \
-    apt-get autoremove -y && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get autoremove -y
 
 CMD ["python", "main.py"]

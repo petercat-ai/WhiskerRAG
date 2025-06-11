@@ -17,12 +17,23 @@ def configure_git_environment():
     try:
         # set git environment variables
         os.environ["GIT_PYTHON_REFRESH"] = "quiet"
-        os.environ["GIT_EXEC_PATH"] = "/opt/bin"
+        
+        # for Docker-based Lambda, git is installed at /usr/bin/git
+        git_path = "/usr/bin/git"
+        if os.path.exists(git_path):
+            os.environ["GIT_EXEC_PATH"] = "/usr/bin"
+        else:
+            # fallback to standard locations
+            for path in ["/usr/bin", "/usr/local/bin", "/opt/bin"]:
+                if os.path.exists(os.path.join(path, "git")):
+                    os.environ["GIT_EXEC_PATH"] = path
+                    break
 
-        # ensure PATH contains /opt/bin (location of Git binaries in Lambda Layer)
+        # ensure PATH contains git binary location
+        git_exec_path = os.environ.get("GIT_EXEC_PATH", "/usr/bin")
         current_path = os.environ.get("PATH", "")
-        if "/opt/bin" not in current_path:
-            os.environ["PATH"] = f"/opt/bin:{current_path}"
+        if git_exec_path not in current_path:
+            os.environ["PATH"] = f"{git_exec_path}:{current_path}"
 
         # set git config to avoid missing global config error
         from git import Repo
@@ -85,7 +96,6 @@ def clone_repository(
         repo_name = repo_url.split("/")[-1].replace(".git", "")
         local_path = os.path.join(work_dir, repo_name)
 
-    # 确保目标目录不存在或为空
     if os.path.exists(local_path):
         import shutil
 
