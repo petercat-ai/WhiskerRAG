@@ -1,0 +1,35 @@
+name: Branch Protection for Main
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check source branch
+        run: |
+          # get source branch name
+          SOURCE_BRANCH="${{ github.head_ref }}"
+          echo "Source branch: $SOURCE_BRANCH"
+          
+          # define allowed patterns for PR to main branch
+          ALLOWED_PATTERNS=("preview" "preview/*")
+          
+          # check if source branch is allowed
+          ALLOWED=false
+          for pattern in "${ALLOWED_PATTERNS[@]}"; do
+            if [[ "$SOURCE_BRANCH" == $pattern ]] || [[ "$SOURCE_BRANCH" == ${pattern//\*/} ]] || [[ "$SOURCE_BRANCH" =~ ^${pattern//\*/.*}$ ]]; then
+              ALLOWED=true
+              break
+            fi
+          done
+          
+          if [ "$ALLOWED" = false ]; then
+            echo "::error::❌ branch '$SOURCE_BRANCH' is not allowed to create PR to main"
+            echo "::error::✅ only the following patterns are allowed to create PR to main: ${ALLOWED_PATTERNS[*]}"
+            exit 1
+          else
+            echo "✅ branch '$SOURCE_BRANCH' is allowed to create PR to main"
+          fi 

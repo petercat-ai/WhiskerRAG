@@ -13,14 +13,6 @@ on:
       - '.aws/server_samconfig.toml'
       - 'template_server.yml'
       - 'docker/Dockerfile.aws.server'
-  pull_request:
-    branches: ["test","main","preview","test/*","preview/*"]
-    paths:
-      - 'server/**'
-      - '.github/workflows/server-deploy.yml'
-      - '.aws/server_samconfig.toml'
-      - 'template_server.yml'
-      - 'docker/Dockerfile.aws.server'
 
 permissions:
   id-token: write   # This is required for requesting the JWT
