@@ -19,7 +19,7 @@ class HuggingFaceModelManager:
         )
         self.revision = revision
         self.api = HfApi()
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger("whisker")
 
     @property
     def model_path(self) -> Path:

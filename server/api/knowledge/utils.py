@@ -17,6 +17,11 @@ from whiskerrag_types.model.knowledge_create import (
 async def _is_knowledge_saved(
     knowledge_create: KnowledgeCreateUnion, tenant: Tenant
 ) -> Optional[Knowledge]:
+    """
+    Check if the knowledge is saved in the database.
+    By default, we only check the knowledge_name, knowledge_type, source_type, and space_id.
+    It means that if the knowledge_name, knowledge_type, source_type, and space_id are the same, the knowledge is considered to be the same. If the file_sha is different, the knowledge is considered to be different,should be deleted and re-added.
+    """
     db_engine = PluginManager().dbPlugin
     eq_conditions = {
         "space_id": knowledge_create.space_id,
@@ -37,7 +42,7 @@ async def _is_knowledge_saved(
 
 async def _process_single_knowledge(
     record: KnowledgeCreateUnion, tenant: Tenant, db_engine: Any
-) -> List[Knowledge]:
+) -> Optional[Knowledge]:
     saved_knowledge = await _is_knowledge_saved(record, tenant)
 
     for type_cls, func in KNOWLEDGE_CREATE_2_KNOWLEDGE_STRATEGY_MAP.items():
@@ -50,13 +55,13 @@ async def _process_single_knowledge(
             tenant_id=tenant.tenant_id,
         )
     if not saved_knowledge:
-        return [new_knowledge]
+        return new_knowledge
     elif saved_knowledge.file_sha != new_knowledge.file_sha:
         await db_engine.delete_knowledge(
             tenant.tenant_id, [saved_knowledge.knowledge_id]
         )
-        return [new_knowledge]
-    return []
+        return new_knowledge
+    return None
 
 
 async def gen_knowledge_list(
@@ -72,8 +77,9 @@ async def gen_knowledge_list(
             for record in user_input
         ]
         results = await asyncio.gather(*tasks)
-        for knowledge_list in results:
-            pre_add_knowledge_list.extend(knowledge_list)
+        for knowledge in results:
+            if knowledge is not None:
+                pre_add_knowledge_list.append(knowledge)
         return pre_add_knowledge_list
 
     except Exception as e:

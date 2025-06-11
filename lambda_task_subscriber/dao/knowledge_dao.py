@@ -1,17 +1,9 @@
-import json
-import math
-from enum import Enum
-from typing import Any, List
+from typing import List
 
 from dao.base import BaseDAO, get_env_variable
 from dao.chunk_dao import ChunkDao
 from dao.task_dao import TaskDao
-from pydantic import BaseModel
-from whiskerrag_types.model import (
-    Knowledge,
-    PageQueryParams,
-    PageResponse,
-)
+from whiskerrag_types.model import Knowledge
 
 
 class KnowledgeDao(BaseDAO):

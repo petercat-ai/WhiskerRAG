@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import uuid
 from typing import Any, Dict, List
 
 from dao.chunk_dao import ChunkDao
@@ -9,8 +8,6 @@ from dao.knowledge_dao import KnowledgeDao
 from dao.task_dao import TaskDao
 from whiskerrag_types.model import (
     Knowledge,
-    PageQueryParams,
-    PageResponse,
     Task,
     TaskStatus,
 )
@@ -79,6 +76,12 @@ class TaskExecutor:
 
                 logger.info(f"Successfully processed task: {task.task_id}")
                 task.update(status=TaskStatus.SUCCESS)
+            except asyncio.CancelledError:
+                logger.warning(f"Task {task.task_id} was cancelled")
+                task.update(
+                    status=TaskStatus.FAILED, error_message="Task was cancelled"
+                )
+                raise
             except asyncio.TimeoutError:
                 logger.error(f"Task {task.task_id} timed out after 60 seconds")
                 task.status = TaskStatus.FAILED
@@ -93,6 +96,12 @@ class TaskExecutor:
                     # Save new chunks
                     self.chunk_dao.save_chunk_list(chunk_list)
                 self.task_dao.update_task_list([task])
+
+    async def cleanup(self):
+        """Clean up any resources"""
+        # Cancel any pending tasks if needed
+        # This method can be called before shutting down
+        pass
 
 
 _task_executor = TaskExecutor()
@@ -164,21 +173,24 @@ def lambda_handler(
 ) -> Dict[str, List[Dict[str, str]]]:
     init_register("whiskerrag_utils")
     try:
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+        # Create a new event loop for lambda execution
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
 
-        records = event.get("Records", [])
-        logger.info(f"Processing {len(records)} records")
+        try:
+            records = event.get("Records", [])
+            logger.info(f"Processing {len(records)} records")
 
-        result = loop.run_until_complete(handle_records(records))
+            result = loop.run_until_complete(handle_records(records))
 
-        failed_count = len(result["batchItemFailures"])
-        if failed_count > 0:
-            logger.warning(f"{failed_count} records failed and will be retried")
+            failed_count = len(result["batchItemFailures"])
+            if failed_count > 0:
+                logger.warning(f"{failed_count} records failed and will be retried")
 
-        return result
+            return result
+        finally:
+            # Clean up the event loop
+            loop.close()
 
     except Exception as e:
         logger.error(f"Unexpected error in lambda handler: {str(e)}", exc_info=True)
@@ -191,53 +203,99 @@ def lambda_handler(
 
 
 if __name__ == "__main__":
-    knowledge_id = "6f7b68b3-61ef-422c-a994-a3c3960681ce"
-    task_id = "eca55ec7-c06e-4f4a-8a4b-64d302e7f4b0"
-    tenant_id = "38fbd88b-e869-489c-9142-e4ea2c226e42"
-    space_id = "ch-liuzhide/AgentFlow"
-    # Example dummy data for a record
-    # Please modify the content of task and knowledge according to your actual situation
-    dummy_record = {
-        "messageId": "test-message-123",
-        "body": json.dumps(
-            {
-                "task": {
-                    "task_id": task_id,
-                    "tenant_id": tenant_id,
-                    "status": "pending",
-                    "space_id": space_id,
-                    "created_at": "2023-01-01T00:00:00Z",
-                    "updated_at": "2023-01-01T00:00:00Z",
-                    "knowledge_id": knowledge_id,
-                },
-                "knowledge": {
-                    "knowledge_name": "ch-liuzhide/AgentFlow",
-                    "source_type": "github_repo",
-                    "knowledge_type": "github_repo",
-                    "space_id": "ch-liuzhide/AgentFlow",
-                    "split_config": {
-                        "type": "github_repo",
-                        "include_patterns": ["*.md"],
+    import traceback
+
+    async def main():
+        init_register("whiskerrag_utils")
+
+        knowledge_id = "6f7b68b3-61ef-422c-a994-a3c3960681ce"
+        task_id = "eca55ec7-c06e-4f4a-8a4b-64d302e7f4b0"
+        tenant_id = "38fbd88b-e869-489c-9142-e4ea2c226e42"
+        space_id = "ch-liuzhide/AgentFlow"
+
+        # Example dummy data for a record
+        # Please modify the content of task and knowledge according to your actual situation
+        dummy_record = {
+            "messageId": "test-message-123",
+            "body": json.dumps(
+                {
+                    "task": {
+                        "task_id": task_id,
+                        "tenant_id": tenant_id,
+                        "status": "pending",
+                        "space_id": space_id,
+                        "created_at": "2023-01-01T00:00:00Z",
+                        "updated_at": "2023-01-01T00:00:00Z",
+                        "knowledge_id": knowledge_id,
                     },
-                    "source_config": {
-                        "url": "https://github.com",
-                        "repo_name": "ch-liuzhide/AgentFlow",
+                    "knowledge": {
+                        "knowledge_name": "ch-liuzhide/AgentFlow",
+                        "source_type": "github_repo",
+                        "knowledge_type": "folder",
+                        "space_id": "ch-liuzhide/AgentFlow",
+                        "split_config": {
+                            "type": "github_repo",
+                            "include_patterns": ["*.md"],
+                        },
+                        "source_config": {
+                            "url": "https://github.com",
+                            "repo_name": "ch-liuzhide/AgentFlow",
+                        },
+                        "embedding_model_name": "openai",
+                        "metadata": {"url": "xxxx"},
+                        "file_sha": "111",
+                        "knowledge_id": knowledge_id,
+                        "tenant_id": tenant_id,
+                        "enabled": True,
                     },
-                    "embedding_model_name": "openai",
-                    "metadata": {"url": "xxxx"},
-                    "file_sha": "111",
-                    "knowledge_id": knowledge_id,
-                    "tenant_id": tenant_id,
-                    "enabled": True,
-                },
+                }
+            ),
+        }
+
+        # Simulate the event structure received by lambda_handler
+        dummy_event = {"Records": [dummy_record]}
+
+        print("Running lambda_handler locally with dummy data...")
+
+        try:
+            records = dummy_event.get("Records", [])
+            logger.info(f"Processing {len(records)} records")
+
+            result = await handle_records(records)
+
+            failed_count = len(result["batchItemFailures"])
+            if failed_count > 0:
+                logger.warning(f"{failed_count} records failed and will be retried")
+
+            print("Local execution result:", result)
+            return result
+        except Exception as e:
+            logger.error(f"Unexpected error in main: {str(e)}", exc_info=True)
+            return {
+                "batchItemFailures": [
+                    {"itemIdentifier": record["messageId"]}
+                    for record in dummy_event.get("Records", [])
+                ]
             }
-        ),
-    }
+        finally:
+            # Ensure cleanup of any resources
+            executor = get_task_executor()
+            await executor.cleanup()
 
-    # Simulate the event structure received by lambda_handler
-    dummy_event = {"Records": [dummy_record]}
+            # Wait for a short time to allow any pending operations to complete
+            await asyncio.sleep(0.1)
 
-    print("Running lambda_handler locally with dummy data...")
-    # context can be None for local testing
-    result = lambda_handler(dummy_event, None)
-    print("Local execution result:", result)
+    # Use asyncio.run() for proper event loop management in Python 3.13
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("Interrupted by user")
+    except Exception as e:
+        print(f"Error in main execution: {e}")
+        traceback.print_exc()
+    finally:
+        # Force garbage collection to clean up any remaining resources
+        import gc
+
+        gc.collect()
+        traceback.print_exc()

@@ -64,6 +64,7 @@ next-env.d.ts
 # log
 logs
 **/logs
+tracelog
 
 # ignore
 */ignore
