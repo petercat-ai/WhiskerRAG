@@ -20,9 +20,10 @@
 **任务函数 (`docker/Dockerfile.aws.task`)**:
 ```dockerfile
 # Install git and other necessary packages
-RUN yum update -y && \
-    yum install -y git && \
-    yum clean all
+# Python 3.12 base image uses Amazon Linux 2023 with dnf package manager
+RUN dnf update -y && \
+    dnf install -y git && \
+    dnf clean all
 
 # Set git environment variables
 ENV GIT_PYTHON_REFRESH=quiet
@@ -42,9 +43,11 @@ ENV GIT_EXEC_PATH=/usr/bin/git
 ```
 
 **重要说明：**
-- 任务函数使用 Amazon Linux 2 基础镜像，使用 `yum` 包管理器
-- 服务器函数使用 Debian 基础镜像，使用 `apt-get` 包管理器
+- **Python 3.12+ 基础镜像基于 Amazon Linux 2023，使用 `dnf` 包管理器**
+- Python 3.11 及更早版本基于 Amazon Linux 2，使用 `yum` 包管理器
+- **服务器函数使用 Debian 基础镜像，使用 `apt-get` 包管理器**
 - Git 安装在系统标准路径 `/usr/bin/git`
+- 构建过程中，`make` 工具临时安装后会被清理，但 `git` 被保留
 
 ### 2. 环境变量配置
 
@@ -63,7 +66,15 @@ Environment:
 
 ### 3. 依赖管理
 
-在 `lambda_task_subscriber/requirements.txt` 中添加：
+在项目的 requirements.txt 文件中添加了 GitPython 依赖：
+
+**任务函数** (`lambda_task_subscriber/requirements.txt`):
+```
+whiskerrag>=0.1.2
+supabase==2.13.0
+python-dotenv>=1.0.0,<2.0.0
+gitpython>=3.1.44
+```
 
 ```
 gitpython>=3.1.44

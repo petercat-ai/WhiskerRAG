@@ -4,9 +4,10 @@ FROM public.ecr.aws/lambda/python:3.12
 WORKDIR ${LAMBDA_TASK_ROOT}
 
 # Install git and other necessary packages
-RUN yum update -y && \
-    yum install -y git && \
-    yum clean all
+# Python 3.12 base image uses Amazon Linux 2023 with dnf package manager
+RUN dnf update -y && \
+    dnf install -y git && \
+    dnf clean all
 
 # Copy requirements.txt first to leverage Docker's layer caching
 COPY requirements.txt .
