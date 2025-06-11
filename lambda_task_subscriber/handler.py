@@ -17,9 +17,10 @@ from whiskerrag_utils import (
     get_diff_knowledge_by_sha,
     init_register,
 )
+from git_config import configure_git_environment, test_git_functionality
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 class TaskExecutor:
@@ -172,6 +173,19 @@ def lambda_handler(
     event: Dict[str, Any], context: Any
 ) -> Dict[str, List[Dict[str, str]]]:
     init_register("whiskerrag_utils")
+
+    # init git environment
+    logger.info("init git environment")
+    if not configure_git_environment():
+        logger.error("Git 环境初始化失败，继续执行但可能影响 GitHub 仓库处理")
+    else:
+        logger.info("Git 环境初始化成功")
+        # test git functionality
+        if test_git_functionality():
+            logger.info("Git 功能测试通过")
+        else:
+            logger.warning("Git 功能测试失败，GitHub 仓库处理可能受影响")
+
     try:
         # Create a new event loop for lambda execution
         loop = asyncio.new_event_loop()

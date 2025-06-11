@@ -108,9 +108,15 @@ Resources:
           FASTAPI_ENGINE_CLASSNAME: !Ref fastapiEngineClassName
           TASK_ENGINE_CLASSNAME: !Ref taskEngineClassName
           SQS_QUEUE_URL: !Ref sqsQueueUrl
+          # git env config
+          GIT_PYTHON_REFRESH: quiet
+          GIT_EXEC_PATH: /opt/bin
       FunctionUrlConfig:
         AuthType: NONE
         InvokeMode: RESPONSE_STREAM
+      Layers:
+        # add Git Lambda Layer support
+        - !Sub 'arn:aws:lambda:${AWS::Region}:553035198032:layer:git-lambda2:8'
       Policies:
       - Statement:
           - Sid: BedrockInvokePolicy

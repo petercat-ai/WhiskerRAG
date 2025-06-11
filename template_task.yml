@@ -73,6 +73,10 @@ Resources:
           SUPABASE_URL: !Ref supabaseUrl
           CHUNK_TABLE_NAME: !Ref chunkTableName
           TASK_TABLE_NAME: !Ref taskTableName
+          GIT_PYTHON_REFRESH: quiet
+          GIT_EXEC_PATH: /opt/bin
+      Layers:
+        - !Sub 'arn:aws:lambda:${AWS::Region}:553035198032:layer:git-lambda2:8'
       Events:
         SQSTrigger:
           Type: SQS
