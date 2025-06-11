@@ -37,8 +37,6 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
     ) -> List[Task]:
         task_list: List[Task] = []
         for knowledge in knowledge_list:
-            if knowledge.knowledge_type is KnowledgeTypeEnum.FOLDER:
-                continue
             task = Task(
                 status=TaskStatus.PENDING,
                 knowledge_id=knowledge.knowledge_id,
