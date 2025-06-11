@@ -1,13 +1,17 @@
-from enum import Enum
 import json
+from enum import Enum
 from typing import Any, Dict, List, Optional, Type, TypeVar
+
 import asyncpg
 from fastapi import HTTPException, status
+from pgvector.asyncpg import register_vector
 from pydantic import BaseModel
 from whiskerrag_types.interface import DBPluginInterface
 from whiskerrag_types.model import (
     Chunk,
+    GenericConverter,
     Knowledge,
+    KnowledgeSourceEnum,
     PageQueryParams,
     PageResponse,
     RetrievalByKnowledgeRequest,
@@ -16,11 +20,8 @@ from whiskerrag_types.model import (
     RetrievalRequest,
     Task,
     Tenant,
-    KnowledgeSourceEnum,
-    GenericConverter,
 )
 from whiskerrag_utils import RegisterTypeEnum, get_register
-from pgvector.asyncpg import register_vector
 
 T = TypeVar("T", bound=BaseModel)
 

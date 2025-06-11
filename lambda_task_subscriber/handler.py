@@ -1,16 +1,26 @@
-import logging
-from typing import Any, Dict, List
-from whiskerrag_types.model import Task, Knowledge, TaskStatus
-from whiskerrag_utils import get_chunks_by_knowledge, init_register
 import asyncio
 import json
+import logging
+from typing import Any, Dict, List
 
 from dao.chunk_dao import ChunkDao
+from dao.knowledge_dao import KnowledgeDao
 from dao.task_dao import TaskDao
-import asyncio
+from whiskerrag_types.model import (
+    Knowledge,
+    Task,
+    TaskStatus,
+)
+from whiskerrag_utils import (
+    decompose_knowledge,
+    get_chunks_by_knowledge,
+    get_diff_knowledge_by_sha,
+    init_register,
+)
+from git_config import configure_git_environment, test_git_functionality
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 class TaskExecutor:
@@ -18,6 +28,7 @@ class TaskExecutor:
         self._is_running = False
         self.task_dao = TaskDao()
         self.chunk_dao = ChunkDao()
+        self.knowledge_dao = KnowledgeDao()
         self.semaphore = asyncio.Semaphore(50)
 
     async def handle_add_knowledge_task(self, task: Task, knowledge: Knowledge):
@@ -28,11 +39,50 @@ class TaskExecutor:
                 print("=== start task ===", task.task_id)
                 task.update(status=TaskStatus.RUNNING)
                 self.task_dao.update_task_list([task])
-                chunk_list = await asyncio.wait_for(
-                    get_chunks_by_knowledge(knowledge), timeout=60 * 3
+
+                # 1. Decompose knowledge
+                decomposed_knowledge_list = await decompose_knowledge(knowledge)
+
+                # 2. Get existing knowledge from the database
+                db_knowledge_list: List[Knowledge] = (
+                    await self.knowledge_dao.get_all_knowledge_list(
+                        tenant_id=knowledge.tenant_id,
+                        eq_conditions={
+                            "space_id": knowledge.space_id,
+                            "parent_id": knowledge.knowledge_id,
+                        },
+                    )
                 )
+
+                # 3. Compare knowledge
+                diff = get_diff_knowledge_by_sha(
+                    db_knowledge_list, decomposed_knowledge_list
+                )
+
+                # 4. Handle deletions
+                if diff["to_delete"]:
+                    delete_ids = [k.knowledge_id for k in diff["to_delete"]]
+                    await self.knowledge_dao.delete_knowledge(
+                        knowledge.tenant_id, delete_ids
+                    )
+
+                # 5. Handle additions and get chunks for new knowledge
+                if diff["to_add"]:
+                    added_knowledge_list = await self.knowledge_dao.add_knowledge_list(
+                        knowledge.tenant_id, diff["to_add"]
+                    )
+                    for new_knowledge_item in added_knowledge_list:
+                        chunks = await get_chunks_by_knowledge(new_knowledge_item)
+                        chunk_list.extend(chunks)
+
                 logger.info(f"Successfully processed task: {task.task_id}")
                 task.update(status=TaskStatus.SUCCESS)
+            except asyncio.CancelledError:
+                logger.warning(f"Task {task.task_id} was cancelled")
+                task.update(
+                    status=TaskStatus.FAILED, error_message="Task was cancelled"
+                )
+                raise
             except asyncio.TimeoutError:
                 logger.error(f"Task {task.task_id} timed out after 60 seconds")
                 task.status = TaskStatus.FAILED
@@ -43,12 +93,16 @@ class TaskExecutor:
                 task.update(status=TaskStatus.FAILED, error_message=str(e))
             finally:
                 logger.info(f"=== End task ===: {task.task_id}")
-            if chunk_list and len(chunk_list) > 0:
-                # delete existing chunks and save new chunks
-                self.chunk_dao.delete_knowledge_chunks(knowledge)
-                self.chunk_dao.save_chunk_list(chunk_list)
-            # TODO: or delete successful task ?
-            self.task_dao.update_task_list([task])
+                if chunk_list and len(chunk_list) > 0:
+                    # Save new chunks
+                    self.chunk_dao.save_chunk_list(chunk_list)
+                self.task_dao.update_task_list([task])
+
+    async def cleanup(self):
+        """Clean up any resources"""
+        # Cancel any pending tasks if needed
+        # This method can be called before shutting down
+        pass
 
 
 _task_executor = TaskExecutor()
@@ -119,22 +173,38 @@ def lambda_handler(
     event: Dict[str, Any], context: Any
 ) -> Dict[str, List[Dict[str, str]]]:
     init_register("whiskerrag_utils")
+
+    # init git environment
+    logger.info("init git environment")
+    if not configure_git_environment():
+        logger.error("Git 环境初始化失败，继续执行但可能影响 GitHub 仓库处理")
+    else:
+        logger.info("Git 环境初始化成功")
+        # test git functionality
+        if test_git_functionality():
+            logger.info("Git 功能测试通过")
+        else:
+            logger.warning("Git 功能测试失败，GitHub 仓库处理可能受影响")
+
     try:
-        loop = asyncio.get_event_loop()
-        if loop.is_closed():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+        # Create a new event loop for lambda execution
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
 
-        records = event.get("Records", [])
-        logger.info(f"Processing {len(records)} records")
+        try:
+            records = event.get("Records", [])
+            logger.info(f"Processing {len(records)} records")
 
-        result = loop.run_until_complete(handle_records(records))
+            result = loop.run_until_complete(handle_records(records))
 
-        failed_count = len(result["batchItemFailures"])
-        if failed_count > 0:
-            logger.warning(f"{failed_count} records failed and will be retried")
+            failed_count = len(result["batchItemFailures"])
+            if failed_count > 0:
+                logger.warning(f"{failed_count} records failed and will be retried")
 
-        return result
+            return result
+        finally:
+            # Clean up the event loop
+            loop.close()
 
     except Exception as e:
         logger.error(f"Unexpected error in lambda handler: {str(e)}", exc_info=True)
@@ -144,3 +214,102 @@ def lambda_handler(
                 for record in event.get("Records", [])
             ]
         }
+
+
+if __name__ == "__main__":
+    import traceback
+
+    async def main():
+        init_register("whiskerrag_utils")
+
+        knowledge_id = "6f7b68b3-61ef-422c-a994-a3c3960681ce"
+        task_id = "eca55ec7-c06e-4f4a-8a4b-64d302e7f4b0"
+        tenant_id = "38fbd88b-e869-489c-9142-e4ea2c226e42"
+        space_id = "ch-liuzhide/AgentFlow"
+
+        # Example dummy data for a record
+        # Please modify the content of task and knowledge according to your actual situation
+        dummy_record = {
+            "messageId": "test-message-123",
+            "body": json.dumps(
+                {
+                    "task": {
+                        "task_id": task_id,
+                        "tenant_id": tenant_id,
+                        "status": "pending",
+                        "space_id": space_id,
+                        "created_at": "2023-01-01T00:00:00Z",
+                        "updated_at": "2023-01-01T00:00:00Z",
+                        "knowledge_id": knowledge_id,
+                    },
+                    "knowledge": {
+                        "knowledge_name": "ch-liuzhide/AgentFlow",
+                        "source_type": "github_repo",
+                        "knowledge_type": "folder",
+                        "space_id": "ch-liuzhide/AgentFlow",
+                        "split_config": {
+                            "type": "github_repo",
+                            "include_patterns": ["*.md"],
+                        },
+                        "source_config": {
+                            "url": "https://github.com",
+                            "repo_name": "ch-liuzhide/AgentFlow",
+                        },
+                        "embedding_model_name": "openai",
+                        "metadata": {"url": "xxxx"},
+                        "file_sha": "111",
+                        "knowledge_id": knowledge_id,
+                        "tenant_id": tenant_id,
+                        "enabled": True,
+                    },
+                }
+            ),
+        }
+
+        # Simulate the event structure received by lambda_handler
+        dummy_event = {"Records": [dummy_record]}
+
+        print("Running lambda_handler locally with dummy data...")
+
+        try:
+            records = dummy_event.get("Records", [])
+            logger.info(f"Processing {len(records)} records")
+
+            result = await handle_records(records)
+
+            failed_count = len(result["batchItemFailures"])
+            if failed_count > 0:
+                logger.warning(f"{failed_count} records failed and will be retried")
+
+            print("Local execution result:", result)
+            return result
+        except Exception as e:
+            logger.error(f"Unexpected error in main: {str(e)}", exc_info=True)
+            return {
+                "batchItemFailures": [
+                    {"itemIdentifier": record["messageId"]}
+                    for record in dummy_event.get("Records", [])
+                ]
+            }
+        finally:
+            # Ensure cleanup of any resources
+            executor = get_task_executor()
+            await executor.cleanup()
+
+            # Wait for a short time to allow any pending operations to complete
+            await asyncio.sleep(0.1)
+
+    # Use asyncio.run() for proper event loop management in Python 3.13
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("Interrupted by user")
+    except Exception as e:
+        print(f"Error in main execution: {e}")
+        traceback.print_exc()
+    finally:
+        # Force garbage collection to clean up any remaining resources
+        import gc
+
+        gc.collect()
+        traceback.print_exc()

@@ -22,6 +22,10 @@ class Settings(SettingsInterface):
         return os.getenv("TASK_ENGINE_CLASSNAME", "")
 
     @property
+    def FASTAPI_ENGINE_CLASSNAME(self) -> str:
+        return os.getenv("FASTAPI_ENGINE_CLASSNAME", "")
+
+    @property
     def KNOWLEDGE_TABLE_NAME(self) -> str:
         return os.getenv("KNOWLEDGE_TABLE_NAME", "")
 

@@ -1,0 +1,241 @@
+---
+description: 
+globs: main.py
+alwaysApply: false
+---
+FastAPI 最新版本(0.109.0+)的最佳实践，我将按重要性和使用频率组织：
+
+生命周期管理 (推荐使用 Lifespan):
+python
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 启动时执行
+    await startup_tasks()
+    yield
+    # 关闭时执行
+    await cleanup_tasks()
+
+app = FastAPI(lifespan=lifespan)
+依赖注入和状态管理:
+python
+from fastapi import FastAPI, Depends
+from typing import Annotated
+
+# 1. 使用 Annotated 类型提示
+async def get_db():
+    db = await connect_db()
+    try:
+        yield db
+    finally:
+        await db.close()
+
+DB = Annotated[AsyncSession, Depends(get_db)]
+
+# 2. 使用 StateManager 管理应用状态
+from typing import Any
+
+class StateManager:
+    def __init__(self):
+        self._state: dict[str, Any] = {}
+
+    async def initialize(self):
+        # 初始化状态
+        pass
+
+    def get(self, key: str) -> Any:
+        return self._state.get(key)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    state_manager = StateManager()
+    await state_manager.initialize()
+    app.state.manager = state_manager
+    yield
+路由组织和版本控制:
+python
+from fastapi import APIRouter, FastAPI
+
+# 1. 使用 APIRouter 组织路由
+router = APIRouter(prefix="/v1/users", tags=["users"])
+
+@router.get("/")
+async def get_users():
+    pass
+
+# 2. 版本控制
+v1_router = APIRouter(prefix="/v1")
+v2_router = APIRouter(prefix="/v2")
+
+app = FastAPI()
+app.include_router(v1_router)
+app.include_router(v2_router)
+异常处理和中间件:
+python
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+from typing import Callable
+
+# 1. 全局异常处理
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"message": exc.detail},
+    )
+
+# 2. 中间件
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next: Callable):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    return response
+配置管理:
+python
+from pydantic_settings import BaseSettings
+from functools import lru_cache
+
+class Settings(BaseSettings):
+    app_name: str = "MyApp"
+    admin_email: str
+    database_url: str
+
+    class Config:
+        env_file = ".env"
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+# 在依赖中使用
+async def get_db(settings: Annotated[Settings, Depends(get_settings)]):
+    pass
+后台任务和异步操作:
+python
+from fastapi import BackgroundTasks
+
+# 1. 后台任务
+def write_log(message: str):
+    with open("log.txt", mode="a") as log:
+        log.write(message)
+
+@app.post("/send-notification/")
+async def send_notification(
+    background_tasks: BackgroundTasks,
+):
+    background_tasks.add_task(write_log, "notification sent")
+    return {"message": "Notification sent"}
+
+# 2. 异步上下文管理器
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def get_async_session():
+    session = await create_session()
+    try:
+        yield session
+    finally:
+        await session.close()
+安全性实践:
+python
+from fastapi.security import OAuth2PasswordBearer
+from fastapi import Security
+
+# 1. OAuth2 认证
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+@app.get("/users/me")
+async def read_users_me(token: Annotated[str, Depends(oauth2_scheme)]):
+    return {"token": token}
+
+# 2. CORS 配置
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+测试最佳实践:
+python
+from fastapi.testclient import TestClient
+import pytest
+
+# 1. 测试客户端
+client = TestClient(app)
+
+def test_read_main():
+    response = client.get("/")
+    assert response.status_code == 200
+
+# 2. 异步测试
+@pytest.mark.asyncio
+async def test_async_operation():
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        response = await ac.get("/")
+    assert response.status_code == 200
+文档和OpenAPI:
+python
+from fastapi import FastAPI
+
+app = FastAPI(
+    title="My Super Project",
+    description="This is a very fancy project",
+    version="2.5.0",
+    openapi_url="/api/v1/openapi.json",
+    docs_url="/api/v1/docs",
+    redoc_url="/api/v1/redoc",
+)
+
+# 路由文档
+@app.get("/items/", response_model=List[Item])
+async def read_items():
+    """
+    Retrieve items.
+
+    This will return a list of items from the database.
+    """
+    return [{"name": "Portal Gun", "price": 42.0}]
+性能优化:
+python
+# 1. 使用缓存
+from functools import lru_cache
+
+@lru_cache
+def get_expensive_data():
+    return expensive_operation()
+
+# 2. 异步数据库操作
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+
+engine = create_async_engine(
+    "postgresql+asyncpg://user:password@localhost/db"
+)
+
+# 3. 连接池管理
+async def get_connection_pool():
+    return await asyncpg.create_pool(
+        user='user',
+        password='password',
+        database='database',
+        host='localhost',
+        min_size=5,
+        max_size=20
+    )
+这些实践遵循以下原则：
+
+类型安全
+异步优先
+依赖注入
+模块化设计
+性能优化
+安全性
+可测试性
+可维护性
+建议根据项目具体需求选择适合的实践。

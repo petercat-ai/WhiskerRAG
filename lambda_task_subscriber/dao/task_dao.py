@@ -1,6 +1,6 @@
 from typing import List
-from dao.base import BaseDAO, get_env_variable
 
+from dao.base import BaseDAO, get_env_variable
 from whiskerrag_types.model import Task
 
 
@@ -16,3 +16,13 @@ class TaskDao(BaseDAO):
             ],
             on_conflict=["task_id"],
         ).execute()
+
+    def delete_knowledge_tasks(self, tenant_id: str, knowledge_ids: List[str]):
+        res = (
+            self.client.table(self.TASK_TABLE_NAME)
+            .delete()
+            .eq("tenant_id", tenant_id)
+            .in_("knowledge_id", knowledge_ids)
+            .execute()
+        )
+        return res

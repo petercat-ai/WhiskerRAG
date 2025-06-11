@@ -6,10 +6,10 @@ import boto3  # type: ignore
 from whiskerrag_types.interface import DBPluginInterface, TaskEnginPluginInterface
 from whiskerrag_types.model import (
     Knowledge,
+    KnowledgeTypeEnum,
     Task,
     TaskStatus,
     Tenant,
-    KnowledgeTypeEnum,
 )
 
 

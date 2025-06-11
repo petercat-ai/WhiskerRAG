@@ -73,6 +73,8 @@ Resources:
           SUPABASE_URL: !Ref supabaseUrl
           CHUNK_TABLE_NAME: !Ref chunkTableName
           TASK_TABLE_NAME: !Ref taskTableName
+          GIT_PYTHON_REFRESH: quiet
+          GIT_EXEC_PATH: /usr/bin
       Events:
         SQSTrigger:
           Type: SQS

@@ -1,22 +1,21 @@
 from typing import List
-from pydantic import BaseModel
 
-from core.auth import get_tenant_with_permissions, Resource, Action
+from core.auth import Action, Resource, get_tenant_with_permissions
 from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
 from fastapi import APIRouter, HTTPException
-from whiskerrag_utils.registry import get_registry_list, RegisterTypeEnum
+from pydantic import BaseModel
 from whiskerrag_types.model import (
     Knowledge,
+    KnowledgeCreateUnion,
     PageQueryParams,
     PageResponse,
     Tenant,
-    KnowledgeCreateUnion,
 )
+from whiskerrag_utils.registry import RegisterTypeEnum, get_registry_list
 
 from .utils import gen_knowledge_list
-
 
 router = APIRouter(
     prefix="/api/knowledge",
@@ -46,7 +45,7 @@ async def add_knowledge(
         knowledge_list = await gen_knowledge_list(body, tenant)
         if not knowledge_list:
             return ResponseModel(
-                success=True, data=[], message="No knowledge identified"
+                success=True, data=[], message="No knowledge identified. If you really want to add, please check if the filename is duplicated or modify the file_sha."
             )
         saved_knowledge = await db_engine.save_knowledge_list(knowledge_list)
         task_list = await task_engine.init_task_from_knowledge(saved_knowledge, tenant)

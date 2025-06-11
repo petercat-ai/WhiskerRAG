@@ -1,10 +1,11 @@
-import os
-from pathlib import Path
-from typing import Optional
-from functools import partial
 import asyncio
 import logging
-from huggingface_hub import snapshot_download, HfApi
+import os
+from functools import partial
+from pathlib import Path
+from typing import Optional
+
+from huggingface_hub import HfApi, snapshot_download
 from huggingface_hub.utils import LocalEntryNotFoundError, RepositoryNotFoundError
 
 
@@ -18,7 +19,7 @@ class HuggingFaceModelManager:
         )
         self.revision = revision
         self.api = HfApi()
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger("whisker")
 
     @property
     def model_path(self) -> Path:

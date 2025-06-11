@@ -1,100 +1,118 @@
 import logging
 import os
-from datetime import datetime
-from logging.handlers import TimedRotatingFileHandler
+from logging.handlers import RotatingFileHandler
 
-from core.settings import settings
-from whiskerrag_types.interface import LoggerManagerInterface
+from contextvars import ContextVar
 
-
-class ColorCodes:
-    GREY = "\x1b[38;21m"
-    BLUE = "\x1b[38;5;39m"
-    YELLOW = "\x1b[38;5;226m"
-    RED = "\x1b[38;5;196m"
-    BOLD_RED = "\x1b[31;1m"
-    RESET = "\x1b[0m"
+tracer_context = ContextVar("trace_id", default="default_trace_id")
+tenant_context = ContextVar("tenant_id", default="default_tenant_id")
 
 
-class ColoredFormatter(logging.Formatter):
-    def __init__(self, format_str: str) -> None:
-        super().__init__(format_str)
-        self.FORMATS = {
-            logging.DEBUG: ColorCodes.GREY + format_str + ColorCodes.RESET,
-            logging.INFO: ColorCodes.BLUE + format_str + ColorCodes.RESET,
-            logging.WARNING: ColorCodes.YELLOW + format_str + ColorCodes.RESET,
-            logging.ERROR: ColorCodes.RED + format_str + ColorCodes.RESET,
-        }
+class ColorFormatter(logging.Formatter):
+    """
+    Custom formatter for colored logging
+    """
 
-    def format(self, record: logging.LogRecord) -> str:
-        log_fmt = self.FORMATS.get(record.levelno)
-        formatter = logging.Formatter(log_fmt, datefmt="%Y-%m-%d %H:%M:%S")
-        return formatter.format(record)
+    COLORS = {
+        "DEBUG": "\033[0m",  # default green
+        "INFO": "\033[92m",  # green
+        "WARNING": "\033[93m",  # yellow
+        "ERROR": "\033[91m",  # red
+        "CRITICAL": "\033[95m",  # purple
+    }
+    RESET = "\033[0m"  # reset color
+
+    def format(self, record):
+        # get color by level
+        color = self.COLORS.get(record.levelname, self.RESET)
+
+        # format time
+        asctime = self.formatTime(record, self.datefmt)
+
+        # format colored prefix: time - level - traceId - tenantId
+        colored_prefix = f"{color}{asctime} - {record.levelname} - {record.traceId} - {record.tenantId}{self.RESET}"
+
+        # format remaining part (filename and message)
+        remaining_part = f" - {record.filename}:{record.lineno} - {record.getMessage()}"
+
+        return colored_prefix + remaining_part
 
 
-class LoggerManager(LoggerManagerInterface):
-    _instance = None
-    _logger = None
+class TraceIDFilter(logging.Filter):
+    def filter(self, record):
+        record.traceId = tracer_context.get()
+        return True
 
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._initialize_logger()
-        return cls._instance
 
-    def _initialize_logger(self):
-        if settings.IS_IN_Lambda:
-            self._logger = logging.getLogger()
-            self._logger.setLevel(logging.INFO)
-            # In AWS Lambda environment, log files will be automatically uploaded
-            return
+class TenantIDFilter(logging.Filter):
+    def filter(self, record):
+        record.tenantId = tenant_context.get()
+        return True
 
-        # Get the log file path, defaulting to the logs folder in the current directory
-        log_dir = os.getenv("LOG_DIR", "./logs")
 
-        os.makedirs(log_dir, exist_ok=True)
+def setup_logging(
+    name="whisker", log_dir="./tracelog", max_bytes=1024 * 1024 * 1024, backup_count=3
+):
+    """
+    setup logging
 
-        self._logger = logging.getLogger("app_logger")
-        self._logger.setLevel(logging.DEBUG)
+    Args:
+        name: logger name
+        log_dir: log directory
+        max_bytes: max size of each log file (default 1GB)
+        backup_count: number of backup files (default 3)
+    """
+    logger = logging.getLogger(name)
 
-        log_filename = os.path.join(
-            log_dir, f'app_{datetime.now().strftime("%Y-%m-%d")}.log'
-        )
-        file_handler = TimedRotatingFileHandler(
-            filename=log_filename,
-            when="midnight",
-            interval=1,
-            backupCount=30,
-            encoding="utf-8",
-        )
+    if logger.handlers:
+        return
 
+    logger.setLevel(logging.DEBUG)
+
+    os.makedirs(log_dir, exist_ok=True)
+
+    # 使用RotatingFileHandler替代FileHandler，添加文件轮转功能
+    error_handler = RotatingFileHandler(
+        os.path.join(log_dir, "error.log"), maxBytes=max_bytes, backupCount=backup_count
+    )
+    info_handler = RotatingFileHandler(
+        os.path.join(log_dir, "info.log"), maxBytes=max_bytes, backupCount=backup_count
+    )
+    warn_handler = RotatingFileHandler(
+        os.path.join(log_dir, "warn.log"), maxBytes=max_bytes, backupCount=backup_count
+    )
+
+    error_handler.setLevel(logging.ERROR)
+    info_handler.setLevel(logging.INFO)
+    warn_handler.setLevel(logging.WARN)
+
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(traceId)s - %(tenantId)s - %(pathname)s - %(filename)s - %(lineno)d - %(message)s"
+    )
+
+    error_handler.setFormatter(formatter)
+    info_handler.setFormatter(formatter)
+    warn_handler.setFormatter(formatter)
+
+    logger.addHandler(error_handler)
+    logger.addHandler(info_handler)
+    logger.addHandler(warn_handler)
+
+    if os.getenv("WHISKER_ENV", "dev") == "dev":
         console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.DEBUG)
 
-        format_str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-
-        file_formatter = logging.Formatter(format_str, datefmt="%Y-%m-%d %H:%M:%S")
-        console_formatter = ColoredFormatter(format_str)
-
-        file_handler.setFormatter(file_formatter)
+        console_formatter = ColorFormatter(
+            "%(asctime)s - %(levelname)s - %(traceId)s - %(tenantId)s - %(filename)s:%(lineno)d - %(message)s"
+        )
         console_handler.setFormatter(console_formatter)
+        console_handler.addFilter(TraceIDFilter())
+        console_handler.addFilter(TenantIDFilter())
 
-        self._logger.addHandler(file_handler)
-        self._logger.addHandler(console_handler)
+        logger.addHandler(console_handler)
 
-    def get_logger(self):
-        return self._logger
-
-    def info(self, message: str, *args, **kwargs):
-        self._logger.info(message, *args, **kwargs)
-
-    def error(self, message: str, *args, **kwargs):
-        self._logger.error(message, *args, **kwargs)
-
-    def debug(self, message: str, *args, **kwargs):
-        self._logger.debug(message, *args, **kwargs)
-
-    def warning(self, message: str, *args, **kwargs):
-        self._logger.warning(message, *args, **kwargs)
+    logger.addFilter(TraceIDFilter())
+    logger.addFilter(TenantIDFilter())
 
 
-logger = LoggerManager()
+logger = logging.getLogger("whisker")
