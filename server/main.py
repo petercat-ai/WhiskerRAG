@@ -98,7 +98,7 @@ def create_app() -> FastAPI:
     """create and configure FastAPI application"""
 
     # init log and base settings
-    log_dir = os.getenv("LOG_DIR", "./logs")
+    log_dir = os.getenv("LOG_DIR", "/tmp/logs")
     setup_logging("whisker", log_dir)
     # init register
     init_register("whiskerrag_utils")
