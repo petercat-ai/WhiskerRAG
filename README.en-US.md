@@ -75,7 +75,7 @@ Ensure you have AWS and Supabase environments ready. Configure the environment v
 ```bash
 TASK_ENGINE_CLASSNAME="AWSLambdaTaskEnginePlugin"
 DB_ENGINE_CLASSNAME="SupaBasePlugin"
-FASTAPI_ENGINE_CLASSNAME="fastapiPlugin"
+FASTAPI_ENGINE_CLASSNAME="fastAPIPlugin"
 # db
 SUPABASE_URL=your-supabase-url
 SUPABASE_SERVICE_KEY=your-supabase-service-key

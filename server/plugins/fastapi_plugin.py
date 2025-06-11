@@ -134,6 +134,6 @@ class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):
             raise
 
 
-class fastapiPlugin(FastAPIPluginInterface):
+class FastAPIPlugin(FastAPIPluginInterface):
     def get_extra_middleware_list(self) -> List[Tuple[Any, Dict[str, Any]]]:
         return [(RequestResponseLoggingMiddleware, {})]

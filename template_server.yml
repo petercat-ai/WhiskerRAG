@@ -65,7 +65,7 @@ Parameters:
   fastapiEngineClassName:
     Type: String
     Description: Environment marker for FASTAPI_ENGINE_CLASSNAME
-    Default: "FastAPIEnginePlugin"
+    Default: "FastAPIPlugin"
 
   taskEngineClassName:
     Type: String
