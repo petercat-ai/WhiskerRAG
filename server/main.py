@@ -39,22 +39,22 @@ def resolve_plugin_path() -> str:
 
 async def startup_event() -> None:
     try:
-        # 获取插件实例
+        # init plugin manager
         plugin_manager = PluginManager()
         db_plugin = plugin_manager.dbPlugin
         task_plugin = plugin_manager.taskPlugin
-        
-        # 检查插件是否已加载
+
+        # check plugin is loaded
         if db_plugin is None:
             raise Exception("Database plugin not found or failed to load")
         if task_plugin is None:
             raise Exception("Task engine plugin not found or failed to load")
 
-        # 初始化插件（仅做业务逻辑初始化，不注册middleware）
+        # init plugin (only do business logic init, not register middleware)
         await db_plugin.ensure_initialized()
         await task_plugin.ensure_initialized(db_plugin)
 
-        # 初始化retrieval counter
+        # init retrieval counter
         initialize_retrieval_counter()
 
         logger.info("App startup event success")
@@ -65,13 +65,13 @@ async def startup_event() -> None:
 
 async def shutdown_event() -> None:
     try:
-        # Shutdown retrieval counter first
+        # shutdown retrieval counter first
         try:
             shutdown_retrieval_counter()
         except Exception as e:
             logger.warning(f"Error during retrieval counter shutdown: {e}")
 
-        # Then cleanup dbPlugin
+        # cleanup dbPlugin
         try:
             db_plugin = PluginManager().dbPlugin
             if db_plugin:
@@ -94,25 +94,25 @@ async def lifespan(app: FastAPI):  # type: ignore
 
 
 def create_app() -> FastAPI:
-    """创建并配置FastAPI应用"""
-    
-    # 初始化日志和基础设置
+    """create and configure FastAPI application"""
+
+    # init log and base settings
     log_dir = os.getenv("LOG_DIR", "./logs")
     setup_logging("whisker", log_dir)
     init_register("whiskerrag_utils")
-    
-    # 创建FastAPI应用
+
+    # create FastAPI application
     app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.5")
-    
-    # 初始化插件管理器
+
+    # init plugin manager
     plugin_abs_path = resolve_plugin_path()
     logger.info(f"plugin_abs_path: {plugin_abs_path}")
     plugin_manager = PluginManager(plugin_abs_path)
-    
-    # 让插件管理器设置应用（包括middleware）
+
+    # let plugin manager setup application (including middleware)
     plugin_manager.setup_plugins(app)
-    
-    # 添加异常处理器
+
+    # add exception handler
     @app.exception_handler(404)
     async def http404_error_handler(request: Request, exc: HTTPException):
         return JSONResponse(
@@ -123,7 +123,9 @@ def create_app() -> FastAPI:
         )
 
     @app.exception_handler(HTTPException)
-    async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    async def http_exception_handler(
+        request: Request, exc: HTTPException
+    ) -> JSONResponse:
         error_message = str(exc.detail) if isinstance(exc.detail, str) else str(exc)
 
         logger.error(
@@ -141,7 +143,9 @@ def create_app() -> FastAPI:
         )
 
     @app.exception_handler(Exception)
-    async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    async def global_exception_handler(
+        request: Request, exc: Exception
+    ) -> JSONResponse:
         error_message = str(exc)
 
         logger.error(
@@ -158,7 +162,7 @@ def create_app() -> FastAPI:
             ).model_dump(),
         )
 
-    # 添加CORS中间件
+    # add CORS middleware
     cors_origins_whitelist = os.getenv("CORS_ORIGINS_WHITELIST", "*")
     cors_origins = (
         ["*"] if cors_origins_whitelist is None else cors_origins_whitelist.split(",")
@@ -171,7 +175,7 @@ def create_app() -> FastAPI:
         allow_headers="*",
     )
 
-    # 包含路由
+    # include routers
     app.include_router(knowledge_router.router)
     app.include_router(retrieval_router.router)
     app.include_router(task_router.router)
@@ -181,7 +185,7 @@ def create_app() -> FastAPI:
     app.include_router(rule_router.router)
     app.include_router(api_key_router.router)
 
-    # 添加基础路由
+    # add base router
     @app.get("/")
     def home_page() -> RedirectResponse:
         return RedirectResponse(url=settings.WEB_URL)
@@ -195,7 +199,7 @@ def create_app() -> FastAPI:
     return app
 
 
-# 创建应用实例
+# create application instance
 app = create_app()
 
 
