@@ -104,7 +104,7 @@ def create_app() -> FastAPI:
     init_register("whiskerrag_utils")
 
     # create FastAPI application
-    app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.5")
+    app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.6")
 
     # init plugin manager
     plugin_abs_path = resolve_plugin_path()
