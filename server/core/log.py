@@ -69,8 +69,7 @@ def setup_logging(
 
     logger.setLevel(logging.DEBUG)
 
-    if not os.path.exists(log_dir):
-        os.makedirs(log_dir)
+    os.makedirs(log_dir, exist_ok=True)
 
     # 使用RotatingFileHandler替代FileHandler，添加文件轮转功能
     error_handler = RotatingFileHandler(
