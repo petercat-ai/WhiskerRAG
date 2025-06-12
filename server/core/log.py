@@ -44,7 +44,6 @@ class TraceIDFilter(logging.Filter):
             if tracer_context_global:
                 trace_id = tracer_context_global.get()
 
-                # 如果 ContextVar 返回默认值，尝试线程局部存储
                 if trace_id == "default_trace_id":
                     try:
                         if isinstance(__builtins__, dict):
@@ -61,7 +60,7 @@ class TraceIDFilter(logging.Filter):
                             if thread_trace_id != "default_trace_id":
                                 trace_id = thread_trace_id
                     except Exception as e:
-                        pass  # 静默处理线程局部存储错误
+                        pass
 
                 record.traceId = trace_id
             else:
@@ -74,7 +73,6 @@ class TraceIDFilter(logging.Filter):
 
 class TenantIDFilter(logging.Filter):
     def filter(self, record):
-        # 直接从全局 builtins 获取
         try:
             if isinstance(__builtins__, dict):
                 tenant_context_global = __builtins__.get("tenant_context")
@@ -84,7 +82,6 @@ class TenantIDFilter(logging.Filter):
             if tenant_context_global:
                 tenant_id = tenant_context_global.get()
 
-                # 如果 ContextVar 返回默认值，尝试线程局部存储
                 if tenant_id == "default_tenant":
                     try:
                         if isinstance(__builtins__, dict):
@@ -101,14 +98,14 @@ class TenantIDFilter(logging.Filter):
                             if thread_tenant_id != "default_tenant":
                                 tenant_id = thread_tenant_id
                     except Exception as e:
-                        pass  # 静默处理
-
-                record.tenantId = tenant_id
-            else:
-                record.tenantId = "ERROR_NO_TENANT_CONTEXT"
+                        pass
         except Exception as e:
-            record.tenantId = "ERROR_TENANT_CONTEXT_FAILED"
+            tenant_id = "ERROR_TENANT_FILTER_FAILED"
 
+        if tenant_id == "default_tenant":
+            tenant_id = "system"
+
+        record.tenantId = tenant_id
         return True
 
 
@@ -176,6 +173,38 @@ def setup_logging(
 
     logger.addFilter(TraceIDFilter())
     logger.addFilter(TenantIDFilter())
+
+
+def cleanup_logging(name="whisker"):
+    """
+    Properly cleanup logging handlers to prevent thread cleanup errors
+    
+    Args:
+        name: logger name to cleanup
+    """
+    try:
+        logger = logging.getLogger(name)
+        
+        # Get all handlers before clearing
+        handlers = logger.handlers[:]
+        
+        # Close all handlers properly
+        for handler in handlers:
+            try:
+                handler.close()
+            except Exception as e:
+                print(f"Error closing handler {handler}: {e}")
+        
+        # Clear all handlers
+        logger.handlers.clear()
+        
+        # Remove all filters
+        logger.filters.clear()
+        
+        print(f"Successfully cleaned up logging for: {name}")
+        
+    except Exception as e:
+        print(f"Error during logging cleanup: {e}")
 
 
 logger = logging.getLogger("whisker")
