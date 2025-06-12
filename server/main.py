@@ -16,6 +16,7 @@ from api.tenant import router as tenant_router
 from core.log import logger, setup_logging
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
+from core.global_vars import inject_global_vars
 from core.retrieval_counter import (
     initialize_retrieval_counter,
     shutdown_retrieval_counter,
@@ -100,6 +101,12 @@ def create_app() -> FastAPI:
     # init log and base settings
     log_dir = os.getenv("LOG_DIR", "/tmp/logs")
     setup_logging("whisker", log_dir)
+
+    # inject global vars
+
+    inject_global_vars()
+    logger.info("Global variables injected into builtins")
+
     # init register
     init_register("whiskerrag_utils")
 
