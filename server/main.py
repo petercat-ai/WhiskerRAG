@@ -13,10 +13,10 @@ from api.rule import router as rule_router
 from api.space import router as space_router
 from api.task import router as task_router
 from api.tenant import router as tenant_router
-from core.log import logger, setup_logging
+from core.log import logger, setup_logging, cleanup_logging
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
-from core.global_vars import inject_global_vars
+from core.global_vars import inject_global_vars, cleanup_global_vars
 from core.retrieval_counter import (
     initialize_retrieval_counter,
     shutdown_retrieval_counter,
@@ -82,8 +82,31 @@ async def shutdown_event() -> None:
             logger.warning(f"Error during dbPlugin cleanup: {e}")
 
         logger.info("Application shutdown")
+        
+        # cleanup global vars and thread local storage
+        try:
+            cleanup_global_vars()
+        except Exception as e:
+            print(f"Error during global vars cleanup: {e}")
+        
+        # cleanup logging last to ensure all logs are written
+        try:
+            cleanup_logging("whisker")
+        except Exception as e:
+            print(f"Error during logging cleanup: {e}")
+            
     except Exception as e:
         logger.error(f"Error during shutdown: {e}")
+        # Still try to cleanup resources even if other cleanup fails
+        try:
+            cleanup_global_vars()
+        except Exception as cleanup_error:
+            print(f"Error during global vars cleanup after shutdown error: {cleanup_error}")
+            
+        try:
+            cleanup_logging("whisker")
+        except Exception as cleanup_error:
+            print(f"Error during logging cleanup after shutdown error: {cleanup_error}")
 
 
 @asynccontextmanager

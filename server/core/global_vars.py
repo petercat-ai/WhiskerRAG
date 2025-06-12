@@ -20,22 +20,75 @@ _thread_local = threading.local()
 
 def set_thread_trace_id(trace_id: str):
     """set thread local trace_id"""
-    _thread_local.trace_id = trace_id
+    try:
+        _thread_local.trace_id = trace_id
+    except Exception:
+        # Silently fail if thread local is not available (e.g., during shutdown)
+        pass
 
 
 def get_thread_trace_id() -> str:
     """get thread local trace_id"""
-    return getattr(_thread_local, "trace_id", "default_trace_id")
+    try:
+        return getattr(_thread_local, "trace_id", "default_trace_id")
+    except Exception:
+        return "default_trace_id"
 
 
 def set_thread_tenant_id(tenant_id: str):
     """set thread local tenant_id"""
-    _thread_local.tenant_id = tenant_id
+    try:
+        _thread_local.tenant_id = tenant_id
+    except Exception:
+        # Silently fail if thread local is not available (e.g., during shutdown)
+        pass
 
 
 def get_thread_tenant_id() -> str:
     """get thread local tenant_id"""
-    return getattr(_thread_local, "tenant_id", "default_tenant")
+    try:
+        return getattr(_thread_local, "tenant_id", "default_tenant")
+    except Exception:
+        return "default_tenant"
+
+
+def cleanup_global_vars():
+    """
+    Cleanup global variables and thread local storage
+    
+    This function should be called during application shutdown to prevent
+    thread cleanup errors.
+    """
+    global _thread_local
+    
+    try:
+        # Clear any attributes from thread local storage
+        if hasattr(_thread_local, "__dict__"):
+            _thread_local.__dict__.clear()
+        
+        # Remove global variables from __builtins__ if they exist
+        cleanup_builtins = [
+            "tracer_context", 
+            "tenant_context",
+            "set_thread_trace_id", 
+            "get_thread_trace_id",
+            "set_thread_tenant_id", 
+            "get_thread_tenant_id"
+        ]
+        
+        if isinstance(__builtins__, dict):
+            for var_name in cleanup_builtins:
+                if var_name in __builtins__:
+                    del __builtins__[var_name]
+        else:
+            for var_name in cleanup_builtins:
+                if hasattr(__builtins__, var_name):
+                    delattr(__builtins__, var_name)
+        
+        print("Successfully cleaned up global variables and thread local storage")
+        
+    except Exception as e:
+        print(f"Error during global vars cleanup: {e}")
 
 
 def inject_global_vars():
@@ -67,6 +120,7 @@ __all__ = [
     "tracer_context",
     "tenant_context",
     "inject_global_vars",
+    "cleanup_global_vars",
     "set_thread_trace_id",
     "get_thread_trace_id",
     "set_thread_tenant_id",
