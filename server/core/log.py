@@ -2,11 +2,6 @@ import logging
 import os
 from logging.handlers import RotatingFileHandler
 
-from contextvars import ContextVar
-
-tracer_context = ContextVar("trace_id", default="default_trace_id")
-tenant_context = ContextVar("tenant_id", default="default_tenant_id")
-
 
 class ColorFormatter(logging.Formatter):
     """
@@ -40,13 +35,80 @@ class ColorFormatter(logging.Formatter):
 
 class TraceIDFilter(logging.Filter):
     def filter(self, record):
-        record.traceId = tracer_context.get()
+        try:
+            if isinstance(__builtins__, dict):
+                tracer_context_global = __builtins__.get("tracer_context")
+            else:
+                tracer_context_global = getattr(__builtins__, "tracer_context", None)
+
+            if tracer_context_global:
+                trace_id = tracer_context_global.get()
+
+                # 如果 ContextVar 返回默认值，尝试线程局部存储
+                if trace_id == "default_trace_id":
+                    try:
+                        if isinstance(__builtins__, dict):
+                            get_thread_trace_id_func = __builtins__.get(
+                                "get_thread_trace_id"
+                            )
+                        else:
+                            get_thread_trace_id_func = getattr(
+                                __builtins__, "get_thread_trace_id", None
+                            )
+
+                        if get_thread_trace_id_func:
+                            thread_trace_id = get_thread_trace_id_func()
+                            if thread_trace_id != "default_trace_id":
+                                trace_id = thread_trace_id
+                    except Exception as e:
+                        pass  # 静默处理线程局部存储错误
+
+                record.traceId = trace_id
+            else:
+                record.traceId = "ERROR_NO_TRACE_CONTEXT"
+        except Exception as e:
+            record.traceId = "ERROR_TRACE_CONTEXT_FAILED"
+
         return True
 
 
 class TenantIDFilter(logging.Filter):
     def filter(self, record):
-        record.tenantId = tenant_context.get()
+        # 直接从全局 builtins 获取
+        try:
+            if isinstance(__builtins__, dict):
+                tenant_context_global = __builtins__.get("tenant_context")
+            else:
+                tenant_context_global = getattr(__builtins__, "tenant_context", None)
+
+            if tenant_context_global:
+                tenant_id = tenant_context_global.get()
+
+                # 如果 ContextVar 返回默认值，尝试线程局部存储
+                if tenant_id == "default_tenant":
+                    try:
+                        if isinstance(__builtins__, dict):
+                            get_thread_tenant_id_func = __builtins__.get(
+                                "get_thread_tenant_id"
+                            )
+                        else:
+                            get_thread_tenant_id_func = getattr(
+                                __builtins__, "get_thread_tenant_id", None
+                            )
+
+                        if get_thread_tenant_id_func:
+                            thread_tenant_id = get_thread_tenant_id_func()
+                            if thread_tenant_id != "default_tenant":
+                                tenant_id = thread_tenant_id
+                    except Exception as e:
+                        pass  # 静默处理
+
+                record.tenantId = tenant_id
+            else:
+                record.tenantId = "ERROR_NO_TENANT_CONTEXT"
+        except Exception as e:
+            record.tenantId = "ERROR_TENANT_CONTEXT_FAILED"
+
         return True
 
 
@@ -62,13 +124,14 @@ def setup_logging(
         max_bytes: max size of each log file (default 1GB)
         backup_count: number of backup files (default 3)
     """
+    print(
+        f"--------setup_logging-------\n: {name}, {log_dir}, {max_bytes}, {backup_count}"
+    )
     logger = logging.getLogger(name)
-
     if logger.handlers:
         return
 
     logger.setLevel(logging.DEBUG)
-
     os.makedirs(log_dir, exist_ok=True)
 
     # 使用RotatingFileHandler替代FileHandler，添加文件轮转功能
