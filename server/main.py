@@ -3,6 +3,7 @@ import traceback
 from contextlib import asynccontextmanager
 from pathlib import Path
 import sys
+import time
 
 import uvicorn
 from api.api_key import router as api_key_router
@@ -136,15 +137,77 @@ def create_app() -> FastAPI:
     # create FastAPI application
     app = FastAPI(lifespan=lifespan, title="whisker rag server", version="1.0.6")
 
-    # init plugin manager
+    # add exception handling middleware FIRST (before plugins)
+    @app.middleware("http")
+    async def exception_handling_middleware(request: Request, call_next):
+        """Middleware to handle exceptions and create responses that go through the full middleware stack"""
+        start_time = time.time()
+        
+        try:
+            response = await call_next(request)
+            
+            # Add process time header to all responses
+            process_time = time.time() - start_time
+            response.headers['X-Process-Time'] = f"{process_time:.4f}"
+            
+            return response
+            
+        except HTTPException as exc:
+            # Create error response for HTTP exceptions
+            error_message = str(exc.detail) if isinstance(exc.detail, str) else str(exc)
+            
+            logger.error(
+                f"HTTPException in middleware: "
+                f"Path={request.url.path}, Method={request.method}, "
+                f"Status Code={exc.status_code}, Message={error_message}, "
+                f"Traceback={traceback.format_exc()}"
+            )
+            
+            response_content = ResponseModel(
+                success=False, message=error_message, data=None
+            ).model_dump()
+            
+            response = JSONResponse(
+                status_code=exc.status_code,
+                content=response_content
+            )
+            
+            # Add process time header to error response
+            process_time = time.time() - start_time
+            response.headers['X-Process-Time'] = f"{process_time:.4f}"
+            
+            return response
+            
+        except Exception as exc:
+            # Create error response for general exceptions
+            exc_info = sys.exc_info()
+            logger.error(
+                f"General exception in middleware: Path={request.url.path}, Method={request.method}",
+                exc_info=exc_info,
+            )
+            
+            response_content = ResponseModel(
+                success=False, message=f"Internal Server Error: {exc}", data=None
+            ).model_dump()
+            
+            response = JSONResponse(
+                status_code=500,
+                content=response_content
+            )
+            
+            # Add process time header to error response
+            process_time = time.time() - start_time
+            response.headers['X-Process-Time'] = f"{process_time:.4f}"
+            
+            return response
+
+    # let plugin manager setup application (including middleware)
     plugin_abs_path = resolve_plugin_path()
     logger.info(f"plugin_abs_path: {plugin_abs_path}")
     plugin_manager = PluginManager(plugin_abs_path)
-
-    # let plugin manager setup application (including middleware)
     plugin_manager.setup_plugins(app)
 
-    # add exception handler
+    # Simplified exception handlers (these will rarely be called now)
     @app.exception_handler(404)
     async def http404_error_handler(request: Request, exc: HTTPException):
         return JSONResponse(
@@ -161,10 +224,9 @@ def create_app() -> FastAPI:
         error_message = str(exc.detail) if isinstance(exc.detail, str) else str(exc)
 
         logger.error(
-            f"HTTPException occurred: "
+            f"HTTPException in fallback handler: "
             f"Path={request.url.path}, Method={request.method}, "
-            f"Status Code={exc.status_code}, Message={error_message}, "
-            f"Traceback={traceback.format_exc()}"
+            f"Status Code={exc.status_code}, Message={error_message}"
         )
 
         return JSONResponse(
@@ -180,7 +242,7 @@ def create_app() -> FastAPI:
     ) -> JSONResponse:
         exc_info = sys.exc_info()
         logger.error(
-            f"Global exception occurred: Path={request.url.path}, Method={request.method}",
+            f"General exception in fallback handler: Path={request.url.path}, Method={request.method}",
             exc_info=exc_info,
         )
 
