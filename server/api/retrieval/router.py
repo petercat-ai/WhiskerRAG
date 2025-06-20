@@ -29,6 +29,7 @@ router = APIRouter(
     "/knowledge",
     operation_id="retrieve_knowledge_content",
     response_model_by_alias=False,
+    response_model_exclude_none=True,
 )
 async def retrieve_knowledge_content(
     body: RetrievalByKnowledgeRequest,
@@ -46,7 +47,10 @@ async def retrieve_knowledge_content(
 
 @deprecated("retrieve_space_content is deprecated, please use retrieve instead.")
 @router.post(
-    "/space", operation_id="retrieve_space_content", response_model_by_alias=False
+    "/space",
+    operation_id="retrieve_space_content",
+    response_model_by_alias=False,
+    response_model_exclude_none=True,
 )
 async def retrieve_space_content(
     body: RetrievalBySpaceRequest,
@@ -62,7 +66,12 @@ async def retrieve_space_content(
     return ResponseModel(success=True, data=res)
 
 
-@router.post("/", operation_id="retrieve", response_model_by_alias=False)
+@router.post(
+    "/",
+    operation_id="retrieve",
+    response_model_by_alias=False,
+    response_model_exclude_none=True,
+)
 async def retrieve(
     body: RetrievalRequest,
     tenant: Tenant = get_tenant_with_permissions(Resource.RETRIEVAL, [Action.READ]),

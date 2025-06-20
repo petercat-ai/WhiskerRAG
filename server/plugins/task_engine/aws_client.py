@@ -6,7 +6,6 @@ import boto3  # type: ignore
 from whiskerrag_types.interface import DBPluginInterface, TaskEnginPluginInterface
 from whiskerrag_types.model import (
     Knowledge,
-    KnowledgeTypeEnum,
     Task,
     TaskStatus,
     Tenant,
@@ -42,6 +41,7 @@ class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):
                 knowledge_id=knowledge.knowledge_id,
                 space_id=knowledge.space_id,
                 tenant_id=tenant.tenant_id,
+                task_type="knowledge_chunk",
             )
             task_list.append(task)
         return task_list
