@@ -7,6 +7,7 @@ import time
 
 import uvicorn
 from api.api_key import router as api_key_router
+from api.agent import router as agent_router
 from api.chunk import router as chunk_router
 from api.knowledge import router as knowledge_router
 from api.retrieval import router as retrieval_router
@@ -83,27 +84,29 @@ async def shutdown_event() -> None:
             logger.warning(f"Error during dbPlugin cleanup: {e}")
 
         logger.info("Application shutdown")
-        
+
         # cleanup global vars and thread local storage
         try:
             cleanup_global_vars()
         except Exception as e:
             print(f"Error during global vars cleanup: {e}")
-        
+
         # cleanup logging last to ensure all logs are written
         try:
             cleanup_logging("whisker")
         except Exception as e:
             print(f"Error during logging cleanup: {e}")
-            
+
     except Exception as e:
         logger.error(f"Error during shutdown: {e}")
         # Still try to cleanup resources even if other cleanup fails
         try:
             cleanup_global_vars()
         except Exception as cleanup_error:
-            print(f"Error during global vars cleanup after shutdown error: {cleanup_error}")
-            
+            print(
+                f"Error during global vars cleanup after shutdown error: {cleanup_error}"
+            )
+
         try:
             cleanup_logging("whisker")
         except Exception as cleanup_error:
@@ -142,42 +145,41 @@ def create_app() -> FastAPI:
     async def exception_handling_middleware(request: Request, call_next):
         """Middleware to handle exceptions and create responses that go through the full middleware stack"""
         start_time = time.time()
-        
+
         try:
             response = await call_next(request)
-            
+
             # Add process time header to all responses
             process_time = time.time() - start_time
-            response.headers['X-Process-Time'] = f"{process_time:.4f}"
-            
+            response.headers["X-Process-Time"] = f"{process_time:.4f}"
+
             return response
-            
+
         except HTTPException as exc:
             # Create error response for HTTP exceptions
             error_message = str(exc.detail) if isinstance(exc.detail, str) else str(exc)
-            
+
             logger.error(
                 f"HTTPException in middleware: "
                 f"Path={request.url.path}, Method={request.method}, "
                 f"Status Code={exc.status_code}, Message={error_message}, "
                 f"Traceback={traceback.format_exc()}"
             )
-            
+
             response_content = ResponseModel(
                 success=False, message=error_message, data=None
             ).model_dump()
-            
+
             response = JSONResponse(
-                status_code=exc.status_code,
-                content=response_content
+                status_code=exc.status_code, content=response_content
             )
-            
+
             # Add process time header to error response
             process_time = time.time() - start_time
-            response.headers['X-Process-Time'] = f"{process_time:.4f}"
-            
+            response.headers["X-Process-Time"] = f"{process_time:.4f}"
+
             return response
-            
+
         except Exception as exc:
             # Create error response for general exceptions
             exc_info = sys.exc_info()
@@ -185,20 +187,17 @@ def create_app() -> FastAPI:
                 f"General exception in middleware: Path={request.url.path}, Method={request.method}",
                 exc_info=exc_info,
             )
-            
+
             response_content = ResponseModel(
                 success=False, message=f"Internal Server Error: {exc}", data=None
             ).model_dump()
-            
-            response = JSONResponse(
-                status_code=500,
-                content=response_content
-            )
-            
+
+            response = JSONResponse(status_code=500, content=response_content)
+
             # Add process time header to error response
             process_time = time.time() - start_time
-            response.headers['X-Process-Time'] = f"{process_time:.4f}"
-            
+            response.headers["X-Process-Time"] = f"{process_time:.4f}"
+
             return response
 
     # let plugin manager setup application (including middleware)
@@ -275,6 +274,7 @@ def create_app() -> FastAPI:
     app.include_router(space_router.router)
     app.include_router(rule_router.router)
     app.include_router(api_key_router.router)
+    app.include_router(agent_router.router)
 
     # add base router
     @app.get("/")
