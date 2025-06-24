@@ -1,10 +1,9 @@
 import json
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, List, Optional, TypeVar, Union
+from typing import Any, AsyncIterator, List, Optional, TypeVar, Union
 
 from fastapi import HTTPException, status
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from supabase.client import Client, create_client
 from whiskerrag_types.interface import DBPluginInterface
@@ -670,5 +669,5 @@ class SupaBasePlugin(DBPluginInterface):
         pass
 
     # =================== agent ===================
-    async def agent_invoke(self, body: Any) -> StreamingResponse:
+    async def agent_invoke(self, body: Any) -> AsyncIterator[Any]:
         pass
