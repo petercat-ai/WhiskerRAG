@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger("whisker")
 
 router = APIRouter(
-    prefix="/v1/api/agent",
+    prefix="/api/v1/agent",
     tags=["agent"],
     responses={404: {"description": "Not found"}},
 )
