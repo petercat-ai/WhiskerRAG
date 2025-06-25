@@ -24,4 +24,6 @@ async def pro_research(
         f"type:pro_research - tenant: {tenant.tenant_id} - body: {body.messages}"
     )
     db_engine = PluginManager().dbPlugin
-    return StreamingResponse(db_engine.agent_invoke(body), media_type="text/plain")
+    return StreamingResponse(
+        db_engine.agent_invoke(body), media_type="text/event-stream"
+    )
