@@ -1,7 +1,7 @@
 import json
 from datetime import datetime, timezone
 from enum import Enum
-from typing import List, Optional, TypeVar, Union
+from typing import Any, AsyncIterator, List, Optional, TypeVar, Union
 
 from fastapi import HTTPException, status
 from pydantic import BaseModel
@@ -124,9 +124,7 @@ class SupaBasePlugin(DBPluginInterface):
     async def save_knowledge_list(
         self, knowledge_list: List[Knowledge]
     ) -> List[Knowledge]:
-        knowledge_dicts = [
-            knowledge.model_dump() for knowledge in knowledge_list
-        ]
+        knowledge_dicts = [knowledge.model_dump() for knowledge in knowledge_list]
         response = (
             self.supabase_client.table(self.settings.KNOWLEDGE_TABLE_NAME)
             .insert(knowledge_dicts)
@@ -668,4 +666,8 @@ class SupaBasePlugin(DBPluginInterface):
 
     # =================== wiki ===================
     async def create_wiki(self, wiki: Wiki) -> None:
+        pass
+
+    # =================== agent ===================
+    async def agent_invoke(self, body: Any) -> AsyncIterator[Any]:
         pass
