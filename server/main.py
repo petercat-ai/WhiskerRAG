@@ -14,6 +14,7 @@ from api.retrieval import router as retrieval_router
 from api.rule import router as rule_router
 from api.space import router as space_router
 from api.task import router as task_router
+from api.dashboard import router as dashboard_router
 from api.tenant import router as tenant_router
 from core.log import logger, setup_logging, cleanup_logging
 from core.plugin_manager import PluginManager
@@ -272,6 +273,7 @@ def create_app() -> FastAPI:
     app.include_router(chunk_router.router)
     app.include_router(tenant_router.router)
     app.include_router(space_router.router)
+    app.include_router(dashboard_router.router)
     app.include_router(rule_router.router)
     app.include_router(api_key_router.router)
     app.include_router(agent_router.router)
