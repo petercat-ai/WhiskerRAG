@@ -47,11 +47,16 @@ async def add_knowledge(
             data=[],
             message="No knowledge identified. If you really want to add, please check if the filename is duplicated or modify the file_sha.",
         )
-    saved_knowledge = await db_engine.save_knowledge_list(knowledge_list)
-    task_list = await task_engine.init_task_from_knowledge(saved_knowledge, tenant)
-    saved_task = await db_engine.save_task_list(task_list)
-    await task_engine.batch_execute_task(saved_task, saved_knowledge)
-    return ResponseModel(success=True, data=saved_knowledge)
+    try:
+        saved_knowledge = await db_engine.save_knowledge_list(knowledge_list)
+        task_list = await task_engine.init_task_from_knowledge(saved_knowledge, tenant)
+        saved_task = await db_engine.save_task_list(task_list)
+        logger.debug(f"[add_knowledge][saved_task], saved_task={saved_task}")
+        await task_engine.batch_execute_task(saved_task, saved_knowledge)
+        return ResponseModel(success=True, data=saved_knowledge)
+    except Exception as e:
+        logger.error(f"[add_knowledge][error], error={str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/update", operation_id="update_knowledge", response_model_by_alias=False)
