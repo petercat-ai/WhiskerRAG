@@ -1,12 +1,12 @@
+import logging
 from typing import List
 
 from core.auth import Action, Resource, get_tenant_with_permissions
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from whiskerrag_types.model import (
     PageQueryParams,
-    PageResponse,
     StatusStatisticsPageResponse,
     Task,
     TaskRestartRequest,
@@ -17,6 +17,8 @@ from whiskerrag_types.model import (
 router = APIRouter(
     prefix="/api/task", tags=["task"], responses={404: {"description": "Not found"}}
 )
+
+logger = logging.getLogger("whisker")
 
 
 @router.post("/restart", operation_id="restart_task", response_model_by_alias=False)
@@ -34,15 +36,20 @@ async def restart_task(
             task_id,
         )
         if not task:
+            logger.error(f"Task {task_id} not found")
             continue
         knowledge = await db_engine.get_knowledge(tenant.tenant_id, task.knowledge_id)
         if not knowledge:
+            logger.error(f"Knowledge {task.knowledge_id} not found")
             continue
         task.update(status=TaskStatus.PENDING_RETRY)
         restart_task.append(task)
         restart_knowledge.append(knowledge)
     await db_engine.update_task_list(restart_task)
-    await task_engine.batch_execute_task(restart_task, restart_knowledge)
+    if restart_task:
+        await task_engine.batch_execute_task(restart_task, restart_knowledge)
+    else:
+        logger.info("No task to restart")
     return ResponseModel(data=restart_task, success=True)
 
 
@@ -72,17 +79,7 @@ async def get_task_list(
     tenant: Tenant = get_tenant_with_permissions(Resource.TASK, [Action.READ]),
 ) -> ResponseModel[StatusStatisticsPageResponse[Task]]:
     db_engine = PluginManager().dbPlugin
-    res: PageResponse[Task] = await db_engine.get_task_list(tenant.tenant_id, body)
-    statistics = await db_engine.task_statistics(
-        body.eq_conditions.get("space_id", None), None
-    )
-    res: StatusStatisticsPageResponse[Task] = StatusStatisticsPageResponse(
-        **res.model_dump()
-    )
-    res.success = statistics.get(TaskStatus.SUCCESS, 0)
-    res.failed = statistics.get(TaskStatus.FAILED, 0)
-    res.cancelled = statistics.get(TaskStatus.CANCELED, 0)
-    res.pending = statistics.get(TaskStatus.PENDING, 0)
+    res = await db_engine.get_task_list(tenant.tenant_id, body)
     return ResponseModel(data=res, success=True)
 
 

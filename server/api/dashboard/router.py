@@ -19,12 +19,8 @@ class GlobalInfo(BaseModel):
     space_count: Optional[int] = None
     knowledge_count: Optional[int] = None
     task_count: Optional[int] = None
-    agent_count: Optional[int] = None
-    task_count: Optional[int] = None
-    last_1d_user_count: Optional[int] = None
-    last_7d_user_count: Optional[int] = None
-    sum_user_count: Optional[int] = None
     tenant_count: Optional[int] = None
+    retrieval_count: Optional[int] = None
     # system knowledge storage size
     storage_size: Optional[str] = None
 
