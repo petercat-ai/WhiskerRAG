@@ -55,27 +55,27 @@ def get_thread_tenant_id() -> str:
 def cleanup_global_vars():
     """
     Cleanup global variables and thread local storage
-    
+
     This function should be called during application shutdown to prevent
     thread cleanup errors.
     """
     global _thread_local
-    
+
     try:
         # Clear any attributes from thread local storage
         if hasattr(_thread_local, "__dict__"):
             _thread_local.__dict__.clear()
-        
+
         # Remove global variables from __builtins__ if they exist
         cleanup_builtins = [
-            "tracer_context", 
+            "tracer_context",
             "tenant_context",
-            "set_thread_trace_id", 
+            "set_thread_trace_id",
             "get_thread_trace_id",
-            "set_thread_tenant_id", 
-            "get_thread_tenant_id"
+            "set_thread_tenant_id",
+            "get_thread_tenant_id",
         ]
-        
+
         if isinstance(__builtins__, dict):
             for var_name in cleanup_builtins:
                 if var_name in __builtins__:
@@ -84,9 +84,9 @@ def cleanup_global_vars():
             for var_name in cleanup_builtins:
                 if hasattr(__builtins__, var_name):
                     delattr(__builtins__, var_name)
-        
+
         print("Successfully cleaned up global variables and thread local storage")
-        
+
     except Exception as e:
         print(f"Error during global vars cleanup: {e}")
 

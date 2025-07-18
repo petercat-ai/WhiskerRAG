@@ -1,11 +1,11 @@
+import asyncio
+import logging
+
+from core.auth import Action, Resource, get_tenant_with_permissions
+from core.plugin_manager import PluginManager
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
-from whiskerrag_types.model import ProResearchRequest
-from core.plugin_manager import PluginManager
-from whiskerrag_types.model import Tenant
-from core.auth import Action, Resource, get_tenant_with_permissions
-import logging
-import asyncio
+from whiskerrag_types.model import ProResearchRequest, Tenant
 
 logger = logging.getLogger("whisker")
 

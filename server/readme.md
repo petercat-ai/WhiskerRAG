@@ -14,50 +14,68 @@ git clone https://github.com/petercat-ai/whiskerrag.git
 cd whisker/server
 ```
 
-2. 首次安装（包含所有开发依赖）
+2. 安装 Poetry
 
 ```bash
-make install-dev
+pip install poetry
 ```
 
-3. 启动服务器
+3. （强烈建议首次执行）配置虚拟环境目录为 .venv
 
 ```bash
-make run
+poetry config virtualenvs.in-project true
 ```
+
+4. 安装依赖
+
+```bash
+poetry install
+```
+
+5. 启动服务器
+
+```bash
+poetry run run
+```
+
+> 💡 你也可以直接运行一键初始化脚本 `init.bat`，自动完成上述 3-4 步骤。
 
 ## 常用命令
 
 ### 基础命令
 
 ```bash
-# 创建虚拟环境并安装基础依赖
-make all
-
-# 仅安装生产环境依赖
-make install
-
-# 安装所有依赖（包括开发工具）
-make install-dev
+# 安装依赖
+poetry install
 
 # 启动开发服务器
-make run
+poetry run run
 ```
+
+### 插件依赖管理
+
+如需使用 plugins 目录下的插件功能，请按需安装插件依赖：
+
+- 一键安装插件依赖：
+  poetry run pip install -r plugins/requirements.txt
+- 一键卸载插件依赖：
+  poetry run pip uninstall -r plugins/requirements.txt
+- （可选）单独安装某个插件依赖：
+  poetry run pip install supabase boto3
+
+建议仅在需要时安装插件依赖，避免污染主环境。
 
 ### 开发相关命令
 
 ```bash
 # 运行测试
-make test
+poetry run test
 
 # 格式化代码（使用 black 和 isort）
-make format
+poetry run format
 
 # 运行类型检查
-make type-check
-
-# 清理虚拟环境和缓存文件
-make clean
+poetry run type-check
 ```
 
 ## 目录结构

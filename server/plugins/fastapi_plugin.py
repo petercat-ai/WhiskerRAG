@@ -3,11 +3,11 @@ import os
 import time
 from typing import Any, Dict, List, Tuple
 
+from core.log import logger
 from fastapi import Request, Response
 from fastapi.responses import StreamingResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from whiskerrag_types.interface import FastAPIPluginInterface
-from core.log import logger
 
 
 class RequestResponseLoggingMiddleware(BaseHTTPMiddleware):

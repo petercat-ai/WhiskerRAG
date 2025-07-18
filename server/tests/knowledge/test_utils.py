@@ -1,16 +1,16 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from api.knowledge.utils import (
-    gen_knowledge_list,
-    _process_single_knowledge,
     _is_knowledge_saved,
+    _process_single_knowledge,
+    gen_knowledge_list,
 )
-from whiskerrag_types.model import Knowledge, Tenant, PageResponse
+from whiskerrag_types.model import Knowledge, PageResponse, Tenant
 from whiskerrag_types.model.knowledge import (
-    KnowledgeTypeEnum,
-    KnowledgeSourceEnum,
     EmbeddingModelEnum,
+    KnowledgeSourceEnum,
+    KnowledgeTypeEnum,
 )
 
 

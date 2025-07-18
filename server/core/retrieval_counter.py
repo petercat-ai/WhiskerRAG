@@ -3,10 +3,11 @@ import threading
 import traceback
 from collections import defaultdict
 
-from .log import logger
-from .plugin_manager import PluginManager
 from whiskerrag_types.interface import DBPluginInterface
 from whiskerrag_types.model import RetrievalChunk
+
+from .log import logger
+from .plugin_manager import PluginManager
 
 
 class RetrievalCounter:
@@ -25,9 +26,7 @@ class RetrievalCounter:
         self.stop_event = threading.Event()
         self._shutdown_called = False
         self.flush_thread = threading.Thread(
-            target=self._flush_loop, 
-            name=f"RetrievalCounter-{id(self)}",
-            daemon=True
+            target=self._flush_loop, name=f"RetrievalCounter-{id(self)}", daemon=True
         )
         self.flush_thread.start()
 
@@ -65,7 +64,7 @@ class RetrievalCounter:
         """Switch buffers and write to the database"""
         if not self.running:
             return
-            
+
         # 1. Switch the buffers for all shards
         for i in range(self.shards):
             with self.locks[i]:
@@ -88,10 +87,10 @@ class RetrievalCounter:
     def _write_to_database(self, data) -> bool:
         if not data:
             return True
-        
+
         if not self.running:
             return False
-        
+
         # Check if db_plugin is available
         if self.db_plugin is None:
             try:
@@ -99,11 +98,11 @@ class RetrievalCounter:
             except Exception as e:
                 logger.warning(f"Database plugin not available: {e}")
                 return False
-        
+
         if self.db_plugin is None:
             logger.warning("Database plugin is None, skipping flush")
             return False
-        
+
         try:
             asyncio.run(self.db_plugin.batch_update_knowledge_retrieval_count(data))
             logger.debug(f"Flushed {len(data)} retrieval counts successfully")
@@ -120,18 +119,18 @@ class RetrievalCounter:
     def shutdown(self):
         if self._shutdown_called:
             return
-        
+
         logger.debug("Shutting down RetrievalCounter")
         self._shutdown_called = True
         self.running = False
         self.stop_event.set()
-        
+
         # Final flush
         try:
             self.force_flush()
         except Exception as e:
             logger.warning(f"Error during final flush: {e}")
-        
+
         # Wait for thread to finish
         if self.flush_thread.is_alive():
             self.flush_thread.join(timeout=3.0)
@@ -157,7 +156,7 @@ def get_retrieval_counter() -> RetrievalCounter:
         except Exception:
             # Plugin not available yet, will be set later
             db_plugin = None
-            
+
         _retrieval_counter = RetrievalCounter(
             flush_interval=60, shards=16, db_plugin=db_plugin
         )

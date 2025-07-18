@@ -23,15 +23,12 @@ COPY . .
 # Copy aws-lambda-adapter for Streaming response
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.1 /lambda-adapter /opt/extensions/lambda-adapter
 
-# Install dependencies
-RUN set -ex && \
-    ls -l && \
-    pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -U --target "${LAMBDA_TASK_ROOT}" -r requirements.txt && \
-    pip install --no-cache-dir -U --target "${LAMBDA_TASK_ROOT}" -r requirements-dev.txt && \
-    if [ -f plugins/requirements.txt ]; then \
-        pip install --no-cache-dir -U --target "${LAMBDA_TASK_ROOT}" -r plugins/requirements.txt; \
-    fi
+# Install poetry and dependencies
+RUN pip install poetry && \
+    cd server && \
+    poetry install --only main
+RUN poetry run pip install -r plugins/requirements.txt
+# 插件依赖已自动安装，无需手动操作
 
 # Clean up (keep git)
 RUN rm -rf ~/.cache/pip && \

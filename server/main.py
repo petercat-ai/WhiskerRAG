@@ -1,25 +1,25 @@
 import os
+import sys
+import time
 import traceback
 from contextlib import asynccontextmanager
 from pathlib import Path
-import sys
-import time
 
 import uvicorn
-from api.api_key import router as api_key_router
 from api.agent import router as agent_router
+from api.api_key import router as api_key_router
 from api.chunk import router as chunk_router
+from api.dashboard import router as dashboard_router
 from api.knowledge import router as knowledge_router
 from api.retrieval import router as retrieval_router
 from api.rule import router as rule_router
 from api.space import router as space_router
 from api.task import router as task_router
-from api.dashboard import router as dashboard_router
 from api.tenant import router as tenant_router
-from core.log import logger, setup_logging, cleanup_logging
+from core.global_vars import cleanup_global_vars, inject_global_vars
+from core.log import cleanup_logging, logger, setup_logging
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
-from core.global_vars import inject_global_vars, cleanup_global_vars
 from core.retrieval_counter import (
     initialize_retrieval_counter,
     shutdown_retrieval_counter,
@@ -296,7 +296,7 @@ def create_app() -> FastAPI:
 app = create_app()
 
 
-if __name__ == "__main__":
+def run():
     if settings.IS_DEV:
         plugin_abs_path = resolve_plugin_path()
         uvicorn.run(
@@ -312,3 +312,7 @@ if __name__ == "__main__":
         uvicorn.run(
             app, host="0.0.0.0", port=int(os.environ.get("WHISKER_SERVER_PORT", "8080"))
         )
+
+
+if __name__ == "__main__":
+    run()

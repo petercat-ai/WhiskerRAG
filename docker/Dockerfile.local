@@ -9,13 +9,9 @@ COPY . .
 
 # Install server dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r /app/server/requirements.txt && \
-    if [ -f /app/server/requirements-dev.txt ]; then \
-        pip install --no-cache-dir -r /app/server/requirements-dev.txt; \
-    fi && \
-    if [ -f /app/server/local_plugin/requirements.txt ]; then \
-        pip install --no-cache-dir -r /app/server/local_plugin/requirements.txt; \
-    fi
+    pip install --no-cache-dir poetry && \
+    cd /app/server && poetry install && \
+    poetry run pip install -r plugins/requirements.txt
 
 # Start the server
 USER root
