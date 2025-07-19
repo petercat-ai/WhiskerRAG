@@ -5,7 +5,7 @@ description = ""
 authors = [
     {name = "liuzhide",email = "2265335198@qq.com"}
 ]
-readme = "README.md"
+readme = "./README.md"
 requires-python = ">=3.11,<4.0"
 
 [tool.poetry]
