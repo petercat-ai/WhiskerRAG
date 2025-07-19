@@ -60,6 +60,9 @@ next-env.d.ts
 # IDE
 .idea
 **/.vscode/
+.cursor
+.cursor/*
+.trae
 
 # log
 logs

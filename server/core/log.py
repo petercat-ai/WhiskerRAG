@@ -178,31 +178,31 @@ def setup_logging(
 def cleanup_logging(name="whisker"):
     """
     Properly cleanup logging handlers to prevent thread cleanup errors
-    
+
     Args:
         name: logger name to cleanup
     """
     try:
         logger = logging.getLogger(name)
-        
+
         # Get all handlers before clearing
         handlers = logger.handlers[:]
-        
+
         # Close all handlers properly
         for handler in handlers:
             try:
                 handler.close()
             except Exception as e:
                 print(f"Error closing handler {handler}: {e}")
-        
+
         # Clear all handlers
         logger.handlers.clear()
-        
+
         # Remove all filters
         logger.filters.clear()
-        
+
         print(f"Successfully cleaned up logging for: {name}")
-        
+
     except Exception as e:
         print(f"Error during logging cleanup: {e}")
 

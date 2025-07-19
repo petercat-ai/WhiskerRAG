@@ -6,8 +6,8 @@ from typing import Union
 
 from whiskerrag_types.interface import (
     DBPluginInterface,
-    TaskEnginPluginInterface,
     FastAPIPluginInterface,
+    TaskEnginPluginInterface,
 )
 
 from .settings import settings
@@ -87,7 +87,7 @@ class PluginManager:
                 fastapi_engine_classname
             )
             if module_class is None:
-                raise Exception("fastapi plugin is not found")
+                return None  # fastapi plugin 可选，未找到直接返回 None
             fastapi_plugin_instance = module_class(settings)
             self._fastapi_plugin_instance_dict[fastapi_engine_classname] = (
                 fastapi_plugin_instance
@@ -104,9 +104,10 @@ class PluginManager:
                 for middleware, kwargs in middleware_list:
                     app.add_middleware(middleware, **kwargs)
                     logger.info(f"Added middleware: {middleware.__name__}")
-            
+
             logger.info("Plugin setup completed successfully")
         except Exception as e:
+            logger.warning(f"Plugin setup: fastapi plugin not found or error: {e}")
             logger.error(f"Error during plugin setup: {e}")
             raise
 

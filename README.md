@@ -22,26 +22,33 @@
   - 增强的知识检索能力
   - 知识图谱功能
 
-## 项目结构 📁
 
-```
-.
-├── server/                 # FastAPI 服务端
-│   ├── api/                # API 接口
-│   ├── plugins/            # 插件模块
-│   └── core/               # 项目核心方法
-├── web/                    # WEB 前端（TODO）
-├── docker/                 # Docker 镜像
-└── lambda_task_subscriber/ # 亚马逊异步处理任务云函数
-```
+## 高级用法 🚀
+RAG 项目在真实落地中就会发现，定制化需求极高。这和大家的数据存储方案、运行资源有极大的关系，大部分企业级项目都有自己的规范，因此与其他开源项目 ragflow，llamindex 不同，WhiskerRAG 的核心是提供插件机制，支持每个项目通过编写插件的形式自定义数据入库、数据存储、向量存储、召回方案。参考 `server/local_plugin` 中的实现来创建您自己的接口。
+
+
+### 自定义数据层
+在一个 RAG 系统中，核心的是数据层。WhiskerRAG 的核心贡献是建立了数据模型，实现了 tenant、space、knowledge、task、chunk的分层机制，然后用户可以根据自己的需求定制数据层，实现抽象方法即可串联完整的知识管理流程。
+
+
+### 自定义 RAG 核心流程
+
+WhiskerRAG 提供贡献点注册机制，允许自定义核心 RAG 流程，包括资源加载(loader)、解析器(parser)、向量化(embedder)和检索策略(retriever)。
+查看 `server/local_plugin/registry` 获取实现示例。
+
+### 自定义数据处理任务
+WhiskerRAG 提供自定义数据处理任务机制，允许用户根据自己的需求定制数据处理任务。
+查看 `server/local_plugin/task_engine` 获取实现示例。
+
+
 
 ## 部署 📦
 
 WhiskerRAG 支持多种部署选项，包括本地部署和 AWS 云部署。
 
-### 本地部署
+### 私有方案部署
+RAG 通常与敏感数据相关，因此私有部署是必要的。下面提供一个 基于 Docker 环境和自定义 plugin 的组合。
 
-本地部署需要 Docker 环境。使用以下命令：
 
 ```bash
 docker login
@@ -72,7 +79,7 @@ docker-compose down
 
 环境变量在 `docker-compose.yml` 中预先配置。默认值适用于大多数情况。对于本地开发，请参考 `.env.example` 并创建包含自定义配置的 `.env` 文件。
 
-### AWS Cloud 和 Supabase
+### 使用 AWS Cloud 和 Supabase
 
 为了通过云服务提供增强的系统稳定性，我们提供 AWS 和 Supabase 集成选项。
 请确保已准备好 AWS 和 Supabase 环境。在 `.github/workflows/server-deploy.yml` 中配置环境变量：
@@ -95,15 +102,6 @@ OPENAI_API_KEY=your-openai-api-key
 SQS_QUEUE_URL=your-sqs-queue-url
 ```
 
-## 高级用法 🚀
-
-### 自定义数据层
-
-考虑到私有部署中多样化的数据存储需求，WhiskerRAG 实现了插件机制，支持自定义数据存储解决方案。参考 `server/local-plugin` 中的实现来创建您自己的接口。
-
-### 自定义 RAG 核心流程
-
-WhiskerRAG 提供贡献点注册机制，允许自定义核心 RAG 流程，包括资源加载、嵌入、分段和检索策略。查看 `server/local-plugin-registry` 获取实现示例。
 
 ## 贡献 🤝
 

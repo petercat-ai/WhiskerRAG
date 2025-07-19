@@ -1,8 +1,8 @@
-from fastapi.responses import StreamingResponse
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from api.agent.router import ProResearchRequest, pro_research
+from fastapi.responses import StreamingResponse
 
 
 @pytest.fixture

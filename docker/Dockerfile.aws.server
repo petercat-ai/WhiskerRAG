@@ -5,7 +5,7 @@ LABEL org.opencontainers.image.description="Petercat Whisker RAG server Image"
 LABEL org.opencontainers.image.licenses=MIT
 
 # Install make and git
-RUN apt-get update && apt-get install -y make git && \
+RUN apt-get update && apt-get install -y git && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -23,19 +23,15 @@ COPY . .
 # Copy aws-lambda-adapter for Streaming response
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.1 /lambda-adapter /opt/extensions/lambda-adapter
 
-# Install dependencies
-RUN set -ex && \
-    ls -l && \
-    pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -U --target "${LAMBDA_TASK_ROOT}" -r requirements.txt && \
-    pip install --no-cache-dir -U --target "${LAMBDA_TASK_ROOT}" -r requirements-dev.txt && \
-    if [ -f plugins/requirements.txt ]; then \
-        pip install --no-cache-dir -U --target "${LAMBDA_TASK_ROOT}" -r plugins/requirements.txt; \
-    fi
+# Install poetry and dependencies
+RUN pip install poetry && \
+    poetry config virtualenvs.create false && \
+    poetry install --only main
+# Install plugins dependencies
+RUN pip install -r plugins/requirements.txt
 
 # Clean up (keep git)
 RUN rm -rf ~/.cache/pip && \
-    apt-get remove -y make && \
     apt-get autoremove -y
 
-CMD ["python", "main.py"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
