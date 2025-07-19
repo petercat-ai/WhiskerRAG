@@ -2,8 +2,8 @@
 
 ## 前置要求
 
-- Python 3.8 或更高版本
-- make 工具 (Unix/Linux/macOS 自带，Windows 需要安装)
+- Python 3.11 或更高版本
+- 推荐使用 Poetry 进行依赖和虚拟环境管理
 
 ## 快速开始
 
@@ -38,7 +38,7 @@ poetry install
 poetry run run
 ```
 
-> 💡 你也可以直接运行一键初始化脚本 `init.bat`，自动完成上述 3-4 步骤。
+> 💡 你也可以直接运行一键初始化脚本 `python init.py`，自动完成上述 3-4 步骤。
 
 ## 常用命令
 
@@ -85,7 +85,7 @@ whisker/server/
 ├── .venv/                 # 虚拟环境目录（自动创建）
 ├── tests/                 # 测试文件目录
 ├── main.py               # 应用入口文件
-├── Makefile              # 项目管理配置文件
+├── pyproject.toml        # Poetry 配置文件
 ```
 
 ## 开发环境配置
@@ -106,7 +106,7 @@ whisker/server/
 使用 mypy 进行静态类型检查：
 
 ```bash
-make type-check
+poetry run type-check
 ```
 
 ### 代码格式化
@@ -114,7 +114,7 @@ make type-check
 使用 black 和 isort 统一代码风格：
 
 ```bash
-make format
+poetry run format
 ```
 
 ## 测试
@@ -122,7 +122,7 @@ make format
 运行项目测试套件：
 
 ```bash
-make test
+poetry run test
 ```
 
 ## 故障排除
@@ -130,25 +130,24 @@ make test
 1. 如果安装依赖失败，尝试：
 
 ```bash
-make clean
-make install-dev
+poetry install --no-root
 ```
 
 2. 如果端口被占用，修改启动命令中的端口：
 
 ```bash
-# 在 Makefile 中修改 run 命令
-$(BIN)/uvicorn main:app --reload --port 8001
+# 修改 pyproject.toml 或 main.py 中的端口配置
 ```
 
 3. 确保 Python 版本正确：
 
 ```bash
-python3 --version  # 应该 >= 3.8
+python3 --version  # 应该 >= 3.11
 ```
 
 ## 注意事项
 
-- 建议在进行任何开发之前先运行 `make install-dev`
-- 提交代码前请运行 `make format` 和 `make type-check`
-- 添加新依赖时，需要手动更新 Makefile 中的 install 或 install-dev 部分
+- 建议在进行任何开发之前先运行 `poetry install`
+- 提交代码前请运行 `poetry run format` 和 `poetry run type-check`
+- 添加新依赖时，使用 `poetry add` 或 `poetry add --group dev` 管理
+- CI/CD 环境下请确保 Python 版本 >=3.11，且 server/README.md 文件存在，否则 poetry install 会报错
