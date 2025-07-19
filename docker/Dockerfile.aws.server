@@ -25,12 +25,13 @@ COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.1 /lambda-adapter /opt
 
 # Install poetry and dependencies
 RUN pip install poetry && \
+    poetry config virtualenvs.create false && \
     poetry install --only main
-RUN poetry run pip install -r plugins/requirements.txt
-# 插件依赖已自动安装，无需手动操作
+# Install plugins dependencies
+RUN pip install -r plugins/requirements.txt
 
 # Clean up (keep git)
 RUN rm -rf ~/.cache/pip && \
     apt-get autoremove -y
 
-CMD ["poetry", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
