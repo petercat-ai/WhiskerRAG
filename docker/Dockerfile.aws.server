@@ -5,7 +5,7 @@ LABEL org.opencontainers.image.description="Petercat Whisker RAG server Image"
 LABEL org.opencontainers.image.licenses=MIT
 
 # Install make and git
-RUN apt-get update && apt-get install -y make git && \
+RUN apt-get update && apt-get install -y git && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -31,7 +31,6 @@ RUN poetry run pip install -r plugins/requirements.txt
 
 # Clean up (keep git)
 RUN rm -rf ~/.cache/pip && \
-    apt-get remove -y make && \
     apt-get autoremove -y
 
-CMD ["python", "main.py"]
+CMD ["poetry", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
