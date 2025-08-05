@@ -56,9 +56,9 @@ poetry run dev
 如需使用 plugins 目录下的插件功能，请按需安装插件依赖：
 
 - 一键安装插件依赖：
-  poetry run pip install -r plugins/requirements.txt
+  poetry run pip install -r supabase_aws_plugin/requirements.txt
 - 一键卸载插件依赖：
-  poetry run pip uninstall -r plugins/requirements.txt
+  poetry run pip uninstall -r supabase_aws_plugin/requirements.txt
 - （可选）单独安装某个插件依赖：
   poetry run pip install supabase boto3
 

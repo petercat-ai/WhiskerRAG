@@ -60,7 +60,7 @@ def run():
             print(f"Warning: 环境配置文件存在但无法加载: {env_file}")
     else:
         print(f"Warning: 环境配置文件不存在: {env_file}")
-        print("请确保已经配置了 plugins/.env 文件")
+        print("请确保已经配置了 supabase_aws_plugin/.env 文件")
 
     # 设置环境变量
     env = os.environ.copy()
