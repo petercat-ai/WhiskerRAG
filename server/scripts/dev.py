@@ -4,9 +4,9 @@
 基于 VSCode launch.json 配置
 """
 import os
+import socket
 import subprocess
 import sys
-import socket
 from pathlib import Path
 
 try:

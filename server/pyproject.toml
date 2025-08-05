@@ -22,6 +22,18 @@ packages = [
 ]
 package-mode = false
 
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+known_first_party = ["api", "core", "local_plugin", "supabase_aws_plugin", "scripts"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+exclude = ["tests/", "scripts/"]
+
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
 fastapi = ">=0.115.0"

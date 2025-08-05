@@ -2,13 +2,17 @@ from typing import Any, Dict, List
 
 from fastapi import APIRouter, Body, HTTPException, Path
 from pydantic import BaseModel
-from whiskerrag_types.model import (Knowledge, KnowledgeCreateUnion,
-                                    PageQueryParams, PageResponse, Tenant)
+from whiskerrag_types.model import (
+    Knowledge,
+    KnowledgeCreateUnion,
+    PageQueryParams,
+    PageResponse,
+    Tenant,
+)
 from whiskerrag_utils import get_all_registered_with_metadata
 from whiskerrag_utils.registry import RegisterTypeEnum
 
-from core.auth import (Action, Resource, get_tenant_with_permissions,
-                       validate_key_string)
+from core.auth import Action, Resource, get_tenant_with_permissions, validate_key_string
 from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel

@@ -6,8 +6,7 @@ from pathlib import Path
 from typing import Optional
 
 from huggingface_hub import HfApi, snapshot_download
-from huggingface_hub.utils import (LocalEntryNotFoundError,
-                                   RepositoryNotFoundError)
+from huggingface_hub.utils import LocalEntryNotFoundError, RepositoryNotFoundError
 
 
 class HuggingFaceModelManager:

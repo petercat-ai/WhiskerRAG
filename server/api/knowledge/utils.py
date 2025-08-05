@@ -1,10 +1,11 @@
 import asyncio
 from typing import Any, List, Optional
 
-from whiskerrag_types.model import (Knowledge, PageQueryParams, PageResponse,
-                                    Tenant)
+from whiskerrag_types.model import Knowledge, PageQueryParams, PageResponse, Tenant
 from whiskerrag_types.model.knowledge_create import (
-    KNOWLEDGE_CREATE_2_KNOWLEDGE_STRATEGY_MAP, KnowledgeCreateUnion)
+    KNOWLEDGE_CREATE_2_KNOWLEDGE_STRATEGY_MAP,
+    KnowledgeCreateUnion,
+)
 
 from core.plugin_manager import PluginManager
 

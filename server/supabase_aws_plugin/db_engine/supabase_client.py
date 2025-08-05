@@ -7,12 +7,23 @@ from fastapi import HTTPException, status
 from pydantic import BaseModel
 from supabase.client import Client, create_client
 from whiskerrag_types.interface import DBPluginInterface
-from whiskerrag_types.model import (APIKey, Chunk, GlobalRule, Knowledge,
-                                    KnowledgeSourceEnum, PageQueryParams,
-                                    PageResponse, RetrievalByKnowledgeRequest,
-                                    RetrievalBySpaceRequest, RetrievalChunk,
-                                    RetrievalRequest, Space, Task, TaskStatus,
-                                    Tenant)
+from whiskerrag_types.model import (
+    APIKey,
+    Chunk,
+    GlobalRule,
+    Knowledge,
+    KnowledgeSourceEnum,
+    PageQueryParams,
+    PageResponse,
+    RetrievalByKnowledgeRequest,
+    RetrievalBySpaceRequest,
+    RetrievalChunk,
+    RetrievalRequest,
+    Space,
+    Task,
+    TaskStatus,
+    Tenant,
+)
 from whiskerrag_types.model.page import QueryParams
 from whiskerrag_utils import RegisterTypeEnum, get_register
 

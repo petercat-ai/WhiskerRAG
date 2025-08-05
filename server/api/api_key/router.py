@@ -5,8 +5,13 @@ from typing import Any, Dict, List, Optional
 import iso8601
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from whiskerrag_types.model import (APIKey, PageQueryParams, PageResponse,
-                                    Permission, Tenant)
+from whiskerrag_types.model import (
+    APIKey,
+    PageQueryParams,
+    PageResponse,
+    Permission,
+    Tenant,
+)
 
 from core.auth import Action, Resource, get_tenant_with_permissions
 from core.log import logger
