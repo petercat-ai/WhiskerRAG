@@ -1,9 +1,10 @@
+from fastapi import APIRouter, HTTPException, Path
+from whiskerrag_types.model import Tenant
+
 from core.auth import Action, Resource, get_tenant_with_permissions
 from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
-from fastapi import APIRouter, HTTPException, Path
-from whiskerrag_types.model import Tenant
 
 router = APIRouter(
     prefix="/api/rule", tags=["rule"], responses={404: {"description": "Not found"}}

@@ -7,20 +7,11 @@ from fastapi import HTTPException, status
 from pgvector.asyncpg import register_vector
 from pydantic import BaseModel
 from whiskerrag_types.interface import DBPluginInterface
-from whiskerrag_types.model import (
-    Chunk,
-    GenericConverter,
-    Knowledge,
-    KnowledgeSourceEnum,
-    PageQueryParams,
-    PageResponse,
-    RetrievalByKnowledgeRequest,
-    RetrievalBySpaceRequest,
-    RetrievalChunk,
-    RetrievalRequest,
-    Task,
-    Tenant,
-)
+from whiskerrag_types.model import (Chunk, GenericConverter, Knowledge,
+                                    KnowledgeSourceEnum, PageQueryParams,
+                                    PageResponse, RetrievalByKnowledgeRequest,
+                                    RetrievalBySpaceRequest, RetrievalChunk,
+                                    RetrievalRequest, Task, Tenant)
 from whiskerrag_utils import RegisterTypeEnum, get_register
 
 T = TypeVar("T", bound=BaseModel)

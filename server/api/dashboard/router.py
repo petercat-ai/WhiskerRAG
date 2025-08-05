@@ -1,11 +1,12 @@
 from typing import List, Optional
 
-from core.auth import Action, Resource, get_tenant_with_permissions
-from core.plugin_manager import PluginManager
-from core.response import ResponseModel
 from fastapi import APIRouter
 from pydantic import BaseModel
 from whiskerrag_types.model import Tenant
+
+from core.auth import Action, Resource, get_tenant_with_permissions
+from core.plugin_manager import PluginManager
+from core.response import ResponseModel
 
 router = APIRouter(
     prefix="/api/v1/dashboard",

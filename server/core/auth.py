@@ -1,8 +1,4 @@
 import logging
-from fastapi import Header, HTTPException
-from whiskerrag_types.model import Tenant, APIKey, Resource, Action
-from typing import Optional, List, Callable, Tuple
-from fastapi import Depends, HTTPException, Request
 from datetime import datetime, timezone
 from typing import Callable, List, Optional, Tuple
 

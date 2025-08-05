@@ -1,4 +1,4 @@
-from server.plugins.db_engine.supabase_client import SupaBasePlugin
+from server.supabase_aws_plugin.db_engine.supabase_client import SupaBasePlugin
 
 
 class MockPlugin(SupaBasePlugin):

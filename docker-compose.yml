@@ -37,7 +37,7 @@ services:
     container_name: whisker-server
     environment:
       - WHISKER_ENV=${WHISKER_ENV:-prod}
-      - WHISKER_PLUGIN_PATH=${WEB_URL:-/app/server/plugins}
+      - WHISKER_PLUGIN_PATH=${WEB_URL:-/app/server/local_plugin}
       - POSTGRES_DB_HOST=${DB_HOST:-localhost}
       - POSTGRES_DB_PORT=${DB_PORT:-5432}
       - POSTGRES_DB_NAME=${DB_NAME:-whisker}

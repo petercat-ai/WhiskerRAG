@@ -17,7 +17,8 @@ packages = [
     { include = "api" },
     { include = "core" },
     { include = "local_plugin" },
-    { include = "plugins" }
+    { include = "supabase_aws_plugin" },
+    { include = "scripts" }
 ]
 package-mode = false
 
@@ -47,5 +48,5 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-dev = "main:run"
-format = "full_format:run"
+dev = "scripts.dev:run"
+format = "scripts.full_format:run"

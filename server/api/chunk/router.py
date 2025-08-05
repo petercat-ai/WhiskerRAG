@@ -3,14 +3,15 @@ from datetime import datetime, timezone
 from http.client import HTTPException
 from typing import List, Optional
 
-from core.auth import Action, Resource, get_tenant_with_permissions
-from core.log import logger
-from core.plugin_manager import PluginManager
-from core.response import ResponseModel
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from whiskerrag_types.model import Chunk, PageQueryParams, PageResponse, Tenant
 from whiskerrag_utils import RegisterTypeEnum, get_register
+
+from core.auth import Action, Resource, get_tenant_with_permissions
+from core.log import logger
+from core.plugin_manager import PluginManager
+from core.response import ResponseModel
 
 router = APIRouter(
     prefix="/api/chunk", tags=["chunk"], responses={404: {"description": "Not found"}}

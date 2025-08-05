@@ -1,7 +1,3 @@
-from core.auth import Action, Resource, get_tenant_with_permissions
-from core.log import logger
-from core.plugin_manager import PluginManager
-from core.response import ResponseModel
 from fastapi import APIRouter, Body, HTTPException, Path
 from whiskerrag_types.model import (
     PageQueryParams,
@@ -11,6 +7,11 @@ from whiskerrag_types.model import (
     SpaceResponse,
     Tenant,
 )
+
+from core.auth import Action, Resource, get_tenant_with_permissions
+from core.log import logger
+from core.plugin_manager import PluginManager
+from core.response import ResponseModel
 
 router = APIRouter(
     prefix="/api/space", tags=["space"], responses={404: {"description": "Not found"}}

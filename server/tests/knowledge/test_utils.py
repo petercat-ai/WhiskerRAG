@@ -1,17 +1,13 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from api.knowledge.utils import (
-    _is_knowledge_saved,
-    _process_single_knowledge,
-    gen_knowledge_list,
-)
 from whiskerrag_types.model import Knowledge, PageResponse, Tenant
-from whiskerrag_types.model.knowledge import (
-    EmbeddingModelEnum,
-    KnowledgeSourceEnum,
-    KnowledgeTypeEnum,
-)
+from whiskerrag_types.model.knowledge import (EmbeddingModelEnum,
+                                              KnowledgeSourceEnum,
+                                              KnowledgeTypeEnum)
+
+from api.knowledge.utils import (_is_knowledge_saved,
+                                 _process_single_knowledge, gen_knowledge_list)
 
 
 # Test fixtures

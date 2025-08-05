@@ -6,6 +6,11 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, RedirectResponse
+from whiskerrag_utils import init_register
+
 from api.agent import router as agent_router
 from api.api_key import router as api_key_router
 from api.chunk import router as chunk_router
@@ -25,10 +30,6 @@ from core.retrieval_counter import (
     shutdown_retrieval_counter,
 )
 from core.settings import settings
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
-from whiskerrag_utils import init_register
 
 
 def resolve_plugin_path() -> str:
