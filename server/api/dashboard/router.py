@@ -1,4 +1,3 @@
-from importlib.resources import Resource
 from typing import List, Optional
 
 from core.auth import Action, Resource, get_tenant_with_permissions

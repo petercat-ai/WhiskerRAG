@@ -56,10 +56,14 @@ async def _process_single_knowledge(
         )
     if not saved_knowledge:
         return new_knowledge
+
     elif saved_knowledge.file_sha != new_knowledge.file_sha:
+        # 仅删除当前文件，不删除子文件
         await db_engine.delete_knowledge(
             tenant.tenant_id, [saved_knowledge.knowledge_id]
         )
+        # 旧文件与新文件不同，需要删除旧文件，重新添加新文件,并更新knowledge_id,避免指向旧文件的 parent_id 丢失
+        new_knowledge.knowledge_id = saved_knowledge.knowledge_id
         return new_knowledge
     return None
 
@@ -71,11 +75,16 @@ async def gen_knowledge_list(
         return []
     db_engine = PluginManager().dbPlugin
     pre_add_knowledge_list: List[Knowledge] = []
+
+    # 创建信号量来控制并发数量为4
+    semaphore = asyncio.Semaphore(4)
+
+    async def _process_with_semaphore(record: KnowledgeCreateUnion):
+        async with semaphore:
+            return await _process_single_knowledge(record, tenant, db_engine)
+
     try:
-        tasks = [
-            _process_single_knowledge(record, tenant, db_engine)
-            for record in user_input
-        ]
+        tasks = [_process_with_semaphore(record) for record in user_input]
         results = await asyncio.gather(*tasks)
         for knowledge in results:
             if knowledge is not None:
@@ -83,5 +92,5 @@ async def gen_knowledge_list(
         return pre_add_knowledge_list
 
     except Exception as e:
-        print(f"Error generating knowledge list: {e}")
+        logger.error(f"Error generating knowledge list: {e}")
         raise

@@ -1,10 +1,17 @@
-from typing import List
+from typing import Any, Dict, List
 
-from core.auth import Action, Resource, get_tenant_with_permissions
+from whiskerrag_utils import get_all_registered_with_metadata
+
+from core.auth import (
+    Action,
+    Resource,
+    get_tenant_with_permissions,
+    validate_key_string,
+)
 from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Body, HTTPException, Path
 from pydantic import BaseModel
 from whiskerrag_types.model import (
     Knowledge,
@@ -13,7 +20,7 @@ from whiskerrag_types.model import (
     PageResponse,
     Tenant,
 )
-from whiskerrag_utils.registry import RegisterTypeEnum, get_registry_list
+from whiskerrag_utils.registry import RegisterTypeEnum
 
 from .utils import gen_knowledge_list
 
@@ -142,7 +149,7 @@ async def delete_knowledge(
         raise HTTPException(
             status_code=404, detail=f"Knowledge {knowledge_id} not found"
         )
-    await db_engine.delete_knowledge(tenant.tenant_id, [knowledge_id])
+    await db_engine.delete_knowledge(tenant.tenant_id, [knowledge_id], True)
     return ResponseModel(
         success=True, message=f"Knowledge {knowledge_id} deleted successfully"
     )
@@ -157,12 +164,49 @@ async def get_embedding_models_list(
     tenant: Tenant = get_tenant_with_permissions(Resource.PUBLIC, []),
 ):
     try:
-        registries = get_registry_list()
-        embedding_registry = registries.get(RegisterTypeEnum.EMBEDDING)
-        if not embedding_registry:
+        registries = get_all_registered_with_metadata(RegisterTypeEnum.EMBEDDING)
+        if not registries:
             raise KeyError("Embedding registry not found")
-        keys = [str(key) for key in embedding_registry._dict.keys()]
-        return ResponseModel(success=True, data=keys, message="Success")
+        # 取 keys 和 metadata ，组成 dict
+        models = []
+        for key, model_cls in registries.items():
+            models.append(
+                {
+                    "name": key,
+                    "metadata": model_cls.get("metadata", {}),
+                }
+            )
+        return ResponseModel(success=True, data=models, message="Success")
     except KeyError as e:
         logger.error(f"[get_embedding_models_list][error], error={str(e)}")
         raise HTTPException(status_code=404, detail=f"Registry not found: {str(e)}")
+
+
+@router.post(
+    "/{webhook_type}/{source}/{auth_info}/{knowledge_base_id}",
+    status_code=200,
+    summary="通用webhook处理器",
+    description="处理不同类型的webhook：knowledge, deployment, notification等",
+    response_model_by_alias=False,
+)
+async def handle_webhook(
+    webhook_type: str = Path(..., description="webhook type"),
+    source: str = Path(..., description="webhook source"),
+    auth_info: str = Path(..., description="auth info"),
+    knowledge_base_id: str = Path(..., description="knowledge base id"),
+    body: Dict[str, Any] = Body(..., description="webhook payload"),
+):
+    db_engine = PluginManager().dbPlugin
+    (is_valid, tenant, error) = await validate_key_string(
+        auth_info, Resource.KNOWLEDGE, [Action.ALL]
+    )
+    if not is_valid or not tenant:
+        raise HTTPException(status_code=401, detail=error)
+    res = await db_engine.handle_webhook(
+        tenant=tenant,
+        webhook_type=webhook_type,
+        source=source,
+        knowledge_base_id=knowledge_base_id,
+        payload=body,
+    )
+    return ResponseModel(success=True, data=res)

@@ -1,7 +1,7 @@
 import json
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, AsyncIterator, List, Optional, TypeVar, Union
+from typing import Any, AsyncIterator, List, Optional, TypeVar, Union, Dict
 
 from fastapi import HTTPException, status
 from pydantic import BaseModel
@@ -20,11 +20,9 @@ from whiskerrag_types.model import (
     RetrievalChunk,
     RetrievalRequest,
     Space,
-    SpaceRule,
     Task,
     TaskStatus,
     Tenant,
-    Wiki,
 )
 from whiskerrag_types.model.page import QueryParams
 from whiskerrag_utils import RegisterTypeEnum, get_register
@@ -648,26 +646,41 @@ class SupaBasePlugin(DBPluginInterface):
         return items
 
     # =================== rule ===================
-    async def create_rule(
-        self, tenant_id: str, rule: Union[GlobalRule, SpaceRule]
-    ) -> None:
-        pass
-
-    async def update_rule(
-        self, tenant_id: str, rule_id: str, rule: Union[GlobalRule, SpaceRule]
-    ) -> Union[GlobalRule, SpaceRule]:
-        pass
-
     async def get_tenant_rule(self, tenant_id: str) -> Optional[str]:
-        return
-
-    async def get_space_rule(self, space_id: str) -> Optional[str]:
         pass
 
-    # =================== wiki ===================
-    async def create_wiki(self, wiki: Wiki) -> None:
+    async def get_space_rule(self, tenant_id: str, space_id: str) -> Optional[str]:
         pass
 
     # =================== agent ===================
     async def agent_invoke(self, body: Any) -> AsyncIterator[Any]:
         pass
+
+    # ================= webhook
+    async def handle_webhook(
+        self,
+        tenant: Tenant,
+        # webhook type, e.g. knowledge, chunk, etc.
+        webhook_type: str,
+        # webhook source, e.g. github, yuque, slack, etc.
+        source: str,
+        # knowledge base id
+        knowledge_base_id: str,
+        # webhook payload
+        payload: Any,
+    ) -> Optional[str]:
+        return None
+
+    # =================== dashboard ===================
+    async def get_system_info(self):
+        return {
+            "space_count": 0,
+            "knowledge_count": 0,
+            "task_count": 0,
+            "tenant_count": 0,
+            "retrieval_count": 0,
+            "storage_size": "0 B",
+        }
+
+    async def get_tenant_log(self, body: Dict[str, Any], tenant_id: str) -> List[Any]:
+        return []

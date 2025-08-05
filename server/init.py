@@ -1,5 +1,3 @@
-import os
-import platform
 import subprocess
 import sys
 
@@ -37,7 +35,7 @@ def main():
     # 安装依赖
     run(["poetry", "install"])
     print("\n虚拟环境和依赖已配置完成！")
-    print("请使用 'poetry run run' 启动开发服务器。")
+    print("请使用 'poetry run dev' 启动开发服务器。")
 
 
 if __name__ == "__main__":

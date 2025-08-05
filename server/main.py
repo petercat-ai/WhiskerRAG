@@ -78,7 +78,8 @@ async def shutdown_event() -> None:
 
         # cleanup dbPlugin
         try:
-            db_plugin = PluginManager().dbPlugin
+            plugin_abs_path = resolve_plugin_path()
+            db_plugin = PluginManager(plugin_abs_path).dbPlugin
             if db_plugin:
                 await db_plugin.cleanup()
         except Exception as e:
