@@ -20,6 +20,7 @@ from api.retrieval import router as retrieval_router
 from api.rule import router as rule_router
 from api.space import router as space_router
 from api.task import router as task_router
+from api.webhook import router as webhook_router
 from api.tenant import router as tenant_router
 from core.global_vars import cleanup_global_vars, inject_global_vars
 from core.log import cleanup_logging, logger, setup_logging
@@ -279,6 +280,7 @@ def create_app() -> FastAPI:
     app.include_router(rule_router.router)
     app.include_router(api_key_router.router)
     app.include_router(agent_router.router)
+    app.include_router(webhook_router.router)
 
     # add base router
     @app.get("/")
