@@ -1,7 +1,6 @@
 # Whisker Server 项目配置说明
 
 ## 前置要求
-
 - Python 3.11 或更高版本
 - 推荐使用 Poetry 进行依赖和虚拟环境管理
 
@@ -35,10 +34,10 @@ poetry install
 5. 启动服务器
 
 ```bash
-poetry run run
+poetry run dev
 ```
 
-> 💡 你也可以直接运行一键初始化脚本 `python init.py`，自动完成上述 3-4 步骤。
+> 💡 你也可以直接运行一键初始化脚本 `python init.py`，自动完成上述 1-4 步骤。
 
 ## 常用命令
 
@@ -49,7 +48,7 @@ poetry run run
 poetry install
 
 # 启动开发服务器
-poetry run run
+poetry run dev
 ```
 
 ### 插件依赖管理
@@ -57,9 +56,9 @@ poetry run run
 如需使用 plugins 目录下的插件功能，请按需安装插件依赖：
 
 - 一键安装插件依赖：
-  poetry run pip install -r plugins/requirements.txt
+  poetry run pip install -r supabase_aws_plugin/requirements.txt
 - 一键卸载插件依赖：
-  poetry run pip uninstall -r plugins/requirements.txt
+  poetry run pip uninstall -r supabase_aws_plugin/requirements.txt
 - （可选）单独安装某个插件依赖：
   poetry run pip install supabase boto3
 
@@ -146,8 +145,7 @@ python3 --version  # 应该 >= 3.11
 ```
 
 ## 注意事项
-
-- 建议在进行任何开发之前先运行 `poetry install`
+- 建议在进行任何开发之前先检查当前激活的虚拟环境
 - 提交代码前请运行 `poetry run format` 和 `poetry run type-check`
 - 添加新依赖时，使用 `poetry add` 或 `poetry add --group dev` 管理
 - CI/CD 环境下请确保 Python 版本 >=3.11，且 server/README.md 文件存在，否则 poetry install 会报错

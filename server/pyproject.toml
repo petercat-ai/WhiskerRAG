@@ -17,9 +17,22 @@ packages = [
     { include = "api" },
     { include = "core" },
     { include = "local_plugin" },
-    { include = "plugins" }
+    { include = "supabase_aws_plugin" },
+    { include = "scripts" }
 ]
 package-mode = false
+
+[tool.isort]
+profile = "black"
+line_length = 88
+multi_line_output = 3
+known_first_party = ["api", "core", "local_plugin", "supabase_aws_plugin", "scripts"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+exclude = ["tests/", "scripts/"]
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
@@ -31,7 +44,7 @@ pydantic-settings = ">=2.0.0,<3.0.0"
 PyGithub = "==2.3.0"
 httpx = ">=0.27.2"
 starlette = ">=0.40.0"
-whiskerrag = ">=0.2.1"
+whiskerrag = ">=0.2.3"
 iso8601 = "==2.1.0"
 
 [tool.poetry.group.dev.dependencies]
@@ -47,5 +60,5 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-run = "main:run"
-format = "full_format:run"
+dev = "scripts.dev:run"
+format = "scripts.full_format:run"

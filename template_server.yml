@@ -82,6 +82,11 @@ Parameters:
     Description: Environment marker for SQS_QUEUE_URL
     Default: "1"
 
+  whiskerPluginPath:
+    Type: String
+    Description: Environment marker for WHISKER_PLUGIN_PATH
+    Default: "./supabase_aws_plugin"
+
 Resources:
   WhiskerServer:
     Type: AWS::Serverless::Function
@@ -108,6 +113,8 @@ Resources:
           FASTAPI_ENGINE_CLASSNAME: !Ref fastapiEngineClassName
           TASK_ENGINE_CLASSNAME: !Ref taskEngineClassName
           SQS_QUEUE_URL: !Ref sqsQueueUrl
+          # whisker plugin path
+          WHISKER_PLUGIN_PATH: !Ref whiskerPluginPath
           # git env config - using system git from Docker image
           GIT_PYTHON_REFRESH: quiet
           GIT_EXEC_PATH: /usr/bin/git

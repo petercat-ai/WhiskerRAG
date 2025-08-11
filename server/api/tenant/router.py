@@ -2,13 +2,14 @@ import secrets
 import uuid
 from typing import Optional
 
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+from whiskerrag_types.model import PageQueryParams, PageResponse, Tenant
+
 from core.auth import Action, Resource, get_tenant_with_permissions
 from core.log import logger
 from core.plugin_manager import PluginManager
 from core.response import ResponseModel
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
-from whiskerrag_types.model import PageQueryParams, PageResponse, Tenant
 
 router = APIRouter(
     prefix="/api/tenant",

@@ -1,8 +1,9 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from api.agent.router import ProResearchRequest, pro_research
 from fastapi.responses import StreamingResponse
+
+from api.agent.router import ProResearchRequest, pro_research
 
 
 @pytest.fixture

@@ -4,12 +4,7 @@ from typing import Any, List, Optional
 
 import boto3  # type: ignore
 from whiskerrag_types.interface import DBPluginInterface, TaskEnginPluginInterface
-from whiskerrag_types.model import (
-    Knowledge,
-    Task,
-    TaskStatus,
-    Tenant,
-)
+from whiskerrag_types.model import Knowledge, Task, TaskStatus, Tenant
 
 
 class AWSLambdaTaskEnginePlugin(TaskEnginPluginInterface):

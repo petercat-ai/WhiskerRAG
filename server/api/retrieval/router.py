@@ -1,13 +1,5 @@
 from typing import List
 
-from core.auth import Action, Resource, get_tenant_with_permissions
-from core.plugin_manager import PluginManager
-from core.response import ResponseModel
-from core.retrieval_counter import (
-    RetrievalCounter,
-    get_retrieval_counter,
-    retrieval_count,
-)
 from deprecated import deprecated
 from fastapi import APIRouter, Depends
 from whiskerrag_types.model import (
@@ -17,6 +9,15 @@ from whiskerrag_types.model import (
     Tenant,
 )
 from whiskerrag_types.model.retrieval import RetrievalRequest
+
+from core.auth import Action, Resource, get_tenant_with_permissions
+from core.plugin_manager import PluginManager
+from core.response import ResponseModel
+from core.retrieval_counter import (
+    RetrievalCounter,
+    get_retrieval_counter,
+    retrieval_count,
+)
 
 router = APIRouter(
     prefix="/api/retrieval",

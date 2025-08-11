@@ -6,6 +6,11 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, RedirectResponse
+from whiskerrag_utils import init_register
+
 from api.agent import router as agent_router
 from api.api_key import router as api_key_router
 from api.chunk import router as chunk_router
@@ -15,6 +20,7 @@ from api.retrieval import router as retrieval_router
 from api.rule import router as rule_router
 from api.space import router as space_router
 from api.task import router as task_router
+from api.webhook import router as webhook_router
 from api.tenant import router as tenant_router
 from core.global_vars import cleanup_global_vars, inject_global_vars
 from core.log import cleanup_logging, logger, setup_logging
@@ -25,10 +31,6 @@ from core.retrieval_counter import (
     shutdown_retrieval_counter,
 )
 from core.settings import settings
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
-from whiskerrag_utils import init_register
 
 
 def resolve_plugin_path() -> str:
@@ -78,7 +80,8 @@ async def shutdown_event() -> None:
 
         # cleanup dbPlugin
         try:
-            db_plugin = PluginManager().dbPlugin
+            plugin_abs_path = resolve_plugin_path()
+            db_plugin = PluginManager(plugin_abs_path).dbPlugin
             if db_plugin:
                 await db_plugin.cleanup()
         except Exception as e:
@@ -277,6 +280,7 @@ def create_app() -> FastAPI:
     app.include_router(rule_router.router)
     app.include_router(api_key_router.router)
     app.include_router(agent_router.router)
+    app.include_router(webhook_router.router)
 
     # add base router
     @app.get("/")

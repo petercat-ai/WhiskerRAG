@@ -5,9 +5,7 @@ from typing import List, Optional
 
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from whiskerrag_types.interface.embed_interface import BaseEmbedding, Image
-from whiskerrag_types.model.knowledge import (
-    EmbeddingModelEnum,
-)
+from whiskerrag_types.model.knowledge import EmbeddingModelEnum
 from whiskerrag_utils import RegisterTypeEnum, register
 
 from .model_manager import HuggingFaceModelManager
