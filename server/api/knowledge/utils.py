@@ -1,4 +1,6 @@
 import asyncio
+import logging
+
 from typing import Any, List, Optional
 
 from whiskerrag_types.model import Knowledge, PageQueryParams, PageResponse, Tenant
@@ -8,6 +10,8 @@ from whiskerrag_types.model.knowledge_create import (
 )
 
 from core.plugin_manager import PluginManager
+
+logger = logging.getLogger("whisker")
 
 
 async def _is_knowledge_saved(
