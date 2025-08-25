@@ -47,7 +47,7 @@ async def add_space(
 
 
 @router.delete(
-    "/{space_id}",
+    "/{space_id:path}",
     operation_id="delete_space",
     response_model_by_alias=False,
 )
@@ -66,7 +66,9 @@ async def delete_space(
     return ResponseModel(success=True, message=f"Space {space_id} deleted successfully")
 
 
-@router.put("/{space_id}", operation_id="update_space", response_model_by_alias=False)
+@router.put(
+    "/{space_id:path}", operation_id="update_space", response_model_by_alias=False
+)
 async def update_space(
     space_id: str = Path(..., description="知识库唯一标识符"),
     body: SpaceCreate = Body(..., description="更新后的知识库信息"),
