@@ -10,7 +10,6 @@ from whiskerrag_types.interface import DBPluginInterface
 from whiskerrag_types.model import (
     APIKey,
     Chunk,
-    GlobalRule,
     Knowledge,
     KnowledgeSourceEnum,
     PageQueryParams,
@@ -23,7 +22,12 @@ from whiskerrag_types.model import (
     Task,
     TaskStatus,
     Tenant,
+    Tag,
+    TagCreate,
+    Tagging,
+    TaggingCreate,
 )
+from whiskerrag_types.model.artifact_index import ArtifactIndexCreate, ArtifactIndex
 from whiskerrag_types.model.page import QueryParams
 from whiskerrag_utils import RegisterTypeEnum, get_register
 
@@ -684,3 +688,87 @@ class SupaBasePlugin(DBPluginInterface):
 
     async def get_tenant_log(self, body: Dict[str, Any], tenant_id: str) -> List[Any]:
         return []
+
+    # =================== tag ===================
+    async def add_tag_list(
+        self, tenant_id: str, tag_list: List[TagCreate]
+    ) -> List[Tag]:
+        pass
+
+    async def get_tag_list(
+        self, tenant_id: str, page_params: PageQueryParams[Tag]
+    ) -> PageResponse[Tag]:
+        pass
+
+    async def get_tag_by_id(self, tenant_id: str, tag_id: str) -> Union[Tag, None]:
+        pass
+
+    async def delete_tag_by_id(self, tenant_id: str, tag_id: str) -> Union[Tag, None]:
+        pass
+
+    async def update_tag_name_description(
+        self,
+        tenant_id: str,
+        tag_id: str,
+        name: Optional[str],
+        description: Optional[str],
+    ) -> Tag:
+        pass
+
+    # =================== tagging ===================
+    async def add_tagging_list(
+        self, tenant_id: str, tagging_list: List[TaggingCreate]
+    ) -> List[Tagging]:
+        pass
+
+    async def get_tagging_list(
+        self, tenant_id: str, page_params: PageQueryParams[Tagging]
+    ) -> PageResponse[Tagging]:
+        pass
+
+    async def delete_tagging_by_id(
+        self, tenant_id: str, tagging_id: str
+    ) -> Union[Tagging, None]:
+        pass
+
+    # =================== artifacts ===================
+    async def add_artifact_list(
+        self, artifact_list: List[ArtifactIndexCreate]
+    ) -> List[ArtifactIndex]:
+        """
+        批量添加 artifact 记录
+        返回实际插入成功的 ArtifactIndex 记录列表
+        """
+        pass
+
+    async def get_artifact_list(
+        self, page_params: PageQueryParams[ArtifactIndex]
+    ) -> PageResponse[ArtifactIndex]:
+        """
+        分页获取 artifact 列表
+        """
+        pass
+
+    async def get_artifact_by_id(self, artifact_id: str) -> Union[ArtifactIndex, None]:
+        """
+        根据 artifact_id 获取 ArtifactIndex 详情
+        """
+        pass
+
+    async def delete_artifact_by_id(
+        self, artifact_id: str
+    ) -> Union[ArtifactIndex, None]:
+        """
+        根据 artifact_id 删除 ArtifactIndex 记录
+        返回被删除的记录（如果存在的话）
+        """
+        pass
+
+    async def update_artifact_space_id(
+        self, artifact_id: str, new_space_id: str
+    ) -> Union[ArtifactIndex, None]:
+        """
+        更新 artifact 的 space_id 绑定
+        返回更新后的 ArtifactIndex 记录（如果存在的话）
+        """
+        pass

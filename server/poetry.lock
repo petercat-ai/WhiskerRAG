@@ -366,6 +366,18 @@ files = [
 pycparser = "*"
 
 [[package]]
+name = "chardet"
+version = "5.2.0"
+description = "Universal encoding detector for Python 3"
+optional = false
+python-versions = ">=3.7"
+groups = ["main"]
+files = [
+    {file = "chardet-5.2.0-py3-none-any.whl", hash = "sha256:e1cf59446890a00105fe7b7912492ea04b6e6f06d4b742b2c788469e34c82970"},
+    {file = "chardet-5.2.0.tar.gz", hash = "sha256:1b3b6ff479a8c414bc3fa2c0852995695c4a026dcd6d0633b2dd092ca39c1cf7"},
+]
+
+[[package]]
 name = "charset-normalizer"
 version = "3.4.2"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
@@ -2804,18 +2816,19 @@ standard = ["colorama (>=0.4) ; sys_platform == \"win32\"", "httptools (>=0.5.0)
 
 [[package]]
 name = "whiskerrag"
-version = "0.2.23"
+version = "0.3.1"
 description = "A utlity package for RAG operations"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "whiskerrag-0.2.23-py3-none-any.whl", hash = "sha256:cdffa1983fa2f09c54bee972a166e489b1486ae4ec8da804455932b4674849f7"},
-    {file = "whiskerrag-0.2.23.tar.gz", hash = "sha256:75f04a3a7963608af451b3dc0b6ba3850e1016b1f2e70e92324814020e1c3b83"},
+    {file = "whiskerrag-0.3.1-py3-none-any.whl", hash = "sha256:2bd70e11ddef499a9c4e1f68df22b2bc3afdd45b598d337b8bbb2eaa8bde4106"},
+    {file = "whiskerrag-0.3.1.tar.gz", hash = "sha256:1ff0066e5d62f9b979ee7a5689ec473bf005b65493a19f3f9a0fa3af511ddd20"},
 ]
 
 [package.dependencies]
 boto3 = ">=1.38.13,<2.0.0"
+chardet = ">=5.2.0,<6.0.0"
 deprecated = ">=1.2.18,<2.0.0"
 gitpython = ">=3.1.44,<4.0.0"
 langchain = ">=0.2.12"
@@ -3153,4 +3166,4 @@ cffi = ["cffi (>=1.11)"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.11,<4.0"
-content-hash = "2af51ecc9f6e12b1b77ff73f27612ec639c4bbfc08cb0614a90dacc3e0faa862"
+content-hash = "c4426b210416f1bae0c854db74d3d882a704bd2daed880e69795296db88129fc"
