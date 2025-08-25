@@ -1,6 +1,6 @@
 from typing import Annotated, List
 
-from fastapi import APIRouter, Body, HTTPException, Path
+from fastapi import APIRouter, HTTPException, Path
 from whiskerrag_types.model import (
     PageQueryParams,
     PageResponse,

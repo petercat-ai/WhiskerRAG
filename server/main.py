@@ -17,6 +17,9 @@ from api.chunk import router as chunk_router
 from api.dashboard import router as dashboard_router
 from api.knowledge import router as knowledge_router
 from api.retrieval import router as retrieval_router
+from api.tag import router as tag_router
+from api.tagging import router as tagging_router
+from api.artifact_index import router as artifact_index_router
 from api.rule import router as rule_router
 from api.space import router as space_router
 from api.task import router as task_router
@@ -281,6 +284,9 @@ def create_app() -> FastAPI:
     app.include_router(api_key_router.router)
     app.include_router(agent_router.router)
     app.include_router(webhook_router.router)
+    app.include_router(tagging_router.router)
+    app.include_router(tag_router.router)
+    app.include_router(artifact_index_router.router)
 
     # add base router
     @app.get("/")
