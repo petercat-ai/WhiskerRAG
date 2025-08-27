@@ -93,41 +93,6 @@ async def verify_permissions(
     return check_resource_permissions(api_key, resource, actions)
 
 
-def set_tenant_id(tenant_id: str):
-    """set tenant_id to global context"""
-    try:
-        if isinstance(__builtins__, dict):
-            tenant_context = __builtins__.get("tenant_context")
-        else:
-            tenant_context = getattr(__builtins__, "tenant_context", None)
-
-        if tenant_context:
-            # set ContextVar (for async context passing)
-            tenant_context.set(tenant_id)
-
-            # set thread local storage as fallback (for cross-thread passing)
-            try:
-                if isinstance(__builtins__, dict):
-                    set_thread_tenant_id_func = __builtins__.get("set_thread_tenant_id")
-                else:
-                    set_thread_tenant_id_func = getattr(
-                        __builtins__, "set_thread_tenant_id", None
-                    )
-
-                if set_thread_tenant_id_func:
-                    set_thread_tenant_id_func(tenant_id)
-            except Exception as e:
-                logger.warning(f"Failed to set thread-local tenant_id: {e}")
-        else:
-            logger.error(
-                "ERROR: tenant_context not found in builtins - global variables may not be injected"
-            )
-    except Exception as e:
-        logger.error(f"ERROR: Failed to set tenant_id: {e}")
-
-    return tenant_id
-
-
 async def authenticate_request(
     request: Request,
     header_auth: str,
@@ -150,7 +115,8 @@ async def authenticate_request(
             raise HTTPException(status_code=403, detail="Permission denied")
     else:
         # not api key, so we assume it's a tenant secret key
-        print(f"Access granted for resource: {resource}")
+        logger.info(f"Access granted for resource: {resource} with SK")
+    from whiskerrag_utils.tracing import set_tenant_id
 
     # Set tenant context for logging
     set_tenant_id(tenant.tenant_id)
