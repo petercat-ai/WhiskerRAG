@@ -91,7 +91,7 @@ async def update_space(
 
 
 @router.get(
-    "/{space_id}", operation_id="get_space_by_id", response_model_by_alias=False
+    "/{space_id:path}", operation_id="get_space_by_id", response_model_by_alias=False
 )
 async def get_space_by_id(
     space_id: str = Path(..., description="knowledge base id"),
