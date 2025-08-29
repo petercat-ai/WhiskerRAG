@@ -4,7 +4,7 @@ from typing import Callable, List, Optional, Tuple
 
 from fastapi import Depends, Header, HTTPException, Request
 from whiskerrag_types.model import Action, APIKey, Resource, Tenant
-
+from whiskerrag_utils import tracing
 from .cache import TTLCache
 from .plugin_manager import PluginManager
 
@@ -116,10 +116,9 @@ async def authenticate_request(
     else:
         # not api key, so we assume it's a tenant secret key
         logger.info(f"Access granted for resource: {resource} with SK")
-    from whiskerrag_utils.tracing import set_tenant_id
 
     # Set tenant context for logging
-    set_tenant_id(tenant.tenant_id)
+    tracing.set_tenant_id(tenant.tenant_id)
 
     return tenant
 
@@ -186,7 +185,7 @@ async def authenticate_by_key_string(
         logger.info(f"Access granted for resource: {resource} with SK")
 
     # 设置租户上下文
-    set_tenant_id(tenant.tenant_id)
+    tracing.set_tenant_id(tenant.tenant_id)
 
     return tenant
 
