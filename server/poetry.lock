@@ -2816,14 +2816,14 @@ standard = ["colorama (>=0.4) ; sys_platform == \"win32\"", "httptools (>=0.5.0)
 
 [[package]]
 name = "whiskerrag"
-version = "0.3.4"
+version = "0.3.7"
 description = "A utlity package for RAG operations"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "whiskerrag-0.3.4-py3-none-any.whl", hash = "sha256:48d67aee7068e9571a216d51da179efc78b916763aac79f0d028a0b6a3fc929c"},
-    {file = "whiskerrag-0.3.4.tar.gz", hash = "sha256:f568c098a93a06c327a2e3668c80c3712d76602c37f11f782fcd4268d68f21bb"},
+    {file = "whiskerrag-0.3.7-py3-none-any.whl", hash = "sha256:8631cd8dcee68e54a1c1d1e6066760b1a6f9da74d91e6f9bba20d43ce2064ce2"},
+    {file = "whiskerrag-0.3.7.tar.gz", hash = "sha256:5eabdefcdb1a983e81a600f26d94697a027ee6cdc8df3082187c140d99a21d68"},
 ]
 
 [package.dependencies]
